@@ -210,18 +210,19 @@ def api_get_options_data():
 def api_market_data():
     """Get major market indices and assets"""
     try:
-        symbols = {
-            'S&P 500': '^GSPC',
-            'Dow Jones': '^DJI', 
-            'NASDAQ': '^IXIC',
-            'Russell 2000': '^RUT',
-            'VIX': '^VIX',
-            'TLT': 'TLT',
-            'Bitcoin': 'BTC-USD',
-            'Ethereum': 'ETH-USD',
-            'Gold': 'GC=F',
-            'US Dollar Index': 'DX=F'
-        }
+        # Ordered by importance as requested
+        symbols_ordered = [
+            ('S&P 500', '^GSPC'),
+            ('Dow Jones', '^DJI'),
+            ('Russell 2000', '^RUT'),
+            ('TLT', 'TLT'),
+            ('VIX', '^VIX'),
+            ('Gold', 'GC=F'),
+            ('Bitcoin', 'BTC-USD'),
+            ('Ethereum', 'ETH-USD'),
+        ]
+        
+        symbols = dict(symbols_ordered)
         
         market_data = {}
         for name, symbol in symbols.items():
