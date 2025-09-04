@@ -10,7 +10,6 @@
     <header class="header">
       <nav class="nav-container">
         <div class="logo">
-          <img src="attached_assets/generated_images/Financial_trading_logo_design_435f88c9.png" alt="Selling-options.com Logo" class="logo-image">
           <strong>Selling-options.com</strong>
         </div>
         <div class="nav-quote">
@@ -147,18 +146,18 @@
           const marketGrid = document.getElementById('marketGrid');
           marketGrid.innerHTML = '';
           
-          for (const [name, info] of Object.entries(data)) {
+          for (const item of data) {
             const card = document.createElement('div');
             card.className = 'market-card';
             
-            const changeClass = info.change >= 0 ? 'positive' : 'negative';
-            const changeSymbol = info.change >= 0 ? '+' : '';
+            const changeClass = item.change >= 0 ? 'positive' : 'negative';
+            const changeSymbol = item.change >= 0 ? '+' : '';
             
             card.innerHTML = `
-              <div class="market-name">${name}</div>
-              <div class="market-price">${formatPrice(info.price, name)}</div>
+              <div class="market-name">${item.name}</div>
+              <div class="market-price">${formatPrice(item.price, item.name)}</div>
               <div class="market-change ${changeClass}">
-                ${changeSymbol}${info.change} (${changeSymbol}${info.change_pct}%)
+                ${changeSymbol}${item.change} (${changeSymbol}${item.change_pct}%)
               </div>
             `;
             

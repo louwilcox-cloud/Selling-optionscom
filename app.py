@@ -226,10 +226,8 @@ def api_market_data():
             ('Ethereum', 'ETH-USD'),
         ]
         
-        symbols = dict(symbols_ordered)
-        
-        market_data = {}
-        for name, symbol in symbols.items():
+        market_data = []
+        for name, symbol in symbols_ordered:
             try:
                 ticker = yf.Ticker(symbol)
                 hist = ticker.history(period="2d")  # Get 2 days to calculate change
@@ -239,20 +237,22 @@ def api_market_data():
                     change = current - previous
                     change_pct = (change / previous * 100) if previous != 0 else 0
                     
-                    market_data[name] = {
+                    market_data.append({
+                        'name': name,
                         'symbol': symbol,
                         'price': round(current, 2),
                         'change': round(change, 2),
                         'change_pct': round(change_pct, 2)
-                    }
+                    })
             except Exception as e:
                 print(f"Error fetching {name}: {e}")
-                market_data[name] = {
+                market_data.append({
+                    'name': name,
                     'symbol': symbol,
                     'price': 0,
                     'change': 0,
                     'change_pct': 0
-                }
+                })
         
         return jsonify(market_data)
     except Exception as e:
