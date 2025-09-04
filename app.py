@@ -509,10 +509,10 @@ def delete_watchlist(watchlist_id):
     
     return redirect('/admin/watchlists')
 
-@app.route('/admin/forecast')
-@admin_required
-def admin_watchlist_forecast():
-    """Admin page for watchlist forecasting"""
+@app.route('/forecast')
+@login_required
+def watchlist_forecast():
+    """Watchlist forecasting page for all users"""
     conn = get_db_connection()
     cur = conn.cursor()
     
@@ -526,7 +526,7 @@ def admin_watchlist_forecast():
     return render_template_string(FORECAST_TEMPLATE, watchlists=watchlists)
 
 @app.route('/api/forecast', methods=['POST'])
-@admin_required
+@login_required
 def run_forecast():
     """Run forecast for selected watchlist"""
     try:
@@ -666,6 +666,7 @@ def serve_calculator():
             <a href="#">Tools</a>
             <div class="dropdown-content">
               <a href="/calculator.html">Options Calculator</a>
+              <a href="/forecast">Watchlist Forecast</a>
             </div>
           </div>
           <div class="nav-item dropdown">
@@ -679,7 +680,6 @@ def serve_calculator():
             <div class="dropdown-content">
               <a href="/admin/users">Manage Users</a>
               <a href="/admin/watchlists">Manage Watchlists</a>
-              <a href="/admin/forecast">Watchlist Forecast</a>
             </div>
           </div>
         </div>
@@ -693,6 +693,7 @@ def serve_calculator():
             <a href="#">Tools</a>
             <div class="dropdown-content">
               <a href="/calculator.html">Options Calculator</a>
+              <a href="/forecast">Watchlist Forecast</a>
             </div>
           </div>
           <div class="nav-item dropdown">
@@ -1112,7 +1113,7 @@ FORECAST_TEMPLATE = '''
                 </div>
                 <div class="form-group">
                     <label for="startDate">Starting Expiration (YYYY-MM-DD)</label>
-                    <input type="date" id="startDate" value="{{ moment().format('YYYY-MM-DD') }}">
+                    <input type="date" id="startDate">
                 </div>
                 <div>
                     <button id="runForecast" class="forecast-btn" onclick="runForecast()">Run Forecast</button>
