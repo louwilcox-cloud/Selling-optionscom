@@ -384,7 +384,34 @@ def serve_index():
 @app.route('/calculator.html')
 @login_required
 def serve_calculator():
-    return send_from_directory('.', 'calculator.html')
+    # Check if current user is admin
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT COUNT(*) FROM admin_users WHERE user_id = %s', (session['user_id'],))
+    is_admin = cur.fetchone()[0] > 0
+    cur.close()
+    conn.close()
+    
+    # Read the calculator HTML file
+    with open('calculator.html', 'r') as f:
+        content = f.read()
+    
+    # Replace the nav actions based on admin status
+    if is_admin:
+        nav_actions = '''<div class="nav-actions">
+          <a href="/admin" class="btn-login">Admin</a>
+          <a href="/logout" class="btn-signup">Logout</a>
+        </div>'''
+    else:
+        nav_actions = '''<div class="nav-actions">
+          <a href="/logout" class="btn-signup">Logout</a>
+        </div>'''
+    
+    # Replace the navigation section
+    import re
+    content = re.sub(r'<div class="nav-actions">.*?</div>', nav_actions, content, flags=re.DOTALL)
+    
+    return content
 
 @app.route('/<path:filename>')
 def serve_static(filename):
