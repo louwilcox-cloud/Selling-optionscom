@@ -12,6 +12,11 @@
         <div class="logo">
           <strong>Selling-options.com</strong>
         </div>
+        <div class="nav-quote">
+          <input type="text" id="navQuoteSymbol" placeholder="Enter symbol..." class="nav-quote-input">
+          <button onclick="getNavQuote()" class="nav-quote-btn">Quote</button>
+          <div id="navQuoteResult" class="nav-quote-result"></div>
+        </div>
         <div class="nav-menu">
           <div class="nav-item dropdown">
             <a href="#">Tools</a>
@@ -43,11 +48,6 @@
           <div class="nav-item">
             <a href="#">Market Data</a>
           </div>
-        </div>
-        <div class="nav-quote">
-          <input type="text" id="navQuoteSymbol" placeholder="Enter symbol..." class="nav-quote-input">
-          <button onclick="getNavQuote()" class="nav-quote-btn">Quote</button>
-          <div id="navQuoteResult" class="nav-quote-result"></div>
         </div>
         <div class="nav-actions">
           <a href="/login" class="btn-login">Log In</a>
