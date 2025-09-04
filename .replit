@@ -1,9 +1,9 @@
 entrypoint = "index.html"
-modules = ["web", "nodejs-20", "python-3.11"]
+modules = ["web", "nodejs-20", "python-3.11", "postgresql-16", "python3"]
 
 [nix]
 channel = "stable-24_11"
-packages = ["glibcLocales", "static-web-server"]
+packages = ["cargo", "glibcLocales", "libiconv", "rustc", "static-web-server"]
 
 [deployment]
 publicDir = "/"
