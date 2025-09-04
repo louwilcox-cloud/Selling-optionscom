@@ -509,6 +509,135 @@ def delete_watchlist(watchlist_id):
     
     return redirect('/admin/watchlists')
 
+@app.route('/admin/forecast')
+@admin_required
+def admin_watchlist_forecast():
+    """Admin page for watchlist forecasting"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Get all watchlists for dropdown
+    cur.execute('SELECT id, name FROM watchlists ORDER BY name')
+    watchlists = cur.fetchall()
+    
+    cur.close()
+    conn.close()
+    
+    return render_template_string(FORECAST_TEMPLATE, watchlists=watchlists)
+
+@app.route('/api/forecast', methods=['POST'])
+@admin_required
+def run_forecast():
+    """Run forecast for selected watchlist"""
+    try:
+        data = request.get_json()
+        watchlist_id = data.get('watchlist_id')
+        start_date = data.get('start_date', datetime.now().strftime('%Y-%m-%d'))
+        
+        if not watchlist_id:
+            return jsonify({'error': 'Watchlist ID required'}), 400
+        
+        # Get watchlist symbols
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT symbols FROM watchlists WHERE id = %s', (watchlist_id,))
+        result = cur.fetchone()
+        cur.close()
+        conn.close()
+        
+        if not result:
+            return jsonify({'error': 'Watchlist not found'}), 404
+        
+        # Parse symbols from comma/space separated string
+        symbols_str = result[0]
+        import re
+        symbols = [s.strip().upper() for s in re.split(r'[,\s]+', symbols_str) if s.strip()]
+        
+        # Get current stock prices and run predictions
+        forecast_results = []
+        
+        for symbol in symbols:
+            try:
+                # Get current price
+                ticker = yf.Ticker(symbol)
+                info = ticker.info
+                current_price = info.get('currentPrice') or info.get('regularMarketPrice', 0)
+                
+                if current_price == 0:
+                    # Try getting it from history if info doesn't have current price
+                    hist = ticker.history(period='1d')
+                    if not hist.empty:
+                        current_price = float(hist['Close'].iloc[-1])
+                
+                # Get available expiration dates starting from start_date
+                expirations = _fetch_expirations(symbol)
+                start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+                
+                # Filter expirations to get next 4 after start_date
+                valid_exps = []
+                for exp_str in expirations:
+                    exp_date = datetime.strptime(exp_str, '%Y-%m-%d').date()
+                    if exp_date >= start_dt:
+                        valid_exps.append(exp_str)
+                
+                # Take first 4 valid expirations
+                next_four_exps = valid_exps[:4]
+                
+                # Calculate predictions for each expiration
+                predictions = []
+                for exp_date in next_four_exps:
+                    try:
+                        # Get options data for this expiration
+                        calls, puts = _fetch_chain(symbol, exp_date)
+                        
+                        # Use the same math as single calculator
+                        result = _compute_results(symbol, exp_date, calls, puts)
+                        
+                        predictions.append({
+                            'expiration': exp_date,
+                            'predicted_price': result.get('weighted_breakeven', current_price),
+                            'percent_change': ((result.get('weighted_breakeven', current_price) - current_price) / current_price * 100) if current_price > 0 else 0
+                        })
+                    except Exception as e:
+                        # If we can't get options data, use current price as prediction
+                        predictions.append({
+                            'expiration': exp_date,
+                            'predicted_price': current_price,
+                            'percent_change': 0.0
+                        })
+                
+                # Fill missing predictions if less than 4
+                while len(predictions) < 4:
+                    predictions.append({
+                        'expiration': 'N/A',
+                        'predicted_price': current_price,
+                        'percent_change': 0.0
+                    })
+                
+                forecast_results.append({
+                    'symbol': symbol,
+                    'current_price': current_price,
+                    'predictions': predictions
+                })
+                
+            except Exception as e:
+                # Add symbol with error message
+                forecast_results.append({
+                    'symbol': symbol,
+                    'current_price': 0,
+                    'predictions': [{'expiration': 'Error', 'predicted_price': 0, 'percent_change': 0}] * 4,
+                    'error': str(e)
+                })
+        
+        return jsonify({
+            'success': True,
+            'results': forecast_results,
+            'start_date': start_date
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # Static file serving
 @app.route('/')
 def serve_index():
@@ -550,6 +679,7 @@ def serve_calculator():
             <div class="dropdown-content">
               <a href="/admin/users">Manage Users</a>
               <a href="/admin/watchlists">Manage Watchlists</a>
+              <a href="/admin/forecast">Watchlist Forecast</a>
             </div>
           </div>
         </div>
@@ -920,6 +1050,203 @@ WATCHLISTS_TEMPLATE = '''
             <a href="/admin" class="action-btn btn-back">Back to Admin</a>
         </div>
     </div>
+</body>
+</html>
+'''
+
+FORECAST_TEMPLATE = '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watchlist Forecast - Selling-options.com</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .forecast-container { max-width: 1400px; margin: 40px auto; padding: 20px; }
+        .forecast-header { text-align: center; margin-bottom: 40px; }
+        .forecast-header h1 { color: #1f2937; margin-bottom: 10px; }
+        .forecast-controls { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .controls-row { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 20px; align-items: end; }
+        .form-group { margin-bottom: 0; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #374151; }
+        .form-group select, .form-group input { width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem; }
+        .form-group select:focus, .form-group input:focus { outline: none; border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
+        .forecast-btn { padding: 12px 24px; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .forecast-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3); }
+        .forecast-btn:disabled { background: #9ca3af; cursor: not-allowed; transform: none; box-shadow: none; }
+        .manage-btn { padding: 12px 20px; background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; }
+        .manage-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3); }
+        .results-container { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; }
+        .results-table { width: 100%; border-collapse: collapse; }
+        .results-table th { background: #f8fafc; padding: 15px 12px; text-align: left; font-weight: 600; color: #374151; font-size: 0.9rem; }
+        .results-table td { padding: 12px; border-bottom: 1px solid #f3f4f6; font-size: 0.9rem; }
+        .symbol-cell { font-weight: 600; color: #1e40af; }
+        .price-cell { font-family: monospace; }
+        .positive { color: #059669; }
+        .negative { color: #dc2626; }
+        .neutral { color: #6b7280; }
+        .loading { text-align: center; padding: 40px; color: #6b7280; }
+        .error-message { background: #fee2e2; color: #dc2626; padding: 15px; border-radius: 8px; margin: 20px 0; }
+        .forecast-ready { background: #d1fae5; color: #059669; padding: 10px; border-radius: 6px; margin: 10px 0; text-align: center; font-weight: 600; }
+        .back-btn { background: #6b7280; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="forecast-container">
+        <div class="forecast-header">
+            <h1>Watchlist Forecast</h1>
+            <p>Analyze options sentiment across entire watchlists for next 4 expiration dates</p>
+        </div>
+        
+        <div class="forecast-controls">
+            <div class="controls-row">
+                <div class="form-group">
+                    <label for="watchlist">Watchlist</label>
+                    <select id="watchlist" required>
+                        <option value="">Select a watchlist...</option>
+                        {% for watchlist in watchlists %}
+                        <option value="{{ watchlist[0] }}">{{ watchlist[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="startDate">Starting Expiration (YYYY-MM-DD)</label>
+                    <input type="date" id="startDate" value="{{ moment().format('YYYY-MM-DD') }}">
+                </div>
+                <div>
+                    <button id="runForecast" class="forecast-btn" onclick="runForecast()">Run Forecast</button>
+                </div>
+                <div>
+                    <a href="/admin/watchlists" class="manage-btn">Manage Watchlists</a>
+                </div>
+            </div>
+            <div id="forecastStatus"></div>
+        </div>
+
+        <div id="resultsContainer" class="results-container">
+            <div class="loading" id="loadingIndicator">
+                Analyzing options data across watchlist...
+            </div>
+            <div id="forecastResults" style="display: none;"></div>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="/admin" class="back-btn">Back to Admin</a>
+        </div>
+    </div>
+
+    <script>
+        // Set today's date as default
+        document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
+
+        async function runForecast() {
+            const watchlistId = document.getElementById('watchlist').value;
+            const startDate = document.getElementById('startDate').value;
+            
+            if (!watchlistId) {
+                alert('Please select a watchlist');
+                return;
+            }
+            
+            const btn = document.getElementById('runForecast');
+            const status = document.getElementById('forecastStatus');
+            const container = document.getElementById('resultsContainer');
+            const loading = document.getElementById('loadingIndicator');
+            const results = document.getElementById('forecastResults');
+            
+            // Show loading state
+            btn.disabled = true;
+            btn.textContent = 'Running...';
+            status.innerHTML = '<div class="forecast-ready">Fetching options data and calculating predictions...</div>';
+            container.style.display = 'block';
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/forecast', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        watchlist_id: watchlistId,
+                        start_date: startDate
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResults(data.results);
+                    status.innerHTML = '<div class="forecast-ready">✓ Forecast ready for ' + data.results.length + ' symbols</div>';
+                } else {
+                    throw new Error(data.error || 'Forecast failed');
+                }
+            } catch (error) {
+                status.innerHTML = '<div class="error-message">Error: ' + error.message + '</div>';
+                container.style.display = 'none';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Run Forecast';
+                loading.style.display = 'none';
+            }
+        }
+        
+        function displayResults(data) {
+            const results = document.getElementById('forecastResults');
+            
+            if (!data || data.length === 0) {
+                results.innerHTML = '<div class="error-message">No forecast data available</div>';
+                results.style.display = 'block';
+                return;
+            }
+            
+            // Build the results table
+            let html = '<table class="results-table"><thead><tr>';
+            html += '<th>Symbol</th>';
+            html += '<th>Current Price</th>';
+            html += '<th>Expiration</th>';
+            html += '<th>Predicted</th>';
+            html += '<th>% Δ</th>';
+            html += '<th>Expiration+1</th>';
+            html += '<th>Predicted</th>';
+            html += '<th>% Δ</th>';
+            html += '<th>Expiration+2</th>';
+            html += '<th>Predicted</th>';
+            html += '<th>% Δ</th>';
+            html += '<th>Expiration+3</th>';
+            html += '<th>Predicted</th>';
+            html += '<th>% Δ</th>';
+            html += '</tr></thead><tbody>';
+            
+            data.forEach(stock => {
+                html += '<tr>';
+                html += '<td class="symbol-cell">' + stock.symbol + '</td>';
+                html += '<td class="price-cell">$' + (stock.current_price || 0).toFixed(2) + '</td>';
+                
+                // Add 4 expiration columns
+                for (let i = 0; i < 4; i++) {
+                    const pred = stock.predictions[i] || {};
+                    const expDate = pred.expiration ? new Date(pred.expiration).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit'}) : 'N/A';
+                    const predPrice = pred.predicted_price || 0;
+                    const pctChange = pred.percent_change || 0;
+                    
+                    html += '<td>' + expDate + '</td>';
+                    html += '<td class="price-cell">$' + predPrice.toFixed(2) + '</td>';
+                    
+                    const changeClass = pctChange > 0.01 ? 'positive' : pctChange < -0.01 ? 'negative' : 'neutral';
+                    html += '<td class="' + changeClass + '">' + pctChange.toFixed(2) + '%</td>';
+                }
+                
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            results.innerHTML = html;
+            results.style.display = 'block';
+        }
+    </script>
 </body>
 </html>
 '''
