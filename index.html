@@ -44,6 +44,11 @@
             <a href="#">Market Data</a>
           </div>
         </div>
+        <div class="nav-quote">
+          <input type="text" id="navQuoteSymbol" placeholder="Enter symbol..." class="nav-quote-input">
+          <button onclick="getNavQuote()" class="nav-quote-btn">Quote</button>
+          <div id="navQuoteResult" class="nav-quote-result"></div>
+        </div>
         <div class="nav-actions">
           <a href="/login" class="btn-login">Log In</a>
           <a href="/signup" class="btn-signup">Sign Up</a>
@@ -62,28 +67,7 @@
         </div>
       </section>
 
-      <!-- Stock Quote Tool for Public Users -->
-      <section class="quote-tool">
-        <div class="container">
-          <h2>Get Stock Quote</h2>
-          <div class="quote-form">
-            <input type="text" id="quoteSymbol" placeholder="Enter symbol (e.g., AAPL, TSLA)" class="quote-input">
-            <button onclick="getPublicQuote()" class="quote-btn">Get Quote</button>
-          </div>
-          <div id="quoteResult" class="quote-result"></div>
-        </div>
-      </section>
 
-      <section class="hero-section">
-        <div class="hero-container">
-          <div class="hero-content">
-            <h2>Professional Options Trading Tools</h2>
-            <p>
-              Access our suite of live calculators and data-driven insights. <a href="/login" style="color: #1e40af; text-decoration: none;">Login</a> or <a href="/signup" style="color: #1e40af; text-decoration: none;">Sign up</a> to access the Options Sentiment Analyzer and advanced tools.
-            </p>
-          </div>
-        </div>
-      </section>
 
       <section class="tools-section">
         <div class="container">
@@ -233,43 +217,48 @@
         return price.toFixed(2);
       }
 
-      // Public stock quote functionality
-      async function getPublicQuote() {
-        const symbol = document.getElementById('quoteSymbol').value.trim().toUpperCase();
-        const resultDiv = document.getElementById('quoteResult');
+      // Navigation stock quote functionality
+      async function getNavQuote() {
+        const symbol = document.getElementById('navQuoteSymbol').value.trim().toUpperCase();
+        const resultDiv = document.getElementById('navQuoteResult');
         
         if (!symbol) {
-          resultDiv.innerHTML = '<div class="quote-error">Please enter a stock symbol</div>';
+          resultDiv.innerHTML = '<div class="nav-quote-error">Enter symbol</div>';
+          setTimeout(() => resultDiv.innerHTML = '', 3000);
           return;
         }
         
-        resultDiv.innerHTML = '<div class="quote-loading">Loading quote...</div>';
+        resultDiv.innerHTML = '<div class="nav-quote-loading">Loading...</div>';
         
         try {
           const response = await fetch(`/api/quote?symbol=${symbol}`);
           const data = await response.json();
           
           if (data.error) {
-            resultDiv.innerHTML = `<div class="quote-error">${data.error}</div>`;
+            resultDiv.innerHTML = `<div class="nav-quote-error">Not found</div>`;
           } else {
             resultDiv.innerHTML = `
-              <div class="quote-success">
-                <strong>${data.symbol}:</strong> $${data.price}
+              <div class="nav-quote-success">
+                ${data.symbol}: $${data.price}
               </div>
             `;
           }
+          
+          // Clear result after 5 seconds
+          setTimeout(() => resultDiv.innerHTML = '', 5000);
         } catch (error) {
-          resultDiv.innerHTML = '<div class="quote-error">Error fetching quote</div>';
+          resultDiv.innerHTML = '<div class="nav-quote-error">Error</div>';
+          setTimeout(() => resultDiv.innerHTML = '', 3000);
         }
       }
 
-      // Allow Enter key for quote search
+      // Allow Enter key for nav quote search
       document.addEventListener('DOMContentLoaded', function() {
-        const quoteInput = document.getElementById('quoteSymbol');
-        if (quoteInput) {
-          quoteInput.addEventListener('keypress', function(e) {
+        const navQuoteInput = document.getElementById('navQuoteSymbol');
+        if (navQuoteInput) {
+          navQuoteInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-              getPublicQuote();
+              getNavQuote();
             }
           });
         }
