@@ -7,36 +7,49 @@
     <link rel="stylesheet" href="style.css" />
     <style>
       .calculator-container {
-        max-width: 900px;
+        max-width: 1200px;
         margin: 0 auto;
-        padding: 40px 20px;
+        padding: 60px 20px;
       }
       
       .calculator-header {
         text-align: center;
-        margin-bottom: 40px;
+        margin-bottom: 50px;
       }
       
       .calculator-header h1 {
-        font-size: 2.5rem;
+        font-size: 3.5rem;
         color: #1f2937;
-        margin-bottom: 15px;
+        margin-bottom: 20px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
       }
       
       .calculator-header p {
-        font-size: 1.1rem;
+        font-size: 1.3rem;
         color: #6b7280;
-        max-width: 600px;
+        max-width: 700px;
         margin: 0 auto;
+        line-height: 1.6;
       }
       
       .input-form {
-        background: white;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border: 1px solid #e5e7eb;
-        margin-bottom: 40px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(249,250,251,0.8) 100%);
+        backdrop-filter: blur(10px);
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 60px;
+        transition: all 0.3s ease;
+      }
+      
+      .input-form:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 50px rgba(0,0,0,0.15);
       }
       
       .form-grid {
@@ -58,60 +71,78 @@
       }
       
       .form-input {
-        padding: 12px 16px;
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
-        font-size: 1rem;
-        transition: border-color 0.2s, box-shadow 0.2s;
+        padding: 16px 20px;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        background: rgba(255,255,255,0.8);
+        backdrop-filter: blur(5px);
+        transition: all 0.3s ease;
+        font-weight: 500;
       }
       
       .form-input:focus {
         outline: none;
         border-color: #1e40af;
-        box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
-      }
-      
-      .analyze-btn {
-        padding: 12px 30px;
-        background: #1e40af;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s, transform 0.2s;
-      }
-      
-      .analyze-btn:hover {
-        background: #1d4ed8;
+        background: rgba(255,255,255,0.95);
+        box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.1), 0 10px 30px rgba(30, 64, 175, 0.1);
         transform: translateY(-1px);
       }
       
+      .analyze-btn {
+        padding: 16px 40px;
+        background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
+      }
+      
+      .analyze-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(30, 64, 175, 0.4);
+        background: linear-gradient(135deg, #1d4ed8 0%, #8b5cf6 100%);
+      }
+      
       .analyze-btn:disabled {
-        background: #9ca3af;
+        background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
         cursor: not-allowed;
         transform: none;
+        box-shadow: 0 2px 8px rgba(156, 163, 175, 0.2);
       }
       
       .current-price {
-        background: #f3f4f6;
-        padding: 20px;
-        border-radius: 12px;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        padding: 30px;
+        border-radius: 20px;
         text-align: center;
-        margin-bottom: 30px;
+        margin-bottom: 40px;
+        border: 1px solid rgba(255,255,255,0.3);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.08);
       }
       
       .current-price h3 {
-        font-size: 1.1rem;
-        color: #6b7280;
-        margin-bottom: 8px;
+        font-size: 1.2rem;
+        color: #64748b;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
       }
       
       .price-display {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #1e40af;
+        font-size: 2.8rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #1e40af 0%, #059669 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
       }
       
       .results-grid {
@@ -122,32 +153,51 @@
       }
       
       .sentiment-card {
-        background: white;
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border: 1px solid #e5e7eb;
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(10px);
+        padding: 35px;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.3);
         text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .sentiment-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: var(--gradient);
+      }
+      
+      .sentiment-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
       }
       
       .sentiment-card.bulls {
-        border-top: 4px solid #059669;
+        --gradient: linear-gradient(135deg, #059669 0%, #10b981 100%);
       }
       
       .sentiment-card.consensus {
-        border-top: 4px solid #1e40af;
+        --gradient: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
       }
       
       .sentiment-card.bears {
-        border-top: 4px solid #dc2626;
+        --gradient: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
       }
       
       .sentiment-card h3 {
         font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 15px;
+        font-weight: 700;
+        margin-bottom: 20px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
       }
       
       .sentiment-card.bulls h3 {
@@ -163,24 +213,29 @@
       }
       
       .sentiment-value {
-        font-size: 2.2rem;
-        font-weight: 700;
+        font-size: 2.5rem;
+        font-weight: 800;
         color: #1f2937;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
       }
       
       .pc-ratios {
-        background: white;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border: 1px solid #e5e7eb;
+        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.9) 100%);
+        backdrop-filter: blur(15px);
+        padding: 40px;
+        border-radius: 25px;
+        box-shadow: 0 15px 50px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.3);
       }
       
       .pc-ratios h3 {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
+        font-weight: 800;
         color: #1f2937;
-        margin-bottom: 25px;
+        margin-bottom: 35px;
         text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 1px;
       }
       
       .ratio-grid {
@@ -191,21 +246,34 @@
       
       .ratio-item {
         text-align: center;
-        padding: 20px;
-        background: #f9fafb;
-        border-radius: 8px;
+        padding: 25px;
+        background: rgba(255,255,255,0.8);
+        backdrop-filter: blur(5px);
+        border-radius: 15px;
+        border: 1px solid rgba(255,255,255,0.4);
+        transition: all 0.3s ease;
+      }
+      
+      .ratio-item:hover {
+        transform: translateY(-3px);
+        background: rgba(255,255,255,0.95);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
       }
       
       .ratio-label {
         font-size: 0.9rem;
-        color: #6b7280;
-        margin-bottom: 8px;
+        color: #64748b;
+        margin-bottom: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
       
       .ratio-value {
-        font-size: 1.4rem;
-        font-weight: 700;
+        font-size: 1.6rem;
+        font-weight: 800;
         color: #1f2937;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
       }
       
       .loading {
