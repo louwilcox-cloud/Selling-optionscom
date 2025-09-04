@@ -1,0 +1,1 @@
+User asked for a website template inspired by TipRanks.com with focus on layout and content structure. This version includes navigation, stock trends, analyst ratings, and a subscription section. It uses Pico CSS and clean semantic HTML.

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Investor Insights | Market Overview</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" />
+  </head>
+  <body>
+
+    <nav class="container-fluid">
+      <ul>
+        <li><strong>Investor Insights</strong></li>
+      </ul>
+      <ul>
+        <li><a href="#trending">Trending Stocks</a></li>
+        <li><a href="#analyst">Analyst Ratings</a></li>
+        <li><a href="#" role="button">Login</a></li>
+      </ul>
+    </nav>
+
+    <main class="container">
+      <div class="grid">
+        <section>
+          <hgroup>
+            <h2>Stay Ahead of the Market</h2>
+            <h3>Real-time insights, ratings, and financial analysis</h3>
+          </hgroup>
+          <p>
+            Get the latest trending stocks, expert analyst opinions, and financial
+            news—all in one place. Make smarter investment decisions with
+            confidence.
+          </p>
+          <figure>
+            <img src="https://via.placeholder.com/800x300" alt="Market Overview" />
+            <figcaption><a href="#" target="_blank">View full market analysis</a></figcaption>
+          </figure>
+
+          <h3 id="trending">Trending Stocks</h3>
+          <p>
+            Explore the most watched and active stocks on the market today.
+            Metrics updated in real-time.
+          </p>
+
+          <ul>
+            <li><strong>AAPL</strong> - Apple Inc. <em>$187.12</em></li>
+            <li><strong>TSLA</strong> - Tesla Inc. <em>$254.36</em></li>
+            <li><strong>NVDA</strong> - Nvidia Corp. <em>$496.20</em></li>
+          </ul>
+
+          <h3 id="analyst">Analyst Ratings</h3>
+          <p>
+            See how top Wall Street analysts rate the stocks you're watching.
+            Updated daily with new insights and projections.
+          </p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Stock</th>
+                <th>Rating</th>
+                <th>Target Price</th>
+                <th>Analyst</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>AMZN</td>
+                <td><strong>Buy</strong></td>
+                <td>$165.00</td>
+                <td>J. Morgan (Goldman Sachs)</td>
+              </tr>
+              <tr>
+                <td>MSFT</td>
+                <td><strong>Hold</strong></td>
+                <td>$335.50</td>
+                <td>A. Chen (Morgan Stanley)</td>
+              </tr>
+              <tr>
+                <td>GOOGL</td>
+                <td><strong>Buy</strong></td>
+                <td>$145.75</td>
+                <td>S. Patel (Barclays)</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+    </main>
+
+    <section aria-label="Subscribe example">
+      <div class="container">
+        <article>
+          <hgroup>
+            <h2>Get Weekly Investment Reports</h2>
+            <h3>Subscribe for actionable insights straight to your inbox</h3>
+          </hgroup>
+          <form class="grid">
+            <input
+              type="text"
+              id="firstname"
+              name="firstname"
+              placeholder="First Name"
+              aria-label="First Name"
+              required
+            />
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="Email Address"
+              aria-label="Email Address"
+              required
+            />
+            <button type="submit" onclick="event.preventDefault()">
+              Subscribe
+            </button>
+          </form>
+        </article>
+      </div>
+    </section>
+
+    <footer class="container">
+      <small>
+        <a href="#">Privacy Policy</a> •
+        <a href="#">Terms & Conditions</a>
+      </small>
+    </footer>
+
+  </body>
+</html>
