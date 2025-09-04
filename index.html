@@ -3,128 +3,228 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Selling-options.com | Market Overview</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" />
+    <title>Selling-options.com | Options Trading Tools & Insights</title>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <header class="header">
+      <nav class="nav-container">
+        <div class="logo">
+          <strong>Selling-options.com</strong>
+        </div>
+        <div class="nav-menu">
+          <div class="nav-item dropdown">
+            <a href="#">Tools</a>
+            <div class="dropdown-content">
+              <a href="#">Options Calculator</a>
+              <a href="#">Risk Assessment</a>
+              <a href="#">Profit Analyzer</a>
+              <a href="#">Strategy Builder</a>
+            </div>
+          </div>
+          <div class="nav-item dropdown">
+            <a href="#">Education</a>
+            <div class="dropdown-content">
+              <a href="#">Options Basics</a>
+              <a href="#">Advanced Strategies</a>
+              <a href="#">Risk Management</a>
+              <a href="#">Video Tutorials</a>
+            </div>
+          </div>
+          <div class="nav-item dropdown">
+            <a href="#">Screeners</a>
+            <div class="dropdown-content">
+              <a href="#">High IV Options</a>
+              <a href="#">Earnings Plays</a>
+              <a href="#">Weekly Options</a>
+              <a href="#">Dividend Stocks</a>
+            </div>
+          </div>
+          <div class="nav-item">
+            <a href="#">Market Data</a>
+          </div>
+          <div class="nav-item">
+            <a href="#">Premium</a>
+          </div>
+        </div>
+        <div class="nav-actions">
+          <button class="btn-login">Log In</button>
+          <button class="btn-signup">Sign Up</button>
+        </div>
+      </nav>
+    </header>
 
-    <nav class="container-fluid">
-      <ul>
-        <li><strong>Selling-options.com</strong></li>
-      </ul>
-      <ul>
-        <li><a href="#trending">Trending Stocks</a></li>
-        <li><a href="#analyst">Analyst Ratings</a></li>
-        <li><a href="#" role="button">Login</a></li>
-      </ul>
-    </nav>
+    <main class="main-content">
+      <section class="hero-section">
+        <div class="hero-container">
+          <div class="hero-content">
+            <h1>Make Smarter Options Trading Decisions</h1>
+            <h2>Data-Driven Tools for Consistent Option Selling</h2>
+            <p>
+              Stop guessing. Use our suite of live calculators and data-driven insights to identify high-probability trades, manage risk, and build a consistent income stream from selling options.
+            </p>
+            <div class="hero-actions">
+              <button class="btn-primary">Get Started Free</button>
+              <button class="btn-secondary">View Tools</button>
+            </div>
+          </div>
+          <div class="hero-image">
+            <div class="dashboard-preview">
+              <div class="mock-chart">📊 Live Options Dashboard</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-    <main class="container">
-      <div class="grid">
-        <section>
-          <hgroup>
-            <h2>Stay Ahead of the Market</h2>
-            <h3>Real-time insights, ratings, and financial analysis</h3>
-          </hgroup>
-          <p>
-            Get the latest trending stocks, expert analyst opinions, and financial
-            news—all in one place. Make smarter investment decisions with
-            confidence.
-          </p>
-          <figure>
-            <img src="https://via.placeholder.com/800x300" alt="Market Overview" />
-            <figcaption><a href="#" target="_blank">View full market analysis</a></figcaption>
-          </figure>
+      <section class="tools-section">
+        <div class="container">
+          <h2>Professional Options Trading Tools</h2>
+          <div class="tools-grid">
 
-          <h3 id="trending">Trending Stocks</h3>
-          <p>
-            Explore the most watched and active stocks on the market today.
-            Metrics updated in real-time.
-          </p>
+            <div class="tool-card">
+              <div class="tool-icon">💰</div>
+              <h3>Options Calculator</h3>
+              <p>Calculate profit/loss, breakeven points, and Greeks for any options strategy</p>
+              <a href="#" class="tool-link">Try Calculator →</a>
+            </div>
+            <div class="tool-card">
+              <div class="tool-icon">🛡️</div>
+              <h3>Risk Assessment</h3>
+              <p>Analyze risk metrics and position sizing for safer options trading</p>
+              <a href="#" class="tool-link">Assess Risk →</a>
+            </div>
+            <div class="tool-card">
+              <div class="tool-icon">📈</div>
+              <h3>Strategy Builder</h3>
+              <p>Build and backtest custom options strategies with real market data</p>
+              <a href="#" class="tool-link">Build Strategy →</a>
+            </div>
+            <div class="tool-card">
+              <div class="tool-icon">🎯</div>
+              <h3>High IV Screener</h3>
+              <p>Find stocks with high implied volatility perfect for option selling</p>
+              <a href="#" class="tool-link">Screen Stocks →</a>
+            </div>
+          </div>
+        </div>
+      </section>
 
-          <ul>
-            <li><strong>AAPL</strong> - Apple Inc. <em>$187.12</em></li>
-            <li><strong>TSLA</strong> - Tesla Inc. <em>$254.36</em></li>
-            <li><strong>NVDA</strong> - Nvidia Corp. <em>$496.20</em></li>
-          </ul>
-
-          <h3 id="analyst">Analyst Ratings</h3>
-          <p>
-            See how top Wall Street analysts rate the stocks you're watching.
-            Updated daily with new insights and projections.
-          </p>
-
-          <table>
-            <thead>
-              <tr>
-                <th>Stock</th>
-                <th>Rating</th>
-                <th>Target Price</th>
-                <th>Analyst</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>AMZN</td>
-                <td><strong>Buy</strong></td>
-                <td>$165.00</td>
-                <td>J. Morgan (Goldman Sachs)</td>
-              </tr>
-              <tr>
-                <td>MSFT</td>
-                <td><strong>Hold</strong></td>
-                <td>$335.50</td>
-                <td>A. Chen (Morgan Stanley)</td>
-              </tr>
-              <tr>
-                <td>GOOGL</td>
-                <td><strong>Buy</strong></td>
-                <td>$145.75</td>
-                <td>S. Patel (Barclays)</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-      </div>
+      <section id="market-data" class="market-section">
+        <div class="container">
+          <h2>Today's High IV Options Opportunities</h2>
+          <p>Top stocks with high implied volatility perfect for option selling strategies</p>
+          
+          <div class="market-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Stock</th>
+                  <th>IV Rank</th>
+                  <th>30d IV</th>
+                  <th>Suggested Strategy</th>
+                  <th>Potential Premium</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>NVDA</strong> - NVIDIA Corp</td>
+                  <td><span class="iv-high">92%</span></td>
+                  <td>45.2%</td>
+                  <td>Put Spread</td>
+                  <td class="premium">$2.15</td>
+                </tr>
+                <tr>
+                  <td><strong>TSLA</strong> - Tesla Inc</td>
+                  <td><span class="iv-high">87%</span></td>
+                  <td>52.8%</td>
+                  <td>Iron Condor</td>
+                  <td class="premium">$3.45</td>
+                </tr>
+                <tr>
+                  <td><strong>AAPL</strong> - Apple Inc</td>
+                  <td><span class="iv-medium">65%</span></td>
+                  <td>28.9%</td>
+                  <td>Cash Secured Put</td>
+                  <td class="premium">$1.80</td>
+                </tr>
+                <tr>
+                  <td><strong>AMZN</strong> - Amazon</td>
+                  <td><span class="iv-medium">71%</span></td>
+                  <td>33.4%</td>
+                  <td>Call Spread</td>
+                  <td class="premium">$2.95</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
     </main>
 
-    <section aria-label="Subscribe example">
+    <section class="cta-section">
       <div class="container">
-        <article>
-          <hgroup>
-            <h2>Get Weekly Investment Reports</h2>
-            <h3>Subscribe for actionable insights straight to your inbox</h3>
-          </hgroup>
-          <form class="grid">
-            <input
-              type="text"
-              id="firstname"
-              name="firstname"
-              placeholder="First Name"
-              aria-label="First Name"
-              required
-            />
-            <input
-              type="email"
-              id="email"
-              name="email"
-              placeholder="Email Address"
-              aria-label="Email Address"
-              required
-            />
-            <button type="submit" onclick="event.preventDefault()">
-              Subscribe
-            </button>
-          </form>
-        </article>
+        <div class="cta-content">
+          <h2>Start Trading Options Like a Pro</h2>
+          <p>Join thousands of traders using our tools to generate consistent income from options</p>
+          <div class="cta-form">
+            <form class="signup-form">
+              <input
+                type="email"
+                placeholder="Enter your email address"
+                required
+              />
+              <button type="submit" class="btn-primary">Get Free Access</button>
+            </form>
+            <p class="form-note">Start with our free tools • No credit card required</p>
+          </div>
+        </div>
       </div>
     </section>
 
-    <footer class="container">
-      <small>
-        <a href="#">Privacy Policy</a> •
-        <a href="#">Terms & Conditions</a>
-      </small>
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h4>Tools</h4>
+            <ul>
+              <li><a href="#">Options Calculator</a></li>
+              <li><a href="#">Risk Assessment</a></li>
+              <li><a href="#">Strategy Builder</a></li>
+              <li><a href="#">IV Screener</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h4>Education</h4>
+            <ul>
+              <li><a href="#">Options Basics</a></li>
+              <li><a href="#">Advanced Strategies</a></li>
+              <li><a href="#">Risk Management</a></li>
+              <li><a href="#">Video Library</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h4>Company</h4>
+            <ul>
+              <li><a href="#">About Us</a></li>
+              <li><a href="#">Contact</a></li>
+              <li><a href="#">Premium Plans</a></li>
+              <li><a href="#">Affiliate Program</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h4>Legal</h4>
+            <ul>
+              <li><a href="#">Privacy Policy</a></li>
+              <li><a href="#">Terms of Service</a></li>
+              <li><a href="#">Disclaimer</a></li>
+              <li><a href="#">Risk Warning</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 Selling-options.com. All rights reserved.</p>
+        </div>
+      </div>
     </footer>
 
   </body>
