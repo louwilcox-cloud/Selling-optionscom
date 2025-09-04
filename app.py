@@ -205,6 +205,51 @@ def api_get_options_data():
     except Exception as e:
         return jsonify({"error": f"Failed to fetch options chain: {e}"}), 500
 
+# Market data API
+@app.route("/api/market-data")
+def api_market_data():
+    """Get major market indices and assets"""
+    try:
+        symbols = {
+            'S&P 500': '^GSPC',
+            'Dow Jones': '^DJI', 
+            'NASDAQ': '^IXIC',
+            'Bitcoin': 'BTC-USD',
+            'Ethereum': 'ETH-USD',
+            'Gold': 'GC=F',
+            'US Dollar Index': 'DX=F'
+        }
+        
+        market_data = {}
+        for name, symbol in symbols.items():
+            try:
+                ticker = yf.Ticker(symbol)
+                hist = ticker.history(period="2d")  # Get 2 days to calculate change
+                if not hist.empty:
+                    current = float(hist['Close'].iloc[-1])
+                    previous = float(hist['Close'].iloc[-2]) if len(hist) > 1 else current
+                    change = current - previous
+                    change_pct = (change / previous * 100) if previous != 0 else 0
+                    
+                    market_data[name] = {
+                        'symbol': symbol,
+                        'price': round(current, 2),
+                        'change': round(change, 2),
+                        'change_pct': round(change_pct, 2)
+                    }
+            except Exception as e:
+                print(f"Error fetching {name}: {e}")
+                market_data[name] = {
+                    'symbol': symbol,
+                    'price': 0,
+                    'change': 0,
+                    'change_pct': 0
+                }
+        
+        return jsonify(market_data)
+    except Exception as e:
+        return jsonify({"error": f"Market data fetch failed: {e}"}), 500
+
 @app.route("/api/results_both")
 def api_results_both():
     symbol = (request.args.get("symbol") or "").strip().upper()
@@ -388,7 +433,8 @@ def serve_calculator():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('SELECT COUNT(*) FROM admin_users WHERE user_id = %s', (session['user_id'],))
-    is_admin = cur.fetchone()[0] > 0
+    result = cur.fetchone()
+    is_admin = result[0] > 0 if result else False
     cur.close()
     conn.close()
     

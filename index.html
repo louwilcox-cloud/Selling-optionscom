@@ -43,9 +43,6 @@
           <div class="nav-item">
             <a href="#">Market Data</a>
           </div>
-          <div class="nav-item">
-            <a href="#">Premium</a>
-          </div>
         </div>
         <div class="nav-actions">
           <a href="/login" class="btn-login">Log In</a>
@@ -55,13 +52,34 @@
     </header>
 
     <main class="main-content">
+      <!-- Market Overview Section -->
+      <section class="market-overview">
+        <div class="container">
+          <h1>Market Overview</h1>
+          <div class="market-grid" id="marketGrid">
+            <div class="loading-message">Loading market data...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stock Quote Tool for Public Users -->
+      <section class="quote-tool">
+        <div class="container">
+          <h2>Get Stock Quote</h2>
+          <div class="quote-form">
+            <input type="text" id="quoteSymbol" placeholder="Enter symbol (e.g., AAPL, TSLA)" class="quote-input">
+            <button onclick="getPublicQuote()" class="quote-btn">Get Quote</button>
+          </div>
+          <div id="quoteResult" class="quote-result"></div>
+        </div>
+      </section>
+
       <section class="hero-section">
         <div class="hero-container">
           <div class="hero-content">
-            <h1>Make Smarter Options Trading Decisions</h1>
-            <h2>Data-Driven Tools for Consistent Option Selling</h2>
+            <h2>Professional Options Trading Tools</h2>
             <p>
-              Stop guessing. Use our suite of live calculators and data-driven insights to identify high-probability trades, manage risk, and build a consistent income stream from selling options.
+              Access our suite of live calculators and data-driven insights. <a href="/login" style="color: #1e40af; text-decoration: none;">Login</a> or <a href="/signup" style="color: #1e40af; text-decoration: none;">Sign up</a> to access the Options Sentiment Analyzer and advanced tools.
             </p>
           </div>
         </div>
@@ -69,7 +87,6 @@
 
       <section class="tools-section">
         <div class="container">
-          <h2>Professional Options Trading Tools</h2>
           <div class="tools-grid">
 
             <div class="tool-card">
@@ -168,5 +185,95 @@
       </div>
     </footer>
 
+    <script>
+      // Load market data on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        loadMarketData();
+        setInterval(loadMarketData, 60000); // Refresh every minute
+      });
+
+      async function loadMarketData() {
+        try {
+          const response = await fetch('/api/market-data');
+          const data = await response.json();
+          
+          const marketGrid = document.getElementById('marketGrid');
+          marketGrid.innerHTML = '';
+          
+          for (const [name, info] of Object.entries(data)) {
+            const card = document.createElement('div');
+            card.className = 'market-card';
+            
+            const changeClass = info.change >= 0 ? 'positive' : 'negative';
+            const changeSymbol = info.change >= 0 ? '+' : '';
+            
+            card.innerHTML = `
+              <div class="market-name">${name}</div>
+              <div class="market-price">${formatPrice(info.price, name)}</div>
+              <div class="market-change ${changeClass}">
+                ${changeSymbol}${info.change} (${changeSymbol}${info.change_pct}%)
+              </div>
+            `;
+            
+            marketGrid.appendChild(card);
+          }
+        } catch (error) {
+          console.error('Error loading market data:', error);
+          document.getElementById('marketGrid').innerHTML = '<div class="error-message">Unable to load market data</div>';
+        }
+      }
+
+      function formatPrice(price, name) {
+        if (name.includes('Bitcoin') || name.includes('Ethereum')) {
+          return '$' + price.toLocaleString();
+        }
+        if (name.includes('Dollar')) {
+          return price.toFixed(3);
+        }
+        return price.toFixed(2);
+      }
+
+      // Public stock quote functionality
+      async function getPublicQuote() {
+        const symbol = document.getElementById('quoteSymbol').value.trim().toUpperCase();
+        const resultDiv = document.getElementById('quoteResult');
+        
+        if (!symbol) {
+          resultDiv.innerHTML = '<div class="quote-error">Please enter a stock symbol</div>';
+          return;
+        }
+        
+        resultDiv.innerHTML = '<div class="quote-loading">Loading quote...</div>';
+        
+        try {
+          const response = await fetch(`/api/quote?symbol=${symbol}`);
+          const data = await response.json();
+          
+          if (data.error) {
+            resultDiv.innerHTML = `<div class="quote-error">${data.error}</div>`;
+          } else {
+            resultDiv.innerHTML = `
+              <div class="quote-success">
+                <strong>${data.symbol}:</strong> $${data.price}
+              </div>
+            `;
+          }
+        } catch (error) {
+          resultDiv.innerHTML = '<div class="quote-error">Error fetching quote</div>';
+        }
+      }
+
+      // Allow Enter key for quote search
+      document.addEventListener('DOMContentLoaded', function() {
+        const quoteInput = document.getElementById('quoteSymbol');
+        if (quoteInput) {
+          quoteInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+              getPublicQuote();
+            }
+          });
+        }
+      });
+    </script>
   </body>
 </html>
