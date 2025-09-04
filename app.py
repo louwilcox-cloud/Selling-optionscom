@@ -211,13 +211,17 @@ def api_market_data():
     """Get major market indices and assets"""
     try:
         # Ordered by importance as requested
+        # Row 1: S&P500, DOW, NASDAQ, Russell, VIX
+        # Row 2: DXY, Gold, TLT, Bitcoin, ETH
         symbols_ordered = [
             ('S&P 500', '^GSPC'),
             ('Dow Jones', '^DJI'),
+            ('NASDAQ', '^IXIC'),
             ('Russell 2000', '^RUT'),
-            ('TLT', 'TLT'),
             ('VIX', '^VIX'),
+            ('US Dollar Index', 'DX=F'),
             ('Gold', 'GC=F'),
+            ('TLT', 'TLT'),
             ('Bitcoin', 'BTC-USD'),
             ('Ethereum', 'ETH-USD'),
         ]
