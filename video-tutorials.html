@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Video Tutorials | Selling-options.com</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="favicon.png" type="image/png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <meta name="theme-color" content="#1e40af">
+    <style>
+      .tutorials-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 60px 20px;
+      }
+      
+      .tutorials-header {
+        text-align: center;
+        margin-bottom: 60px;
+      }
+      
+      .tutorials-header h1 {
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      
+      .tutorials-header p {
+        font-size: 1.3rem;
+        color: #6b7280;
+        max-width: 700px;
+        margin: 0 auto;
+        line-height: 1.6;
+      }
+      
+      .videos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 40px;
+        margin-bottom: 60px;
+      }
+      
+      .video-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(249,250,251,0.8) 100%);
+        backdrop-filter: blur(10px);
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        transition: all 0.3s ease;
+      }
+      
+      .video-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      }
+      
+      .video-wrapper {
+        position: relative;
+        width: 100%;
+        height: 0;
+        padding-bottom: 56.25%; /* 16:9 aspect ratio */
+        margin-bottom: 20px;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      }
+      
+      .video-wrapper iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+        border-radius: 15px;
+      }
+      
+      .video-info h3 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 10px;
+      }
+      
+      .video-info p {
+        font-size: 1rem;
+        color: #6b7280;
+        line-height: 1.5;
+      }
+      
+      .back-section {
+        text-align: center;
+        padding: 40px 0;
+        border-top: 1px solid rgba(229, 231, 235, 0.5);
+      }
+      
+      .back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 32px;
+        background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+        color: white;
+        text-decoration: none;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
+      }
+      
+      .back-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(30, 64, 175, 0.4);
+        background: linear-gradient(135deg, #1d4ed8 0%, #8b5cf6 100%);
+      }
+      
+      .learning-path {
+        background: linear-gradient(135deg, rgba(30, 64, 175, 0.05) 0%, rgba(124, 58, 237, 0.05) 100%);
+        padding: 40px;
+        border-radius: 20px;
+        margin-bottom: 40px;
+        border: 1px solid rgba(30, 64, 175, 0.1);
+      }
+      
+      .learning-path h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      
+      .learning-steps {
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+      
+      .step {
+        text-align: center;
+        flex: 1;
+        min-width: 200px;
+      }
+      
+      .step-number {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin: 0 auto 15px;
+      }
+      
+      .step h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 8px;
+      }
+      
+      .step p {
+        font-size: 0.9rem;
+        color: #6b7280;
+        line-height: 1.4;
+      }
+      
+      @media (max-width: 768px) {
+        .videos-grid {
+          grid-template-columns: 1fr;
+        }
+        
+        .tutorials-header h1 {
+          font-size: 2.5rem;
+        }
+        
+        .learning-steps {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <nav class="nav-container">
+        <div class="logo">
+          <strong>Selling-options.com</strong>
+        </div>
+        <div class="nav-menu">
+          <div class="nav-item dropdown">
+            <a href="#">Tools</a>
+            <div class="dropdown-content">
+              <a href="/calculator.html">Options Calculator</a>
+              <a href="#">Risk Assessment</a>
+              <a href="#">Profit Analyzer</a>
+              <a href="#">Strategy Builder</a>
+            </div>
+          </div>
+          <div class="nav-item dropdown">
+            <a href="#">Education</a>
+            <div class="dropdown-content">
+              <a href="#">Options Basics</a>
+              <a href="#">Advanced Strategies</a>
+              <a href="#">Risk Management</a>
+              <a href="/video-tutorials.html">Video Tutorials</a>
+            </div>
+          </div>
+          <div class="nav-item dropdown">
+            <a href="#">Screeners</a>
+            <div class="dropdown-content">
+              <a href="#">High IV Options</a>
+              <a href="#">Earnings Plays</a>
+              <a href="#">Weekly Options</a>
+              <a href="#">Dividend Stocks</a>
+            </div>
+          </div>
+          <div class="nav-item">
+            <a href="#">Market Data</a>
+          </div>
+          <div class="nav-item">
+            <a href="#">Premium</a>
+          </div>
+        </div>
+        <div class="nav-actions">
+          <button class="btn-login">Log In</button>
+          <button class="btn-signup">Sign Up</button>
+        </div>
+      </nav>
+    </header>
+
+    <main class="main-content">
+      <div class="tutorials-container">
+        <div class="tutorials-header">
+          <h1>Video Tutorials</h1>
+          <p>Master options income strategies with our comprehensive video library. Learn from basics to advanced techniques for consistent weekly and monthly income.</p>
+        </div>
+
+        <div class="learning-path">
+          <h2>Your Learning Path</h2>
+          <div class="learning-steps">
+            <div class="step">
+              <div class="step-number">1</div>
+              <h3>Foundation</h3>
+              <p>Start with basic options concepts and terminology</p>
+            </div>
+            <div class="step">
+              <div class="step-number">2</div>
+              <h3>Strategy</h3>
+              <p>Learn the Wheel Strategy for consistent income</p>
+            </div>
+            <div class="step">
+              <div class="step-number">3</div>
+              <h3>Weekly Income</h3>
+              <p>Master weekly options for passive income</p>
+            </div>
+            <div class="step">
+              <div class="step-number">4</div>
+              <h3>Advanced</h3>
+              <p>Implement advanced techniques and risk management</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="videos-grid">
+          <div class="video-card">
+            <div class="video-wrapper">
+              <iframe src="https://www.youtube.com/embed/LjQOcYTCybY" title="Options Trading Fundamentals" allowfullscreen></iframe>
+            </div>
+            <div class="video-info">
+              <h3>Options Trading Fundamentals</h3>
+              <p>Learn the essential concepts of options trading including calls, puts, and basic strategies. Perfect for beginners looking to understand the foundation of options income strategies.</p>
+            </div>
+          </div>
+
+          <div class="video-card">
+            <div class="video-wrapper">
+              <iframe src="https://www.youtube.com/embed/qKdadAp2ed0" title="The Wheel Strategy Explained" allowfullscreen></iframe>
+            </div>
+            <div class="video-info">
+              <h3>The Wheel Strategy Explained</h3>
+              <p>Discover the powerful Wheel Strategy - a systematic approach to generating consistent income from options. Learn how to implement this strategy step-by-step.</p>
+            </div>
+          </div>
+
+          <div class="video-card">
+            <div class="video-wrapper">
+              <iframe src="https://www.youtube.com/embed/1HXDto7qXaU" title="Weekly Passive Income Strategy" allowfullscreen></iframe>
+            </div>
+            <div class="video-info">
+              <h3>Weekly Passive Income Strategy</h3>
+              <p>Master the art of weekly options trading for consistent passive income. Learn timing, stock selection, and risk management for weekly strategies.</p>
+            </div>
+          </div>
+
+          <div class="video-card">
+            <div class="video-wrapper">
+              <iframe src="https://www.youtube.com/embed/xiiWMo2sfqc" title="Advanced Wheel Strategy Techniques" allowfullscreen></iframe>
+            </div>
+            <div class="video-info">
+              <h3>Advanced Wheel Strategy Techniques</h3>
+              <p>Take your Wheel Strategy to the next level with advanced techniques, position sizing, and portfolio management for maximum income generation.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="back-section">
+          <a href="/" class="back-button">
+            <span>←</span>
+            Back to Home
+          </a>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
