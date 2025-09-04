@@ -617,7 +617,7 @@ ADMIN_TEMPLATE = '''
         </div>
 
         <div style="text-align: center; margin-top: 30px;">
-            <a href="/calculator.html" class="action-btn btn-admin">Back to Calculator</a>
+            <a href="/" class="action-btn btn-admin">Back</a>
             <a href="/logout" class="action-btn btn-toggle">Logout</a>
         </div>
     </div>
