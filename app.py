@@ -573,14 +573,17 @@ def run_forecast():
                 expirations = _fetch_expirations(symbol)
                 start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
                 
-                # Filter expirations to get next 4 after start_date
+                # Filter expirations to get next 4 after (or equal to) start_date
                 valid_exps = []
                 for exp_str in expirations:
                     exp_date = datetime.strptime(exp_str, '%Y-%m-%d').date()
                     if exp_date >= start_dt:
                         valid_exps.append(exp_str)
                 
-                # Take first 4 valid expirations
+                # Sort by date to ensure proper order (nearest first)
+                valid_exps.sort()
+                
+                # Take first 4 valid expirations (handles both daily and monthly options)
                 next_four_exps = valid_exps[:4]
                 
                 # Calculate predictions for each expiration
@@ -590,13 +593,45 @@ def run_forecast():
                         # Get options data for this expiration
                         calls, puts = _fetch_chain(symbol, exp_date)
                         
-                        # Use the same math as single calculator
+                        # Use exact same Bulls Want / Bears Want math as single calculator
                         result = _compute_results(symbol, exp_date, calls, puts)
+                        
+                        # Calculate Bulls Want (calls): Strike × OI weighted average
+                        call_rows = [r for r in result['rows'] if r['Type'] == 'Call']
+                        total_bulls_will_pay = 0
+                        bulls_numerator = 0
+                        
+                        for call in call_rows:
+                            strike = call['Strike'] or 0
+                            oi = call['OI'] or 0
+                            will_pay = strike * oi
+                            total_bulls_will_pay += will_pay
+                            bulls_numerator += strike * will_pay
+                        
+                        bulls_want = bulls_numerator / total_bulls_will_pay if total_bulls_will_pay > 0 else current_price
+                        
+                        # Calculate Bears Want (puts): Strike × OI weighted average  
+                        put_rows = [r for r in result['rows'] if r['Type'] == 'Put']
+                        total_bears_will_pay = 0
+                        bears_numerator = 0
+                        
+                        for put in put_rows:
+                            strike = put['Strike'] or 0
+                            oi = put['OI'] or 0
+                            will_pay = strike * oi
+                            total_bears_will_pay += will_pay
+                            bears_numerator += strike * will_pay
+                        
+                        bears_want = bears_numerator / total_bears_will_pay if total_bears_will_pay > 0 else current_price
+                        
+                        # Average Consensus = (Bulls Want + Bears Want) / 2
+                        average_consensus = (bulls_want + bears_want) / 2
+                        predicted_price = average_consensus
                         
                         predictions.append({
                             'expiration': exp_date,
-                            'predicted_price': result.get('weighted_breakeven', current_price),
-                            'percent_change': ((result.get('weighted_breakeven', current_price) - current_price) / current_price * 100) if current_price > 0 else 0
+                            'predicted_price': predicted_price,
+                            'percent_change': ((predicted_price - current_price) / current_price * 100) if current_price > 0 else 0
                         })
                     except Exception as e:
                         # If we can't get options data, use current price as prediction
@@ -1118,9 +1153,6 @@ FORECAST_TEMPLATE = '''
                 <div>
                     <button id="runForecast" class="forecast-btn" onclick="runForecast()">Run Forecast</button>
                 </div>
-                <div>
-                    <a href="/admin/watchlists" class="manage-btn">Manage Watchlists</a>
-                </div>
             </div>
             <div id="forecastStatus"></div>
         </div>
@@ -1133,7 +1165,7 @@ FORECAST_TEMPLATE = '''
         </div>
 
         <div style="text-align: center;">
-            <a href="/admin" class="back-btn">Back to Admin</a>
+            <a href="/calculator.html" class="back-btn">Back to Calculator</a>
         </div>
     </div>
 
