@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Options Sentiment Analyzer | Selling-options.com</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .calculator-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
+      
+      .calculator-header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+      
+      .calculator-header h1 {
+        font-size: 2.5rem;
+        color: #1f2937;
+        margin-bottom: 15px;
+      }
+      
+      .calculator-header p {
+        font-size: 1.1rem;
+        color: #6b7280;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+      
+      .input-form {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: 1px solid #e5e7eb;
+        margin-bottom: 40px;
+      }
+      
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 20px;
+        align-items: end;
+      }
+      
+      .form-group {
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .form-group label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+      }
+      
+      .form-input {
+        padding: 12px 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      
+      .form-input:focus {
+        outline: none;
+        border-color: #1e40af;
+        box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+      }
+      
+      .analyze-btn {
+        padding: 12px 30px;
+        background: #1e40af;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.2s;
+      }
+      
+      .analyze-btn:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+      }
+      
+      .analyze-btn:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+        transform: none;
+      }
+      
+      .current-price {
+        background: #f3f4f6;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      
+      .current-price h3 {
+        font-size: 1.1rem;
+        color: #6b7280;
+        margin-bottom: 8px;
+      }
+      
+      .price-display {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1e40af;
+      }
+      
+      .results-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        margin-bottom: 40px;
+      }
+      
+      .sentiment-card {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: 1px solid #e5e7eb;
+        text-align: center;
+      }
+      
+      .sentiment-card.bulls {
+        border-top: 4px solid #059669;
+      }
+      
+      .sentiment-card.consensus {
+        border-top: 4px solid #1e40af;
+      }
+      
+      .sentiment-card.bears {
+        border-top: 4px solid #dc2626;
+      }
+      
+      .sentiment-card h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .sentiment-card.bulls h3 {
+        color: #059669;
+      }
+      
+      .sentiment-card.consensus h3 {
+        color: #1e40af;
+      }
+      
+      .sentiment-card.bears h3 {
+        color: #dc2626;
+      }
+      
+      .sentiment-value {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #1f2937;
+      }
+      
+      .pc-ratios {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: 1px solid #e5e7eb;
+      }
+      
+      .pc-ratios h3 {
+        font-size: 1.5rem;
+        color: #1f2937;
+        margin-bottom: 25px;
+        text-align: center;
+      }
+      
+      .ratio-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+      }
+      
+      .ratio-item {
+        text-align: center;
+        padding: 20px;
+        background: #f9fafb;
+        border-radius: 8px;
+      }
+      
+      .ratio-label {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin-bottom: 8px;
+      }
+      
+      .ratio-value {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1f2937;
+      }
+      
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #6b7280;
+      }
+      
+      .error {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+      
+      .hidden {
+        display: none;
+      }
+      
+      @media (max-width: 768px) {
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+        
+        .calculator-header h1 {
+          font-size: 2rem;
+        }
+        
+        .results-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <nav class="nav-container">
+        <div class="logo">
+          <a href="/" style="text-decoration: none; color: inherit;">
+            <strong>Selling-options.com</strong>
+          </a>
+        </div>
+        <div class="nav-menu">
+          <div class="nav-item dropdown">
+            <a href="#">Tools</a>
+            <div class="dropdown-content">
+              <a href="/calculator.html">Options Calculator</a>
+              <a href="#">Risk Assessment</a>
+              <a href="#">Profit Analyzer</a>
+              <a href="#">Strategy Builder</a>
+            </div>
+          </div>
+          <div class="nav-item dropdown">
+            <a href="#">Education</a>
+            <div class="dropdown-content">
+              <a href="#">Options Basics</a>
+              <a href="#">Advanced Strategies</a>
+              <a href="#">Risk Management</a>
+              <a href="#">Video Tutorials</a>
+            </div>
+          </div>
+          <div class="nav-item dropdown">
+            <a href="#">Screeners</a>
+            <div class="dropdown-content">
+              <a href="#">High IV Options</a>
+              <a href="#">Earnings Plays</a>
+              <a href="#">Weekly Options</a>
+              <a href="#">Dividend Stocks</a>
+            </div>
+          </div>
+          <div class="nav-item">
+            <a href="#">Market Data</a>
+          </div>
+          <div class="nav-item">
+            <a href="#">Premium</a>
+          </div>
+        </div>
+        <div class="nav-actions">
+          <button class="btn-login">Log In</button>
+          <button class="btn-signup">Sign Up</button>
+        </div>
+      </nav>
+    </header>
+
+    <main class="calculator-container">
+      <div class="calculator-header">
+        <h1>Options Sentiment Analyzer</h1>
+        <p>Enter a stock symbol to analyze market sentiment based on options data.</p>
+      </div>
+
+      <form class="input-form" id="calculatorForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="symbol">Stock Symbol</label>
+            <input 
+              type="text" 
+              id="symbol" 
+              class="form-input" 
+              placeholder="e.g., NVDA, AAPL"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="expiration">Expiration Date</label>
+            <select id="expiration" class="form-input" required>
+              <option value="">Enter symbol first</option>
+            </select>
+          </div>
+          <button type="submit" class="analyze-btn" id="analyzeBtn">
+            Get Analysis
+          </button>
+        </div>
+      </form>
+
+      <div id="loadingState" class="loading hidden">
+        <div>Loading analysis...</div>
+      </div>
+
+      <div id="errorState" class="error hidden">
+        <div id="errorMessage"></div>
+      </div>
+
+      <div id="resultsSection" class="hidden">
+        <div class="current-price">
+          <h3>Current Price</h3>
+          <div class="price-display" id="currentPrice">--</div>
+        </div>
+
+        <div class="results-grid">
+          <div class="sentiment-card bulls">
+            <h3>Bulls Want</h3>
+            <div class="sentiment-value" id="bullsValue">--</div>
+          </div>
+          
+          <div class="sentiment-card consensus">
+            <h3>Avg Consensus</h3>
+            <div class="sentiment-value" id="consensusValue">--</div>
+          </div>
+          
+          <div class="sentiment-card bears">
+            <h3>Bears Want</h3>
+            <div class="sentiment-value" id="bearsValue">--</div>
+          </div>
+        </div>
+
+        <div class="pc-ratios">
+          <h3>Put/Call Ratios</h3>
+          <div class="ratio-grid">
+            <div class="ratio-item">
+              <div class="ratio-label">Money P/C Ratio</div>
+              <div class="ratio-value" id="moneyRatio">--</div>
+            </div>
+            <div class="ratio-item">
+              <div class="ratio-label">True P/C Ratio</div>
+              <div class="ratio-value" id="trueRatio">--</div>
+            </div>
+            <div class="ratio-item">
+              <div class="ratio-label">Premium P/C Ratio</div>
+              <div class="ratio-value" id="premiumRatio">--</div>
+            </div>
+            <div class="ratio-item">
+              <div class="ratio-label">Volume P/C Ratio</div>
+              <div class="ratio-value" id="volumeRatio">--</div>
+            </div>
+            <div class="ratio-item">
+              <div class="ratio-label">Vol/OI P/C Ratio</div>
+              <div class="ratio-value" id="volOiRatio">--</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h4>Tools</h4>
+            <ul>
+              <li><a href="/calculator.html">Options Calculator</a></li>
+              <li><a href="#">Risk Assessment</a></li>
+              <li><a href="#">Strategy Builder</a></li>
+              <li><a href="#">IV Screener</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h4>Education</h4>
+            <ul>
+              <li><a href="#">Options Basics</a></li>
+              <li><a href="#">Advanced Strategies</a></li>
+              <li><a href="#">Risk Management</a></li>
+              <li><a href="#">Video Library</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h4>Company</h4>
+            <ul>
+              <li><a href="#">About Us</a></li>
+              <li><a href="#">Contact</a></li>
+              <li><a href="#">Premium Plans</a></li>
+              <li><a href="#">Affiliate Program</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h4>Legal</h4>
+            <ul>
+              <li><a href="#">Privacy Policy</a></li>
+              <li><a href="#">Terms of Service</a></li>
+              <li><a href="#">Disclaimer</a></li>
+              <li><a href="#">Risk Warning</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 Selling-options.com. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="calculator.js"></script>
+  </body>
+</html>

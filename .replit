@@ -1,9 +1,9 @@
 entrypoint = "index.html"
-modules = ["web", "nodejs-20"]
+modules = ["web", "nodejs-20", "python-3.11"]
 
 [nix]
 channel = "stable-24_11"
-packages = ["static-web-server"]
+packages = ["glibcLocales", "static-web-server"]
 
 [deployment]
 publicDir = "/"
@@ -32,15 +32,15 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Static Site Server"
+args = "Options Calculator App"
 
 [[workflows.workflow]]
-name = "Static Site Server"
+name = "Options Calculator App"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx http-server . -p 5000 -a 0.0.0.0 -c-1"
+args = "python app.py"
 waitForPort = 5000
 
 [workflows.workflow.metadata]
