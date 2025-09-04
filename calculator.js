@@ -124,9 +124,9 @@ class OptionsCalculator {
         const results = this.calculateSentiment(analysisData);
         
         // Display prediction values
-        document.getElementById('bullsValue').textContent = `$${results.volumePrediction.toFixed(2)}`;
-        document.getElementById('consensusValue').textContent = `$${results.avgPrediction.toFixed(2)}`;
-        document.getElementById('bearsValue').textContent = `$${results.oiPrediction.toFixed(2)}`;
+        document.getElementById('bullsValue').textContent = `$${results.bullsWant.toFixed(2)}`;
+        document.getElementById('consensusValue').textContent = `$${results.avgConsensus.toFixed(2)}`;
+        document.getElementById('bearsValue').textContent = `$${results.bearsWant.toFixed(2)}`;
         
         // Display P/C ratios
         document.getElementById('moneyRatio').textContent = results.ratios.money.toFixed(2);
@@ -139,49 +139,43 @@ class OptionsCalculator {
     }
     
     calculateSentiment(analysisData) {
-        const allRows = analysisData.rows;
-        const calls = allRows.filter(row => row.Type === 'Call');
-        const puts = allRows.filter(row => row.Type === 'Put');
+        const calls = analysisData.rows.filter(row => row.Type === 'Call');
+        const puts = analysisData.rows.filter(row => row.Type === 'Put');
         
-        // Filter contributing rows (premium > 0 and volume > 0 or OI > 0)
-        const contributingRows = allRows.filter(row => 
-            row.AvgLast > 0 && (row.Volume > 0 || row.OI > 0)
-        );
+        // Calculate Bulls Want (calls): Strike × OI weighted average
+        let totalBullsWillPay = 0;
+        let bullsNumerator = 0;
         
-        // Calculate volume-weighted prediction
-        let volumeWeightSum = 0;
-        let volumeNumerator = 0;
-        let oiWeightSum = 0;
-        let oiNumerator = 0;
-        
-        contributingRows.forEach(row => {
-            const premium = row.AvgLast;
-            const volume = row.Volume || 0;
-            const oi = row.OI || 0;
-            const breakeven = row.BreakEven;
-            
-            // Volume weighting
-            if (volume > 0) {
-                const volumeWeight = premium * volume;
-                volumeWeightSum += volumeWeight;
-                volumeNumerator += breakeven * volumeWeight;
-            }
-            
-            // OI weighting
-            if (oi > 0) {
-                const oiWeight = premium * oi;
-                oiWeightSum += oiWeight;
-                oiNumerator += breakeven * oiWeight;
-            }
+        calls.forEach(call => {
+            const strike = call.Strike || 0;
+            const oi = call.OI || 0;
+            const willPay = strike * oi;
+            totalBullsWillPay += willPay;
+            bullsNumerator += strike * willPay;
         });
         
-        const volumePrediction = volumeWeightSum > 0 ? volumeNumerator / volumeWeightSum : 0;
-        const oiPrediction = oiWeightSum > 0 ? oiNumerator / oiWeightSum : 0;
-        const avgPrediction = (volumePrediction + oiPrediction) / 2;
+        const bullsWant = totalBullsWillPay > 0 ? bullsNumerator / totalBullsWillPay : 0;
+        
+        // Calculate Bears Want (puts): Strike × OI weighted average
+        let totalBearsWillPay = 0;
+        let bearsNumerator = 0;
+        
+        puts.forEach(put => {
+            const strike = put.Strike || 0;
+            const oi = put.OI || 0;
+            const willPay = strike * oi;
+            totalBearsWillPay += willPay;
+            bearsNumerator += strike * willPay;
+        });
+        
+        const bearsWant = totalBearsWillPay > 0 ? bearsNumerator / totalBearsWillPay : 0;
+        
+        // Average consensus is the average of bulls and bears
+        const avgConsensus = (bullsWant + bearsWant) / 2;
         
         // Calculate P/C ratios
-        const callsPremium = calls.reduce((sum, row) => sum + row.TotPre, 0);
-        const putsPremium = puts.reduce((sum, row) => sum + row.TotPre, 0);
+        const callsPremium = calls.reduce((sum, row) => sum + (row.OI * row.AvgLast * 100), 0);
+        const putsPremium = puts.reduce((sum, row) => sum + (row.OI * row.AvgLast * 100), 0);
         
         const callsVolume = calls.reduce((sum, row) => sum + (row.Volume || 0), 0);
         const putsVolume = puts.reduce((sum, row) => sum + (row.Volume || 0), 0);
@@ -190,9 +184,9 @@ class OptionsCalculator {
         const putsOI = puts.reduce((sum, row) => sum + row.OI, 0);
         
         return {
-            volumePrediction,
-            oiPrediction,
-            avgPrediction,
+            bullsWant,
+            bearsWant,
+            avgConsensus,
             ratios: {
                 money: putsPremium / (callsPremium || 1),
                 true: putsOI / (callsOI || 1),
