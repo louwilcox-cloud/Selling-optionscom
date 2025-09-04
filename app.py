@@ -429,6 +429,86 @@ def admin_make_admin(user_id):
     flash('User granted admin access', 'success')
     return redirect('/admin')
 
+@app.route('/admin/users')
+@admin_required
+def admin_manage_users():
+    """Redirect to main admin dashboard for user management"""
+    return redirect('/admin')
+
+@app.route('/admin/watchlists')
+@admin_required
+def admin_manage_watchlists():
+    """Admin page to manage watchlists"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Get all watchlists
+    cur.execute('SELECT id, name, symbols FROM watchlists ORDER BY name')
+    watchlists = cur.fetchall()
+    
+    cur.close()
+    conn.close()
+    
+    return render_template_string(WATCHLISTS_TEMPLATE, watchlists=watchlists)
+
+@app.route('/admin/watchlists/save', methods=['POST'])
+@admin_required
+def save_watchlist():
+    """Save or update a watchlist"""
+    name = request.form.get('name', '').strip()
+    symbols = request.form.get('symbols', '').strip()
+    watchlist_id = request.form.get('id')
+    
+    if not name or not symbols:
+        flash('Name and symbols are required', 'error')
+        return redirect('/admin/watchlists')
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        if watchlist_id:
+            # Update existing watchlist
+            cur.execute(
+                'UPDATE watchlists SET name = %s, symbols = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s',
+                (name, symbols, watchlist_id)
+            )
+        else:
+            # Create new watchlist
+            cur.execute(
+                'INSERT INTO watchlists (name, symbols, created_by) VALUES (%s, %s, %s)',
+                (name, symbols, session['user_id'])
+            )
+        
+        conn.commit()
+        flash('Watchlist saved successfully', 'success')
+    except Exception as e:
+        flash(f'Error saving watchlist: {str(e)}', 'error')
+    finally:
+        cur.close()
+        conn.close()
+    
+    return redirect('/admin/watchlists')
+
+@app.route('/admin/watchlists/delete/<int:watchlist_id>')
+@admin_required
+def delete_watchlist(watchlist_id):
+    """Delete a watchlist"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        cur.execute('DELETE FROM watchlists WHERE id = %s', (watchlist_id,))
+        conn.commit()
+        flash('Watchlist deleted successfully', 'success')
+    except Exception as e:
+        flash(f'Error deleting watchlist: {str(e)}', 'error')
+    finally:
+        cur.close()
+        conn.close()
+    
+    return redirect('/admin/watchlists')
+
 # Static file serving
 @app.route('/')
 def serve_index():
@@ -450,20 +530,56 @@ def serve_calculator():
     with open('calculator.html', 'r') as f:
         content = f.read()
     
-    # Replace the nav actions based on admin status
+    # Replace the nav menu and actions based on admin status
     if is_admin:
-        nav_actions = '''<div class="nav-actions">
-          <a href="/admin" class="btn-login">Admin</a>
+        nav_menu_and_actions = '''<div class="nav-menu">
+          <div class="nav-item dropdown">
+            <a href="#">Tools</a>
+            <div class="dropdown-content">
+              <a href="/calculator.html">Options Calculator</a>
+            </div>
+          </div>
+          <div class="nav-item dropdown">
+            <a href="#">Education</a>
+            <div class="dropdown-content">
+              <a href="/video-tutorials.html">Video Tutorials</a>
+            </div>
+          </div>
+          <div class="nav-item dropdown">
+            <a href="#">Admin</a>
+            <div class="dropdown-content">
+              <a href="/admin/users">Manage Users</a>
+              <a href="/admin/watchlists">Manage Watchlists</a>
+            </div>
+          </div>
+        </div>
+        </div>
+        <div class="nav-actions">
           <a href="/logout" class="btn-signup">Logout</a>
         </div>'''
     else:
-        nav_actions = '''<div class="nav-actions">
+        nav_menu_and_actions = '''<div class="nav-menu">
+          <div class="nav-item dropdown">
+            <a href="#">Tools</a>
+            <div class="dropdown-content">
+              <a href="/calculator.html">Options Calculator</a>
+            </div>
+          </div>
+          <div class="nav-item dropdown">
+            <a href="#">Education</a>
+            <div class="dropdown-content">
+              <a href="/video-tutorials.html">Video Tutorials</a>
+            </div>
+          </div>
+        </div>
+        </div>
+        <div class="nav-actions">
           <a href="/logout" class="btn-signup">Logout</a>
         </div>'''
     
-    # Replace the navigation section
+    # Replace the navigation section from nav-menu to nav-actions
     import re
-    content = re.sub(r'<div class="nav-actions">.*?</div>', nav_actions, content, flags=re.DOTALL)
+    content = re.sub(r'<div class="nav-menu">.*?<div class="nav-actions">.*?</div>', nav_menu_and_actions, content, flags=re.DOTALL)
     
     return content
 
@@ -700,6 +816,108 @@ ADMIN_TEMPLATE = '''
         <div style="text-align: center; margin-top: 30px;">
             <a href="/" class="action-btn btn-admin">Back</a>
             <a href="/logout" class="action-btn btn-toggle">Logout</a>
+        </div>
+    </div>
+</body>
+</html>
+'''
+
+WATCHLISTS_TEMPLATE = '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Watchlists - Selling-options.com</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .admin-container { max-width: 1000px; margin: 40px auto; padding: 20px; }
+        .admin-header { text-align: center; margin-bottom: 40px; }
+        .admin-header h1 { color: #1f2937; margin-bottom: 10px; }
+        .watchlist-form { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .form-row { display: grid; grid-template-columns: 1fr 2fr auto; gap: 15px; align-items: end; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #374151; }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem; }
+        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
+        .watchlist-btn { padding: 12px 20px; background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .watchlist-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3); }
+        .watchlists-table { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .watchlists-table table { width: 100%; border-collapse: collapse; }
+        .watchlists-table th { background: #f8fafc; padding: 15px; text-align: left; font-weight: 600; color: #374151; }
+        .watchlists-table td { padding: 15px; border-bottom: 1px solid #f3f4f6; }
+        .action-btn { padding: 5px 10px; margin: 2px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; text-decoration: none; display: inline-block; }
+        .btn-delete { background: #dc2626; color: white; }
+        .btn-edit { background: #f59e0b; color: white; }
+        .btn-back { background: #1e40af; color: white; padding: 10px 20px; margin-top: 20px; }
+        .flash-messages { margin-bottom: 20px; }
+        .flash-success { background: #d1fae5; color: #059669; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
+        .flash-error { background: #fee2e2; color: #dc2626; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
+        .symbols-display { font-family: monospace; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>Manage Watchlists</h1>
+            <p>Create and manage stock symbol watchlists</p>
+        </div>
+        
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <div class="watchlist-form">
+            <h2>Create New Watchlist</h2>
+            <form method="POST" action="/admin/watchlists/save">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" placeholder="My List" required>
+                </div>
+                <div class="form-group">
+                    <label for="symbols">Symbols (comma or space separated)</label>
+                    <textarea id="symbols" name="symbols" rows="3" placeholder="AAPL, MSFT, NVDA" required></textarea>
+                </div>
+                <button type="submit" class="watchlist-btn">Save Watchlist</button>
+            </form>
+        </div>
+
+        {% if watchlists %}
+        <div class="watchlists-table">
+            <h2 style="padding: 20px; margin: 0; background: #f8fafc; font-size: 1.2rem; color: #374151;">Existing Watchlists</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Symbols</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for watchlist in watchlists %}
+                    <tr>
+                        <td>{{ watchlist[1] }}</td>
+                        <td class="symbols-display">{{ watchlist[2] }}</td>
+                        <td>
+                            <a href="/admin/watchlists/delete/{{ watchlist[0] }}" 
+                               class="action-btn btn-delete"
+                               onclick="return confirm('Are you sure you want to delete this watchlist?')">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <div style="text-align: center;">
+            <a href="/admin" class="action-btn btn-back">Back to Admin</a>
         </div>
     </div>
 </body>
