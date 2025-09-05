@@ -206,6 +206,20 @@ body {
   display: none;
 }
 
+.nav-dropdown.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.nav-dropdown.disabled .nav-dropdown-label {
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.nav-dropdown.disabled .nav-dropdown-content {
+  pointer-events: none;
+}
+
 .user-status {
   display: flex;
   align-items: center;

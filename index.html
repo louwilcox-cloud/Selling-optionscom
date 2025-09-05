@@ -220,21 +220,40 @@
           const response = await fetch('/api/auth-status');
           const data = await response.json();
           
+          const toolsDropdown = document.querySelector('.nav-dropdown:first-child');
+          const adminDropdown = document.getElementById('adminDropdown');
+          
           if (data.authenticated) {
             // User is logged in
             document.getElementById('navAuth').style.display = 'none';
             document.getElementById('navUser').style.display = 'flex';
             document.getElementById('userWelcome').textContent = `Welcome, ${data.username}`;
             
+            // Enable Tools dropdown for authenticated users
+            if (toolsDropdown) {
+              toolsDropdown.classList.remove('disabled');
+              toolsDropdown.style.opacity = '1';
+              toolsDropdown.style.pointerEvents = 'auto';
+            }
+            
             // Show admin dropdown if user is admin
             if (data.is_admin) {
-              document.getElementById('adminDropdown').style.display = 'inline-block';
+              adminDropdown.style.display = 'inline-block';
+            } else {
+              adminDropdown.style.display = 'none';
             }
           } else {
             // User is not logged in
             document.getElementById('navAuth').style.display = 'flex';
             document.getElementById('navUser').style.display = 'none';
-            document.getElementById('adminDropdown').style.display = 'none';
+            adminDropdown.style.display = 'none';
+            
+            // Grey out Tools dropdown for non-authenticated users
+            if (toolsDropdown) {
+              toolsDropdown.classList.add('disabled');
+              toolsDropdown.style.opacity = '0.5';
+              toolsDropdown.style.pointerEvents = 'none';
+            }
           }
         } catch (error) {
           console.error('Error checking auth status:', error);
@@ -242,6 +261,14 @@
           document.getElementById('navAuth').style.display = 'flex';
           document.getElementById('navUser').style.display = 'none';
           document.getElementById('adminDropdown').style.display = 'none';
+          
+          // Grey out Tools dropdown
+          const toolsDropdown = document.querySelector('.nav-dropdown:first-child');
+          if (toolsDropdown) {
+            toolsDropdown.classList.add('disabled');
+            toolsDropdown.style.opacity = '0.5';
+            toolsDropdown.style.pointerEvents = 'none';
+          }
         }
       }
 
