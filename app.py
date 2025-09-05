@@ -95,17 +95,18 @@ def generate_navigation():
     if is_authenticated:
         # Authenticated user navigation
         auth_section = f'''
-          <div class="nav-user authenticated">
-            <span class="user-icon" title="Welcome, {user_email}">👤</span>
-            <span class="user-welcome">Welcome, {user_email}</span>
-            <a href="/logout" class="btn-logout">Logout</a>
+          <div class="nav-actions">
+            <div class="user-status" title="Welcome, {user_email}">
+              <span class="user-icon">👤</span>
+            </div>
+            <a href="/logout" class="btn-login">Log Out</a>
           </div>'''
         
         # Tools dropdown (enabled for authenticated users)
         tools_dropdown = '''
-          <div class="nav-dropdown">
-            <span class="nav-dropdown-label">Tools</span>
-            <div class="nav-dropdown-content">
+          <div class="nav-item dropdown">
+            <a href="#">Tools</a>
+            <div class="dropdown-content">
               <a href="/calculator.html">Options Calculator</a>
               <a href="/forecast">Watchlist Forecast</a>
             </div>
@@ -113,29 +114,25 @@ def generate_navigation():
         
         # Admin dropdown (only if user is admin)
         admin_dropdown = '''
-          <div class="nav-dropdown">
-            <span class="nav-dropdown-label">Admin</span>
-            <div class="nav-dropdown-content">
-              <a href="/admin/users">Manage Users</a>
+          <div class="nav-item dropdown">
+            <a href="#">Admin</a>
+            <div class="dropdown-content">
+              <a href="/admin">Manage Users</a>
               <a href="/admin/watchlists">Manage Watchlists</a>
             </div>
           </div>''' if is_admin else ''
     else:
         # Non-authenticated user navigation
         auth_section = '''
-          <div class="nav-auth">
+          <div class="nav-actions">
             <a href="/login" class="btn-login">Log In</a>
             <a href="/signup" class="btn-signup">Sign Up</a>
           </div>'''
         
         # Tools dropdown (disabled for non-authenticated users)
         tools_dropdown = '''
-          <div class="nav-dropdown disabled">
-            <span class="nav-dropdown-label">Tools</span>
-            <div class="nav-dropdown-content">
-              <a href="/calculator.html">Options Calculator</a>
-              <a href="/forecast">Watchlist Forecast</a>
-            </div>
+          <div class="nav-item dropdown disabled">
+            <a href="#" style="color: #ccc; cursor: not-allowed;">Tools</a>
           </div>'''
         
         admin_dropdown = ''
@@ -159,9 +156,9 @@ def generate_navigation():
         </div>
         <div class="nav-right">
           {tools_dropdown}
-          <div class="nav-dropdown">
-            <span class="nav-dropdown-label">Education</span>
-            <div class="nav-dropdown-content">
+          <div class="nav-item dropdown">
+            <a href="#">Education</a>
+            <div class="dropdown-content">
               <a href="/video-tutorials.html">Video Tutorials</a>
             </div>
           </div>
