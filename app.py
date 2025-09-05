@@ -552,8 +552,10 @@ def admin_dashboard():
     
     # Generate server-side navigation and inject it into the template
     navigation_html = generate_navigation()
-    admin_html = render_template_string(ADMIN_TEMPLATE, users=users, recent_activity=recent_activity)
-    admin_html = admin_html.replace('{{NAVIGATION_PLACEHOLDER}}', navigation_html)
+    
+    # Replace navigation placeholder BEFORE Jinja processing
+    template_with_nav = ADMIN_TEMPLATE.replace('{{NAVIGATION_PLACEHOLDER}}', navigation_html)
+    admin_html = render_template_string(template_with_nav, users=users, recent_activity=recent_activity)
     
     return admin_html
 
@@ -642,8 +644,10 @@ def admin_manage_watchlists():
     
     # Generate server-side navigation and inject it into the template
     navigation_html = generate_navigation()
-    watchlists_html = render_template_string(WATCHLISTS_TEMPLATE, watchlists=watchlists)
-    watchlists_html = watchlists_html.replace('{{NAVIGATION_PLACEHOLDER}}', navigation_html)
+    
+    # Replace navigation placeholder BEFORE Jinja processing
+    template_with_nav = WATCHLISTS_TEMPLATE.replace('{{NAVIGATION_PLACEHOLDER}}', navigation_html)
+    watchlists_html = render_template_string(template_with_nav, watchlists=watchlists)
     
     return watchlists_html
 
@@ -721,8 +725,10 @@ def watchlist_forecast():
     
     # Generate server-side navigation and inject it into the template
     navigation_html = generate_navigation()
-    forecast_html = render_template_string(FORECAST_TEMPLATE, watchlists=watchlists)
-    forecast_html = forecast_html.replace('{{NAVIGATION_PLACEHOLDER}}', navigation_html)
+    
+    # Replace navigation placeholder BEFORE Jinja processing
+    template_with_nav = FORECAST_TEMPLATE.replace('{{NAVIGATION_PLACEHOLDER}}', navigation_html)
+    forecast_html = render_template_string(template_with_nav, watchlists=watchlists)
     
     return forecast_html
 
