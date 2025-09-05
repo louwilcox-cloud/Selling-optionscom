@@ -236,13 +236,13 @@ body {
   border-radius: 0; /* Remove border radius */
 }
 
-/* Green color when user is authenticated */
-.nav-user.authenticated .user-icon {
-  color: #10b981; /* Green when logged in */
+/* Purple color when user is authenticated */
+.user-icon.logged-in {
+  color: #7c3aed; /* Purple when logged in */
 }
 
-.nav-user.authenticated .user-icon:hover {
-  color: #059669; /* Darker green on hover */
+.user-icon.logged-in:hover {
+  color: #6d28d9; /* Darker purple on hover */
 }
 
 .btn-login, .btn-signup {

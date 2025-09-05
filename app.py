@@ -97,7 +97,7 @@ def generate_navigation():
         auth_section = f'''
           <div class="nav-actions">
             <div class="user-status" title="Welcome, {user_email}">
-              <span class="user-icon">👤</span>
+              <span class="user-icon logged-in">👤</span>
             </div>
             <a href="/logout" class="btn-login">Log Out</a>
           </div>'''
@@ -719,7 +719,12 @@ def watchlist_forecast():
     cur.close()
     conn.close()
     
-    return render_template_string(FORECAST_TEMPLATE, watchlists=watchlists)
+    # Generate server-side navigation and inject it into the template
+    navigation_html = generate_navigation()
+    forecast_html = render_template_string(FORECAST_TEMPLATE, watchlists=watchlists)
+    forecast_html = forecast_html.replace('{{NAVIGATION_PLACEHOLDER}}', navigation_html)
+    
+    return forecast_html
 
 @app.route('/api/forecast', methods=['POST'])
 # @login_required  # Temporarily disabled for testing  
@@ -1405,6 +1410,7 @@ FORECAST_TEMPLATE = '''
     </style>
 </head>
 <body>
+    {{NAVIGATION_PLACEHOLDER}}
     <div class="forecast-container">
         <div class="forecast-header">
             <h1>Watchlist Forecast</h1>
