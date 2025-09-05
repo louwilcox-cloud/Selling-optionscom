@@ -208,24 +208,37 @@
             <button onclick="getNavQuote()" class="nav-quote-btn">Quote</button>
             <div id="navQuoteResult" class="nav-quote-result"></div>
           </div>
-          <div class="nav-menu">
-          <div class="nav-item dropdown">
-            <a href="#">Tools</a>
-            <div class="dropdown-content">
+        </div>
+        <div class="nav-right">
+          <div class="nav-dropdown disabled">
+            <span class="nav-dropdown-label">Tools</span>
+            <div class="nav-dropdown-content">
               <a href="/calculator.html">Options Calculator</a>
+              <a href="/forecast">Watchlist Forecast</a>
             </div>
           </div>
-          <div class="nav-item dropdown">
-            <a href="#">Education</a>
-            <div class="dropdown-content">
+          <div class="nav-dropdown">
+            <span class="nav-dropdown-label">Education</span>
+            <div class="nav-dropdown-content">
               <a href="/video-tutorials.html">Video Tutorials</a>
             </div>
           </div>
-        </div>
-        </div>
-        <div class="nav-actions">
-          <button class="btn-login">Log In</button>
-          <button class="btn-signup">Sign Up</button>
+          <div class="nav-dropdown" id="adminDropdown" style="display: none;">
+            <span class="nav-dropdown-label">Admin</span>
+            <div class="nav-dropdown-content">
+              <a href="/admin/users">Manage Users</a>
+              <a href="/admin/watchlists">Manage Watchlists</a>
+            </div>
+          </div>
+          <div class="nav-auth" id="navAuth">
+            <a href="/login" class="btn-login">Log In</a>
+            <a href="/signup" class="btn-signup">Sign Up</a>
+          </div>
+          <div class="nav-user" id="navUser" style="display: none;">
+            <span class="user-icon" id="userIcon" title="">👤</span>
+            <span class="user-welcome" id="userWelcome">Welcome, User</span>
+            <a href="/logout" class="btn-logout">Logout</a>
+          </div>
         </div>
       </nav>
     </header>
@@ -349,8 +362,87 @@
         }
       }
 
-      // Allow Enter key for nav quote search
+      // Authentication status checking
+      async function checkAuthStatus() {
+        try {
+          const response = await fetch('/api/auth-status');
+          const data = await response.json();
+          
+          console.log('Auth status response:', data);
+          
+          const toolsDropdown = document.querySelector('.nav-dropdown:first-child');
+          const adminDropdown = document.getElementById('adminDropdown');
+          
+          if (data.authenticated) {
+            console.log('User is authenticated, username:', data.username, 'is_admin:', data.is_admin, 'user_id:', data.user_id);
+            
+            // User is logged in
+            document.getElementById('navAuth').style.display = 'none';
+            document.getElementById('navUser').style.display = 'flex';
+            document.getElementById('userWelcome').textContent = `Welcome, ${data.username}`;
+            
+            // Set user icon tooltip with user ID
+            const userIcon = document.getElementById('userIcon');
+            if (userIcon && data.user_id) {
+              userIcon.title = `User ID: ${data.user_id} | ${data.username}`;
+            }
+            
+            // Enable Tools dropdown for authenticated users
+            if (toolsDropdown) {
+              toolsDropdown.classList.remove('disabled');
+              toolsDropdown.style.opacity = '1';
+              toolsDropdown.style.pointerEvents = 'auto';
+            }
+            
+            // Show admin dropdown if user is admin
+            if (data.is_admin) {
+              console.log('Showing admin dropdown');
+              adminDropdown.style.display = 'inline-block';
+            } else {
+              console.log('Hiding admin dropdown - not admin');
+              adminDropdown.style.display = 'none';
+            }
+          } else {
+            console.log('User is NOT authenticated');
+            
+            // User is not logged in
+            document.getElementById('navAuth').style.display = 'flex';
+            document.getElementById('navUser').style.display = 'none';
+            
+            // Disable Tools dropdown for non-authenticated users
+            if (toolsDropdown) {
+              toolsDropdown.classList.add('disabled');
+              toolsDropdown.style.opacity = '0.5';
+              toolsDropdown.style.pointerEvents = 'none';
+            }
+            
+            // Hide admin dropdown
+            if (adminDropdown) {
+              adminDropdown.style.display = 'none';
+            }
+          }
+        } catch (error) {
+          console.error('Error checking authentication status:', error);
+          
+          // Default to not authenticated on error
+          document.getElementById('navAuth').style.display = 'flex';
+          document.getElementById('navUser').style.display = 'none';
+          
+          const toolsDropdown = document.querySelector('.nav-dropdown:first-child');
+          if (toolsDropdown) {
+            toolsDropdown.classList.add('disabled');
+            toolsDropdown.style.opacity = '0.5';
+            toolsDropdown.style.pointerEvents = 'none';
+          }
+        }
+      }
+
+      // Initialize everything when page loads
       document.addEventListener('DOMContentLoaded', function() {
+        // Check authentication status immediately
+        checkAuthStatus();
+        
+        // Set up nav quote search
         const navQuoteInput = document.getElementById('navQuoteSymbol');
         if (navQuoteInput) {
           navQuoteInput.addEventListener('keypress', function(e) {

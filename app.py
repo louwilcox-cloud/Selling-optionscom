@@ -817,83 +817,9 @@ def serve_index():
     return content
 
 @app.route('/calculator.html')
-# @login_required  # Temporarily disabled for testing
 def serve_calculator():
-    # Check if current user is admin
-    is_admin = False
-    if 'user_id' in session:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute('SELECT COUNT(*) FROM admin_users WHERE user_id = %s', (session['user_id'],))
-        result = cur.fetchone()
-        is_admin = result[0] > 0 if result else False
-        cur.close()
-        conn.close()
-    
-    # Read the calculator HTML file
-    with open('calculator.html', 'r') as f:
-        content = f.read()
-    
-    # Replace the nav menu and actions based on admin status
-    if is_admin:
-        nav_menu_and_actions = '''<div class="nav-menu">
-          <div class="nav-item dropdown">
-            <a href="#">Tools</a>
-            <div class="dropdown-content">
-              <a href="/calculator.html">Options Calculator</a>
-              <a href="/forecast">Watchlist Forecast</a>
-            </div>
-          </div>
-          <div class="nav-item dropdown">
-            <a href="#">Education</a>
-            <div class="dropdown-content">
-              <a href="/video-tutorials.html">Video Tutorials</a>
-            </div>
-          </div>
-          <div class="nav-item dropdown">
-            <a href="#">Admin</a>
-            <div class="dropdown-content">
-              <a href="/admin/users">Manage Users</a>
-              <a href="/admin/watchlists">Manage Watchlists</a>
-            </div>
-          </div>
-        </div>
-        </div>
-        <div class="nav-actions">
-          <div class="user-status" title="Welcome {session.get('user_email', '')}">
-            <span class="user-icon">👤</span>
-          </div>
-          <a href="/logout" class="btn-signup">Logout</a>
-        </div>'''
-    else:
-        nav_menu_and_actions = '''<div class="nav-menu">
-          <div class="nav-item dropdown">
-            <a href="#">Tools</a>
-            <div class="dropdown-content">
-              <a href="/calculator.html">Options Calculator</a>
-              <a href="/forecast">Watchlist Forecast</a>
-            </div>
-          </div>
-          <div class="nav-item dropdown">
-            <a href="#">Education</a>
-            <div class="dropdown-content">
-              <a href="/video-tutorials.html">Video Tutorials</a>
-            </div>
-          </div>
-        </div>
-        </div>
-        <div class="nav-actions">
-          <div class="user-status" title="Welcome {session.get('user_email', '')}">
-            <span class="user-icon">👤</span>
-          </div>
-          <a href="/logout" class="btn-signup">Logout</a>
-        </div>'''
-    
-    # Replace the navigation section from nav-menu to nav-actions
-    import re
-    content = re.sub(r'<div class="nav-menu">.*?<div class="nav-actions">.*?</div>', nav_menu_and_actions, content, flags=re.DOTALL)
-    
-    return content
+    # Simply serve the static file - authentication is handled client-side like other pages
+    return send_from_directory('.', 'calculator.html')
 
 @app.route('/video-tutorials.html')
 def serve_video_tutorials():
