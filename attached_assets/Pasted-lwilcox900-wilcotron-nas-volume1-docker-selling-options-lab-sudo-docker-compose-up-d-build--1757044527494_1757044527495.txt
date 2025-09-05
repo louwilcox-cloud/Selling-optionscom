@@ -1,0 +1,37 @@
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ sudo docker compose up -d --build
+[+] Building 12.4s (12/12) FINISHED
+ => [selling-options-lab-app internal] load build definition from Dockerfile                                                                                                                                1.1s
+ => => transferring dockerfile: 677B                                                                                                                                                                        0.0s
+ => [selling-options-lab-app internal] load .dockerignore                                                                                                                                                   0.8s
+ => => transferring context: 280B                                                                                                                                                                           0.0s
+ => [selling-options-lab-app internal] load metadata for docker.io/library/python:3.11-slim                                                                                                                 0.0s
+ => [selling-options-lab-app 1/7] FROM docker.io/library/python:3.11-slim                                                                                                                                   0.0s
+ => [selling-options-lab-app internal] load build context                                                                                                                                                   0.5s
+ => => transferring context: 32.05kB                                                                                                                                                                        0.0s
+ => CACHED [selling-options-lab-app 2/7] WORKDIR /app                                                                                                                                                       0.0s
+ => CACHED [selling-options-lab-app 3/7] RUN apt-get update && apt-get install -y     gcc     postgresql-client     && rm -rf /var/lib/apt/lists/*                                                          0.0s
+ => CACHED [selling-options-lab-app 4/7] COPY requirements.txt .                                                                                                                                            0.0s
+ => CACHED [selling-options-lab-app 5/7] RUN pip install --no-cache-dir -r requirements.txt                                                                                                                 0.0s
+ => [selling-options-lab-app 6/7] COPY . .                                                                                                                                                                  1.5s
+ => [selling-options-lab-app 7/7] RUN mkdir -p flask_session                                                                                                                                                3.3s
+ => [selling-options-lab-app] exporting to image                                                                                                                                                            3.3s
+ => => exporting layers                                                                                                                                                                                     3.2s
+ => => writing image sha256:4868651c6a4e4cdbdfd278cdd0ce19d8893581933077ea22ff107f7e22c6914e                                                                                                                0.0s
+ => => naming to docker.io/library/selling-options-lab-selling-options-lab-app                                                                                                                              0.1s
+[+] Running 2/2
+ ✔ Container selling-options-lab-db   Running                                                                                                                                                               0.0s
+ ✔ Container selling-options-lab-app  Started                                                                                                                                                               5.1s
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ sudo docker compose ps
+NAME                      IMAGE                                         COMMAND                  SERVICE                   CREATED             STATUS              PORTS
+selling-options-lab-app   selling-options-lab-selling-options-lab-app   "python app.py"          selling-options-lab-app   20 seconds ago      Up 14 seconds       0.0.0.0:5082->5000/tcp, :::5082->5000/tcp
+selling-options-lab-db    postgres:16                                   "docker-entrypoint.s…"   lab-db                    2 minutes ago       Up 2 minutes        0.0.0.0:5433->5432/tcp, :::5433->5432/tcp
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ sudo docker exec -it selling-options-lab-app python3 -c "
+> from app import create_tables, create_admin_user
+> create_tables()
+ialized with adm> create_admin_user('admin@lab.com', 'admin123')
+> print('✅ Database initialized with admin user')
+> "
+Traceback (most recent call last):
+  File "<string>", line 2, in <module>
+ImportError: cannot import name 'create_tables' from 'app' (/app/app.py)
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$
