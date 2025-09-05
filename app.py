@@ -476,6 +476,41 @@ def admin_make_admin(user_id):
     flash('User granted admin access', 'success')
     return redirect('/admin')
 
+@app.route('/admin/demote-admin/<int:user_id>')
+@admin_required
+def admin_demote_admin(user_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute('DELETE FROM admin_users WHERE user_id = %s', (user_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    flash('Admin privileges removed', 'success')
+    return redirect('/admin')
+
+@app.route('/admin/delete-user/<int:user_id>')
+@admin_required
+def admin_delete_user(user_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        # Remove from admin_users first (if exists)
+        cur.execute('DELETE FROM admin_users WHERE user_id = %s', (user_id,))
+        # Delete the user
+        cur.execute('DELETE FROM users WHERE id = %s', (user_id,))
+        conn.commit()
+        flash('User deleted successfully', 'success')
+    except Exception as e:
+        flash(f'Error deleting user: {str(e)}', 'error')
+    finally:
+        cur.close()
+        conn.close()
+    
+    return redirect('/admin')
+
 @app.route('/admin/users')
 @admin_required
 def admin_manage_users():
@@ -1061,6 +1096,8 @@ ADMIN_TEMPLATE = '''
         .action-btn { padding: 5px 10px; margin: 2px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; text-decoration: none; display: inline-block; }
         .btn-toggle { background: #f59e0b; color: white; }
         .btn-admin { background: #1e40af; color: white; }
+        .btn-demote { background: #dc2626; color: white; }
+        .btn-delete { background: #991b1b; color: white; }
         .flash-messages { margin-bottom: 20px; }
         .flash-success { background: #d1fae5; color: #059669; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
     </style>
@@ -1137,7 +1174,10 @@ ADMIN_TEMPLATE = '''
                             </a>
                             {% if not user[6] %}
                                 <a href="/admin/make-admin/{{ user[0] }}" class="action-btn btn-admin">Make Admin</a>
+                            {% else %}
+                                <a href="/admin/demote-admin/{{ user[0] }}" class="action-btn btn-demote">Demote</a>
                             {% endif %}
+                            <a href="/admin/delete-user/{{ user[0] }}" class="action-btn btn-delete" onclick="return confirm('Are you sure you want to delete this user? This action cannot be undone.')">Delete</a>
                         </td>
                     </tr>
                     {% endfor %}

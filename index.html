@@ -220,10 +220,14 @@
           const response = await fetch('/api/auth-status');
           const data = await response.json();
           
+          console.log('Auth Status Response:', data); // Debug logging
+          
           const toolsDropdown = document.querySelector('.nav-dropdown:first-child');
           const adminDropdown = document.getElementById('adminDropdown');
           
           if (data.authenticated) {
+            console.log('User is authenticated, username:', data.username, 'is_admin:', data.is_admin);
+            
             // User is logged in
             document.getElementById('navAuth').style.display = 'none';
             document.getElementById('navUser').style.display = 'flex';
@@ -238,11 +242,15 @@
             
             // Show admin dropdown if user is admin
             if (data.is_admin) {
+              console.log('Showing admin dropdown');
               adminDropdown.style.display = 'inline-block';
             } else {
+              console.log('Hiding admin dropdown - not admin');
               adminDropdown.style.display = 'none';
             }
           } else {
+            console.log('User is NOT authenticated');
+            
             // User is not logged in
             document.getElementById('navAuth').style.display = 'flex';
             document.getElementById('navUser').style.display = 'none';
