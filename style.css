@@ -238,7 +238,7 @@ body {
 
 /* Purple color when user is authenticated */
 .user-icon.logged-in {
-  color: #7c3aed; /* Purple when logged in */
+  color: #c084fc; /* Light purple when logged in */
 }
 
 .user-icon.logged-in:hover {
