@@ -810,6 +810,62 @@ def serve_calculator():
     
     return content
 
+@app.route('/video-tutorials.html')
+def serve_video_tutorials():
+    # Check if user is logged in
+    user_email = session.get('user_email')
+    is_logged_in = user_email is not None
+    
+    # Read the video-tutorials.html file and modify it
+    with open('video-tutorials.html', 'r') as f:
+        content = f.read()
+    
+    # Modify navigation based on login status
+    if is_logged_in:
+        # Show user status icon and active Tools menu
+        nav_actions = f'''<div class="nav-actions">
+          <div class="user-status" title="Welcome {user_email}">
+            <span class="user-icon">👤</span>
+          </div>
+          <a href="/logout" class="btn-login">Log Out</a>
+        </div>'''
+        
+        # Enable Tools menu with Watchlist Forecast
+        tools_menu = '''<div class="nav-item dropdown">
+            <a href="#">Tools</a>
+            <div class="dropdown-content">
+              <a href="/calculator.html">Options Calculator</a>
+              <a href="/forecast">Watchlist Forecast</a>
+            </div>
+          </div>'''
+    else:
+        # Show login/signup buttons
+        nav_actions = '''<div class="nav-actions">
+          <a href="/login" class="btn-login">Log In</a>
+          <a href="/signup" class="btn-signup">Sign Up</a>
+        </div>'''
+        
+        # Disable Tools menu (grey out)
+        tools_menu = '''<div class="nav-item dropdown disabled">
+            <a href="#" style="color: #ccc; cursor: not-allowed;">Tools</a>
+          </div>'''
+    
+    # Replace nav actions
+    content = content.replace('''<div class="nav-actions">
+          <a href="/login" class="btn-login">Log In</a>
+          <a href="/signup" class="btn-signup">Sign Up</a>
+        </div>''', nav_actions)
+    
+    # Replace tools menu
+    content = content.replace('''<div class="nav-item dropdown">
+            <a href="#">Tools</a>
+            <div class="dropdown-content">
+              <a href="/calculator.html">Options Calculator</a>
+            </div>
+          </div>''', tools_menu)
+    
+    return content
+
 @app.route('/<path:filename>')
 def serve_static(filename):
     return send_from_directory('.', filename)
