@@ -1,0 +1,56 @@
+# Lab environment Caddyfile for Market Pulse / Selling Options
+# Configured to work with your existing NAS setup
+
+# For lab environment (adjust domain as needed)
+{
+    # Global options
+    auto_https off
+    admin off
+}
+
+# HTTP configuration for internal lab
+:80 {
+    # Security headers
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "no-referrer-when-downgrade"
+        X-Env "LAB"
+    }
+    
+    # Compression
+    encode zstd gzip
+    
+    # API routes
+    handle /api/* {
+        reverse_proxy selling-options-app:5000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+    
+    # Static files and main application
+    handle {
+        reverse_proxy selling-options-app:5000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+}
+
+# HTTPS configuration (if you want to enable later)
+# your-lab-domain.local {
+#     encode zstd gzip
+#     header {
+#         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+#         X-Content-Type-Options "nosniff"
+#         X-Frame-Options "DENY"
+#         Referrer-Policy "no-referrer-when-downgrade"
+#         X-Env "LAB"
+#     }
+#     reverse_proxy selling-options-app:5000
+# }

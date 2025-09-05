@@ -1,10 +1,12 @@
 version: '3.8'
 
 services:
-  web:
+  # Main Flask application
+  selling-options-app:
     build: .
-    ports:
-      - "5000:5000"
+    container_name: selling-options-app
+    expose:
+      - "5000"
     environment:
       - DATABASE_URL=postgresql://postgres:password@db:5432/options_db
       - FLASK_ENV=production
@@ -12,17 +14,46 @@ services:
       - db
     volumes:
       - ./flask_session:/app/flask_session
+    networks:
+      - selling-options-net
+    restart: unless-stopped
 
+  # PostgreSQL Database
   db:
     image: postgres:16
+    container_name: selling-options-db
     environment:
       - POSTGRES_DB=options_db
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - selling-options-net
+    restart: unless-stopped
+
+  # Caddy reverse proxy for lab environment
+  caddy:
+    image: caddy:2-alpine
+    container_name: selling-options-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - selling-options-app
+    networks:
+      - selling-options-net
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  selling-options-net:
+    driver: bridge
