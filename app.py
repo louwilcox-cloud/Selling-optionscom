@@ -1401,6 +1401,78 @@ FORECAST_TEMPLATE = '''
 </html>
 '''
 
+# Database initialization functions
+def create_tables():
+    """Create the required database tables"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Create users table
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Create admin_users table
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS admin_users (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id),
+            granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Create watchlist table
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS watchlist (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id),
+            symbol VARCHAR(10) NOT NULL,
+            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, symbol)
+        )
+    ''')
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+
+def create_admin_user(email, password):
+    """Create an admin user"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Check if user already exists
+    cur.execute('SELECT id FROM users WHERE email = %s', (email,))
+    existing_user = cur.fetchone()
+    
+    if existing_user:
+        user_id = existing_user[0]
+        print(f'User {email} already exists')
+    else:
+        # Create new user
+        password_hash = hash_password(password)
+        cur.execute('INSERT INTO users (email, password_hash) VALUES (%s, %s) RETURNING id', 
+                   (email, password_hash))
+        user_id = cur.fetchone()[0]
+        print(f'Created user {email}')
+    
+    # Make user admin if not already
+    cur.execute('SELECT 1 FROM admin_users WHERE user_id = %s', (user_id,))
+    if not cur.fetchone():
+        cur.execute('INSERT INTO admin_users (user_id) VALUES (%s)', (user_id,))
+        print(f'Granted admin privileges to {email}')
+    else:
+        print(f'User {email} already has admin privileges')
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5000"))
     app.run(host="0.0.0.0", port=port, debug=True)
