@@ -573,6 +573,10 @@ def run_forecast():
                 expirations = _fetch_expirations(symbol)
                 start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
                 
+                # Debug logging
+                print(f"DEBUG: Symbol {symbol} - Start date: {start_date}")
+                print(f"DEBUG: Available expirations: {expirations[:10]}")  # First 10 dates
+                
                 # Filter real yfinance expiration dates to get next 4 AFTER start_date
                 valid_exps = []
                 for exp_str in expirations:
@@ -585,6 +589,10 @@ def run_forecast():
                 
                 # Take first 4 valid expiration dates (real yfinance dates like Sep 19, Oct 17, Nov 21, Dec 19)
                 next_four_exps = valid_exps[:4]
+                
+                # Debug logging
+                print(f"DEBUG: Valid expirations after {start_date}: {valid_exps[:10]}")
+                print(f"DEBUG: Selected next 4: {next_four_exps}")
                 
                 # Calculate predictions for each expiration
                 predictions = []
@@ -1316,7 +1324,7 @@ FORECAST_TEMPLATE = '''
                 // Add 4 expiration columns
                 for (let i = 0; i < 4; i++) {
                     const pred = stock.predictions[i] || {};
-                    const expDate = pred.expiration ? new Date(pred.expiration).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit'}) : 'N/A';
+                    const expDate = pred.expiration ? pred.expiration.substring(5, 10) : 'N/A';
                     const predPrice = pred.predicted_price || 0;
                     const pctChange = pred.percent_change || 0;
                     
