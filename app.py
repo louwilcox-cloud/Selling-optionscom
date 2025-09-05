@@ -775,6 +775,9 @@ def serve_calculator():
         </div>
         </div>
         <div class="nav-actions">
+          <div class="user-status" title="Welcome {session.get('user_email', '')}">
+            <span class="user-icon">👤</span>
+          </div>
           <a href="/logout" class="btn-signup">Logout</a>
         </div>'''
     else:
@@ -795,6 +798,9 @@ def serve_calculator():
         </div>
         </div>
         <div class="nav-actions">
+          <div class="user-status" title="Welcome {session.get('user_email', '')}">
+            <span class="user-icon">👤</span>
+          </div>
           <a href="/logout" class="btn-signup">Logout</a>
         </div>'''
     
