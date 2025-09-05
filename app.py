@@ -573,11 +573,11 @@ def run_forecast():
                 expirations = _fetch_expirations(symbol)
                 start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
                 
-                # Filter expirations to get next 4 after (or equal to) start_date
+                # Filter expirations to get next 4 AFTER start_date (not including start_date)
                 valid_exps = []
                 for exp_str in expirations:
                     exp_date = datetime.strptime(exp_str, '%Y-%m-%d').date()
-                    if exp_date >= start_dt:
+                    if exp_date > start_dt:  # Changed from >= to > to get dates AFTER start_date
                         valid_exps.append(exp_str)
                 
                 # Sort by date to ensure proper order (nearest first)
@@ -1165,7 +1165,7 @@ FORECAST_TEMPLATE = '''
         </div>
 
         <div style="text-align: center;">
-            <a href="/calculator.html" class="back-btn">Back to Calculator</a>
+            <a href="/" class="back-btn">Back</a>
         </div>
     </div>
 
