@@ -49,6 +49,7 @@
             <a href="/signup" class="btn-signup">Sign Up</a>
           </div>
           <div class="nav-user" id="navUser" style="display: none;">
+            <span class="user-icon" id="userIcon" title="">👤</span>
             <span class="user-welcome" id="userWelcome">Welcome, User</span>
             <a href="/logout" class="btn-logout">Logout</a>
           </div>
@@ -226,12 +227,18 @@
           const adminDropdown = document.getElementById('adminDropdown');
           
           if (data.authenticated) {
-            console.log('User is authenticated, username:', data.username, 'is_admin:', data.is_admin);
+            console.log('User is authenticated, username:', data.username, 'is_admin:', data.is_admin, 'user_id:', data.user_id);
             
             // User is logged in
             document.getElementById('navAuth').style.display = 'none';
             document.getElementById('navUser').style.display = 'flex';
             document.getElementById('userWelcome').textContent = `Welcome, ${data.username}`;
+            
+            // Set user icon tooltip with user ID
+            const userIcon = document.getElementById('userIcon');
+            if (userIcon && data.user_id) {
+              userIcon.title = `User ID: ${data.user_id} | ${data.username}`;
+            }
             
             // Enable Tools dropdown for authenticated users
             if (toolsDropdown) {

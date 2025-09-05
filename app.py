@@ -296,6 +296,7 @@ def api_auth_status():
         return jsonify({
             "authenticated": True,
             "username": username,
+            "user_id": session['user_id'],
             "is_admin": is_admin
         })
     except Exception as e:
@@ -963,6 +964,9 @@ LOGIN_TEMPLATE = '''
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Selling-options.com</title>
     <link rel="stylesheet" href="/style.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="favicon-16x16.png" type="image/png" sizes="16x16">
     <style>
         .auth-container { max-width: 400px; margin: 100px auto; padding: 40px; }
         .auth-form { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
@@ -978,9 +982,45 @@ LOGIN_TEMPLATE = '''
         .flash-messages { margin-bottom: 20px; }
         .flash-error { background: #fee2e2; color: #dc2626; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
         .flash-success { background: #d1fae5; color: #059669; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
+        .nav-user-login { opacity: 0.4; cursor: not-allowed; }
+        .nav-user-login .user-icon { color: #9ca3af; }
     </style>
 </head>
 <body>
+    <header class="header">
+        <nav class="nav-container">
+            <div class="logo">
+                <img src="attached_assets/generated_images/Clean_upward_chart_icon_3aeef765.png" alt="Chart Logo" class="logo-image">
+                <strong>Selling-options.com</strong>
+            </div>
+            <div class="nav-center">
+                <div class="nav-quote">
+                    <input type="text" id="navQuoteSymbol" placeholder="Enter symbol..." class="nav-quote-input">
+                    <button onclick="getNavQuote()" class="nav-quote-btn">Quote</button>
+                    <div id="navQuoteResult" class="nav-quote-result"></div>
+                </div>
+            </div>
+            <div class="nav-right">
+                <div class="nav-dropdown disabled">
+                    <span class="nav-dropdown-label">Tools</span>
+                    <div class="nav-dropdown-content">
+                        <a href="/calculator.html">Options Calculator</a>
+                        <a href="/forecast">Watchlist Forecast</a>
+                    </div>
+                </div>
+                <div class="nav-dropdown">
+                    <span class="nav-dropdown-label">Education</span>
+                    <div class="nav-dropdown-content">
+                        <a href="/video-tutorials.html">Video Tutorials</a>
+                    </div>
+                </div>
+                <div class="nav-user-login">
+                    <span class="user-icon" title="Login to access your account">👤</span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
     <div class="auth-container">
         <div class="auth-form">
             <h1>Login</h1>
@@ -1009,6 +1049,55 @@ LOGIN_TEMPLATE = '''
             </div>
         </div>
     </div>
+
+    <script>
+      // Navigation stock quote functionality
+      async function getNavQuote() {
+        const symbol = document.getElementById('navQuoteSymbol').value.trim().toUpperCase();
+        const resultDiv = document.getElementById('navQuoteResult');
+        
+        if (!symbol) {
+          resultDiv.innerHTML = '<div class="nav-quote-error">Enter symbol</div>';
+          setTimeout(() => resultDiv.innerHTML = '', 3000);
+          return;
+        }
+        
+        resultDiv.innerHTML = '<div class="nav-quote-loading">Loading...</div>';
+        
+        try {
+          const response = await fetch(`/api/quote?symbol=${symbol}`);
+          const data = await response.json();
+          
+          if (data.error) {
+            resultDiv.innerHTML = `<div class="nav-quote-error">Not found</div>`;
+          } else {
+            resultDiv.innerHTML = `
+              <div class="nav-quote-success">
+                ${data.symbol}: $${data.price}
+              </div>
+            `;
+          }
+          
+          // Clear result after 5 seconds
+          setTimeout(() => resultDiv.innerHTML = '', 5000);
+        } catch (error) {
+          resultDiv.innerHTML = '<div class="nav-quote-error">Error</div>';
+          setTimeout(() => resultDiv.innerHTML = '', 3000);
+        }
+      }
+
+      // Allow Enter key for nav quote search
+      document.addEventListener('DOMContentLoaded', function() {
+        const navQuoteInput = document.getElementById('navQuoteSymbol');
+        if (navQuoteInput) {
+          navQuoteInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+              getNavQuote();
+            }
+          });
+        }
+      });
+    </script>
 </body>
 </html>
 '''
