@@ -1,0 +1,22 @@
+[+] Running 4/4
+ ✔ Network selling-options-lab_lab-network         Created                                                                                                                                                  0.8s
+ ✔ Volume "selling-options-lab_lab_postgres_data"  Created                                                                                                                                                  0.2s
+ ✔ Container selling-options-lab-db                Started                                                                                                                                                  2.8s
+ ✔ Container selling-options-lab-app               Started                                                                                                                                                  4.7s
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ sleep 30
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ sudo docker compose ps
+WARN[0000] Found multiple config files with supported names: /volume1/docker/selling-options-lab/compose.yaml, /volume1/docker/selling-options-lab/docker-compose.yml
+WARN[0000] Using /volume1/docker/selling-options-lab/compose.yaml
+WARN[0000] Found multiple config files with supported names: /volume1/docker/selling-options-lab/compose.yaml, /volume1/docker/selling-options-lab/docker-compose.yml
+WARN[0000] Using /volume1/docker/selling-options-lab/compose.yaml
+NAME                      IMAGE                                         COMMAND                  SERVICE                   CREATED              STATUS                          PORTS
+selling-options-lab-app   selling-options-lab-selling-options-lab-app   "python app.py"          selling-options-lab-app   About a minute ago   Restarting (1) 17 seconds ago
+selling-options-lab-db    postgres:16                                   "docker-entrypoint.s…"   lab-db                    About a minute ago   Up About a minute               0.0.0.0:5433->5432/tcp, :::5433->5432/tcp
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ sudo docker exec -it selling-options-lab-app python3 -c "
+> from app import create_tables, create_admin_user
+> create_tables()
+> create_admin_user('admin@lab.com', 'admin123')
+> print('✅ Database initialized with admin user')
+> "
+Error response from daemon: Container 3903979134f86d88a167c7bfb9710d9c4a6703898920912fb33e789aa466e8e3 is restarting, wait until the container is running
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$
