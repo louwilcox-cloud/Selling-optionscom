@@ -569,21 +569,21 @@ def run_forecast():
                     if not hist.empty:
                         current_price = float(hist['Close'].iloc[-1])
                 
-                # Get available expiration dates starting from start_date
+                # Get available expiration dates using yfinance (same as calculator)
                 expirations = _fetch_expirations(symbol)
                 start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
                 
-                # Filter expirations to get next 4 AFTER start_date (not including start_date)
+                # Filter real yfinance expiration dates to get next 4 AFTER start_date
                 valid_exps = []
                 for exp_str in expirations:
                     exp_date = datetime.strptime(exp_str, '%Y-%m-%d').date()
-                    if exp_date > start_dt:  # Changed from >= to > to get dates AFTER start_date
+                    if exp_date > start_dt:  # Only dates AFTER start_date
                         valid_exps.append(exp_str)
                 
-                # Sort by date to ensure proper order (nearest first)
+                # Sort by date to ensure proper chronological order
                 valid_exps.sort()
                 
-                # Take first 4 valid expirations (handles both daily and monthly options)
+                # Take first 4 valid expiration dates (real yfinance dates like Sep 19, Oct 17, Nov 21, Dec 19)
                 next_four_exps = valid_exps[:4]
                 
                 # Calculate predictions for each expiration
