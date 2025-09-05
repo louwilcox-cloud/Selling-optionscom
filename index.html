@@ -24,12 +24,34 @@
           </div>
         </div>
         <div class="nav-right">
-          <a href="/calculator.html" class="btn-nav">Calculator</a>
-          <a href="/forecast" class="btn-nav">Watchlist Forecast</a>
-          <a href="/video-tutorials.html" class="btn-nav">Video Tutorials</a>
-          <a href="/admin" class="btn-nav">Admin</a>
-          <a href="/login" class="btn-login">Log In</a>
-          <a href="/signup" class="btn-signup">Sign Up</a>
+          <div class="nav-dropdown">
+            <span class="nav-dropdown-label">Tools</span>
+            <div class="nav-dropdown-content">
+              <a href="/calculator.html">Options Calculator</a>
+              <a href="/forecast">Watchlist Forecast</a>
+            </div>
+          </div>
+          <div class="nav-dropdown">
+            <span class="nav-dropdown-label">Education</span>
+            <div class="nav-dropdown-content">
+              <a href="/video-tutorials.html">Video Tutorials</a>
+            </div>
+          </div>
+          <div class="nav-dropdown admin-only" id="adminDropdown" style="display: none;">
+            <span class="nav-dropdown-label">Admin</span>
+            <div class="nav-dropdown-content">
+              <a href="/admin">Manage Users</a>
+              <a href="/admin/watchlists">Manage Watchlists</a>
+            </div>
+          </div>
+          <div class="nav-auth" id="navAuth">
+            <a href="/login" class="btn-login">Log In</a>
+            <a href="/signup" class="btn-signup">Sign Up</a>
+          </div>
+          <div class="nav-user" id="navUser" style="display: none;">
+            <span class="user-welcome" id="userWelcome">Welcome, User</span>
+            <a href="/logout" class="btn-logout">Logout</a>
+          </div>
         </div>
       </nav>
     </header>
@@ -192,6 +214,37 @@
         }
       }
 
+      // Navigation authentication handling
+      async function checkAuthStatus() {
+        try {
+          const response = await fetch('/api/auth-status');
+          const data = await response.json();
+          
+          if (data.authenticated) {
+            // User is logged in
+            document.getElementById('navAuth').style.display = 'none';
+            document.getElementById('navUser').style.display = 'flex';
+            document.getElementById('userWelcome').textContent = `Welcome, ${data.username}`;
+            
+            // Show admin dropdown if user is admin
+            if (data.is_admin) {
+              document.getElementById('adminDropdown').style.display = 'inline-block';
+            }
+          } else {
+            // User is not logged in
+            document.getElementById('navAuth').style.display = 'flex';
+            document.getElementById('navUser').style.display = 'none';
+            document.getElementById('adminDropdown').style.display = 'none';
+          }
+        } catch (error) {
+          console.error('Error checking auth status:', error);
+          // Default to not authenticated
+          document.getElementById('navAuth').style.display = 'flex';
+          document.getElementById('navUser').style.display = 'none';
+          document.getElementById('adminDropdown').style.display = 'none';
+        }
+      }
+
       // Allow Enter key for nav quote search
       document.addEventListener('DOMContentLoaded', function() {
         const navQuoteInput = document.getElementById('navQuoteSymbol');
@@ -202,6 +255,9 @@
             }
           });
         }
+        
+        // Check authentication status on page load
+        checkAuthStatus();
       });
     </script>
   </body>

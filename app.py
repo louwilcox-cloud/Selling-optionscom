@@ -258,6 +258,53 @@ def api_market_data():
     except Exception as e:
         return jsonify({"error": f"Market data fetch failed: {e}"}), 500
 
+@app.route("/api/auth-status")
+def api_auth_status():
+    """Get current authentication status"""
+    if 'user_id' not in session:
+        return jsonify({
+            "authenticated": False,
+            "username": None,
+            "is_admin": False
+        })
+    
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Get user info
+        cur.execute('SELECT username FROM users WHERE id = %s', (session['user_id'],))
+        user_result = cur.fetchone()
+        
+        if not user_result:
+            session.clear()
+            return jsonify({
+                "authenticated": False,
+                "username": None,
+                "is_admin": False
+            })
+        
+        username = user_result[0]
+        
+        # Check if admin
+        cur.execute('SELECT 1 FROM admin_users WHERE user_id = %s', (session['user_id'],))
+        is_admin = cur.fetchone() is not None
+        
+        cur.close()
+        conn.close()
+        
+        return jsonify({
+            "authenticated": True,
+            "username": username,
+            "is_admin": is_admin
+        })
+    except Exception as e:
+        return jsonify({
+            "authenticated": False,
+            "username": None,
+            "is_admin": False
+        })
+
 @app.route("/api/results_both")
 def api_results_both():
     symbol = (request.args.get("symbol") or "").strip().upper()

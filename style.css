@@ -122,6 +122,90 @@ body {
   gap: 15px;
 }
 
+/* Navigation dropdown styles */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.nav-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.nav-dropdown-label {
+  color: #374151;
+  font-weight: 500;
+  padding: 20px 0;
+  cursor: pointer;
+  transition: color 0.2s;
+  display: block;
+}
+
+.nav-dropdown-label:hover {
+  color: #1e40af;
+}
+
+.nav-dropdown-content {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  min-width: 180px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-radius: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+  padding: 8px 0;
+  z-index: 1000;
+}
+
+.nav-dropdown:hover .nav-dropdown-content {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.nav-dropdown-content a {
+  display: block;
+  padding: 12px 20px;
+  text-decoration: none;
+  color: #374151;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.nav-dropdown-content a:hover {
+  background-color: #f3f4f6;
+  color: #1e40af;
+}
+
+.nav-auth {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-welcome {
+  color: #374151;
+  font-weight: 500;
+}
+
+.admin-only {
+  display: none;
+}
+
 .user-status {
   display: flex;
   align-items: center;
