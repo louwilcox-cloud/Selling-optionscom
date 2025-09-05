@@ -67,6 +67,112 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def generate_navigation():
+    """
+    Generate navigation HTML based on user authentication status.
+    This is the centralized navigation system - change once, affects all pages.
+    """
+    # Check authentication status
+    is_authenticated = 'user_id' in session
+    is_admin = False
+    user_email = None
+    
+    if is_authenticated:
+        user_email = session.get('user_email', '')
+        
+        # Check if user is admin
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute('SELECT 1 FROM admin_users WHERE user_id = %s', (session['user_id'],))
+            is_admin = cur.fetchone() is not None
+            cur.close()
+            conn.close()
+        except:
+            is_admin = False
+    
+    # Generate appropriate navigation HTML
+    if is_authenticated:
+        # Authenticated user navigation
+        auth_section = f'''
+          <div class="nav-user authenticated">
+            <span class="user-icon" title="Welcome, {user_email}">👤</span>
+            <span class="user-welcome">Welcome, {user_email}</span>
+            <a href="/logout" class="btn-logout">Logout</a>
+          </div>'''
+        
+        # Tools dropdown (enabled for authenticated users)
+        tools_dropdown = '''
+          <div class="nav-dropdown">
+            <span class="nav-dropdown-label">Tools</span>
+            <div class="nav-dropdown-content">
+              <a href="/calculator.html">Options Calculator</a>
+              <a href="/forecast">Watchlist Forecast</a>
+            </div>
+          </div>'''
+        
+        # Admin dropdown (only if user is admin)
+        admin_dropdown = '''
+          <div class="nav-dropdown">
+            <span class="nav-dropdown-label">Admin</span>
+            <div class="nav-dropdown-content">
+              <a href="/admin/users">Manage Users</a>
+              <a href="/admin/watchlists">Manage Watchlists</a>
+            </div>
+          </div>''' if is_admin else ''
+    else:
+        # Non-authenticated user navigation
+        auth_section = '''
+          <div class="nav-auth">
+            <a href="/login" class="btn-login">Log In</a>
+            <a href="/signup" class="btn-signup">Sign Up</a>
+          </div>'''
+        
+        # Tools dropdown (disabled for non-authenticated users)
+        tools_dropdown = '''
+          <div class="nav-dropdown disabled">
+            <span class="nav-dropdown-label">Tools</span>
+            <div class="nav-dropdown-content">
+              <a href="/calculator.html">Options Calculator</a>
+              <a href="/forecast">Watchlist Forecast</a>
+            </div>
+          </div>'''
+        
+        admin_dropdown = ''
+    
+    # Complete navigation HTML
+    navigation_html = f'''
+    <header class="header">
+      <nav class="nav-container">
+        <div class="logo">
+          <img src="attached_assets/generated_images/Clean_upward_chart_icon_3aeef765.png" alt="Chart Logo" class="logo-image">
+          <a href="/" style="text-decoration: none; color: inherit;">
+            <strong>Selling-options.com</strong>
+          </a>
+        </div>
+        <div class="nav-center">
+          <div class="nav-quote">
+            <input type="text" id="navQuoteSymbol" placeholder="Enter symbol..." class="nav-quote-input">
+            <button onclick="getNavQuote()" class="nav-quote-btn">Quote</button>
+            <div id="navQuoteResult" class="nav-quote-result"></div>
+          </div>
+        </div>
+        <div class="nav-right">
+          {tools_dropdown}
+          <div class="nav-dropdown">
+            <span class="nav-dropdown-label">Education</span>
+            <div class="nav-dropdown-content">
+              <a href="/video-tutorials.html">Video Tutorials</a>
+            </div>
+          </div>
+          {admin_dropdown}
+          {auth_section}
+        </div>
+      </nav>
+    </header>'''
+    
+    return navigation_html
+
 def _safe_float(x) -> float:
     try:
         if x is None or (isinstance(x, float) and math.isnan(x)):
@@ -759,121 +865,53 @@ def run_forecast():
 # Static file serving
 @app.route('/')
 def serve_index():
-    # Check if user is logged in
-    user_email = session.get('user_email')
-    is_logged_in = user_email is not None
-    
-    # Read the index.html file and modify it
+    # Read the index.html file
     with open('index.html', 'r') as f:
         content = f.read()
     
     # Replace "Market Overview" with "Market Pulse"
     content = content.replace('Market Overview', 'Market Pulse')
     
-    # Modify navigation based on login status
-    if is_logged_in:
-        # Show user status icon and active Tools menu
-        nav_actions = f'''<div class="nav-actions">
-          <div class="user-status" title="Welcome {user_email}">
-            <span class="user-icon">👤</span>
-          </div>
-          <a href="/logout" class="btn-login">Log Out</a>
-        </div>'''
-        
-        # Enable Tools menu with Watchlist Forecast
-        tools_menu = '''<div class="nav-item dropdown">
-            <a href="#">Tools</a>
-            <div class="dropdown-content">
-              <a href="/calculator.html">Options Calculator</a>
-              <a href="/forecast">Watchlist Forecast</a>
-            </div>
-          </div>'''
-    else:
-        # Show login/signup buttons
-        nav_actions = '''<div class="nav-actions">
-          <a href="/login" class="btn-login">Log In</a>
-          <a href="/signup" class="btn-signup">Sign Up</a>
-        </div>'''
-        
-        # Disable Tools menu (grey out)
-        tools_menu = '''<div class="nav-item dropdown disabled">
-            <a href="#" style="color: #ccc; cursor: not-allowed;">Tools</a>
-          </div>'''
+    # Generate server-side navigation
+    navigation_html = generate_navigation()
     
-    # Replace nav actions
-    content = content.replace('''<div class="nav-actions">
-          <a href="/login" class="btn-login">Log In</a>
-          <a href="/signup" class="btn-signup">Sign Up</a>
-        </div>''', nav_actions)
-    
-    # Replace tools menu
-    content = content.replace('''<div class="nav-item dropdown">
-            <a href="#">Tools</a>
-            <div class="dropdown-content">
-              <a href="/calculator.html">Options Calculator</a>
-            </div>
-          </div>''', tools_menu)
+    # Replace the entire header section with our server-generated navigation
+    import re
+    # Find and replace the entire header section
+    header_pattern = r'<header class="header">.*?</header>'
+    content = re.sub(header_pattern, navigation_html, content, flags=re.DOTALL)
     
     return content
 
 @app.route('/calculator.html')
 def serve_calculator():
-    # Simply serve the static file - authentication is handled client-side like other pages
-    return send_from_directory('.', 'calculator.html')
+    # Read the calculator.html file
+    with open('calculator.html', 'r') as f:
+        content = f.read()
+    
+    # Generate server-side navigation
+    navigation_html = generate_navigation()
+    
+    # Replace the entire header section with our server-generated navigation
+    import re
+    header_pattern = r'<header class="header">.*?</header>'
+    content = re.sub(header_pattern, navigation_html, content, flags=re.DOTALL)
+    
+    return content
 
 @app.route('/video-tutorials.html')
 def serve_video_tutorials():
-    # Check if user is logged in
-    user_email = session.get('user_email')
-    is_logged_in = user_email is not None
-    
-    # Read the video-tutorials.html file and modify it
+    # Read the video-tutorials.html file
     with open('video-tutorials.html', 'r') as f:
         content = f.read()
     
-    # Modify navigation based on login status
-    if is_logged_in:
-        # Show user status icon and active Tools menu
-        nav_actions = f'''<div class="nav-actions">
-          <div class="user-status" title="Welcome {user_email}">
-            <span class="user-icon">👤</span>
-          </div>
-          <a href="/logout" class="btn-login">Log Out</a>
-        </div>'''
-        
-        # Enable Tools menu with Watchlist Forecast
-        tools_menu = '''<div class="nav-item dropdown">
-            <a href="#">Tools</a>
-            <div class="dropdown-content">
-              <a href="/calculator.html">Options Calculator</a>
-              <a href="/forecast">Watchlist Forecast</a>
-            </div>
-          </div>'''
-    else:
-        # Show login/signup buttons
-        nav_actions = '''<div class="nav-actions">
-          <a href="/login" class="btn-login">Log In</a>
-          <a href="/signup" class="btn-signup">Sign Up</a>
-        </div>'''
-        
-        # Disable Tools menu (grey out)
-        tools_menu = '''<div class="nav-item dropdown disabled">
-            <a href="#" style="color: #ccc; cursor: not-allowed;">Tools</a>
-          </div>'''
+    # Generate server-side navigation
+    navigation_html = generate_navigation()
     
-    # Replace nav actions
-    content = content.replace('''<div class="nav-actions">
-          <a href="/login" class="btn-login">Log In</a>
-          <a href="/signup" class="btn-signup">Sign Up</a>
-        </div>''', nav_actions)
-    
-    # Replace tools menu
-    content = content.replace('''<div class="nav-item dropdown">
-            <a href="#">Tools</a>
-            <div class="dropdown-content">
-              <a href="/calculator.html">Options Calculator</a>
-            </div>
-          </div>''', tools_menu)
+    # Replace the entire header section with our server-generated navigation
+    import re
+    header_pattern = r'<header class="header">.*?</header>'
+    content = re.sub(header_pattern, navigation_html, content, flags=re.DOTALL)
     
     return content
 
