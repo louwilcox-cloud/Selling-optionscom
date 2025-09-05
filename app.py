@@ -142,7 +142,7 @@ def generate_navigation():
     <header class="header">
       <nav class="nav-container">
         <div class="logo">
-          <img src="attached_assets/generated_images/Clean_upward_chart_icon_3aeef765.png" alt="Chart Logo" class="logo-image">
+          <img src="/attached_assets/generated_images/Clean_upward_chart_icon_3aeef765.png" alt="Chart Logo" class="logo-image">
           <a href="/" style="text-decoration: none; color: inherit;">
             <strong>Selling-options.com</strong>
           </a>
@@ -972,7 +972,7 @@ LOGIN_TEMPLATE = '''
     <header class="header">
         <nav class="nav-container">
             <div class="logo">
-                <img src="attached_assets/generated_images/Clean_upward_chart_icon_3aeef765.png" alt="Chart Logo" class="logo-image">
+                <img src="/attached_assets/generated_images/Clean_upward_chart_icon_3aeef765.png" alt="Chart Logo" class="logo-image">
                 <strong>Selling-options.com</strong>
             </div>
             <div class="nav-center">
