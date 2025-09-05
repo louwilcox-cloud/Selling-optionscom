@@ -553,7 +553,12 @@ def admin_dashboard():
     cur.close()
     conn.close()
     
-    return render_template_string(ADMIN_TEMPLATE, users=users, recent_activity=recent_activity)
+    # Generate server-side navigation and inject it into the template
+    navigation_html = generate_navigation()
+    admin_html = render_template_string(ADMIN_TEMPLATE, users=users, recent_activity=recent_activity)
+    admin_html = admin_html.replace('{{NAVIGATION_PLACEHOLDER}}', navigation_html)
+    
+    return admin_html
 
 @app.route('/admin/toggle-user/<int:user_id>')
 @admin_required
@@ -638,7 +643,12 @@ def admin_manage_watchlists():
     cur.close()
     conn.close()
     
-    return render_template_string(WATCHLISTS_TEMPLATE, watchlists=watchlists)
+    # Generate server-side navigation and inject it into the template
+    navigation_html = generate_navigation()
+    watchlists_html = render_template_string(WATCHLISTS_TEMPLATE, watchlists=watchlists)
+    watchlists_html = watchlists_html.replace('{{NAVIGATION_PLACEHOLDER}}', navigation_html)
+    
+    return watchlists_html
 
 @app.route('/admin/watchlists/save', methods=['POST'])
 @admin_required
@@ -1132,6 +1142,10 @@ ADMIN_TEMPLATE = '''
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Selling-options.com</title>
     <link rel="stylesheet" href="/style.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
     <style>
         .admin-container { max-width: 1200px; margin: 40px auto; padding: 20px; }
         .admin-header { text-align: center; margin-bottom: 40px; }
@@ -1156,6 +1170,7 @@ ADMIN_TEMPLATE = '''
     </style>
 </head>
 <body>
+    {{NAVIGATION_PLACEHOLDER}}
     <div class="admin-container">
         <div class="admin-header">
             <h1>Admin Dashboard</h1>
@@ -1255,6 +1270,10 @@ WATCHLISTS_TEMPLATE = '''
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Watchlists - Selling-options.com</title>
     <link rel="stylesheet" href="/style.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
     <style>
         .admin-container { max-width: 1000px; margin: 40px auto; padding: 20px; }
         .admin-header { text-align: center; margin-bottom: 40px; }
@@ -1282,6 +1301,7 @@ WATCHLISTS_TEMPLATE = '''
     </style>
 </head>
 <body>
+    {{NAVIGATION_PLACEHOLDER}}
     <div class="admin-container">
         <div class="admin-header">
             <h1>Manage Watchlists</h1>
