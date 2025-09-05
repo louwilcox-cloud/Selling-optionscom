@@ -551,13 +551,15 @@
             
             // User is logged in
             document.getElementById('navAuth').style.display = 'none';
-            document.getElementById('navUser').style.display = 'flex';
+            const navUser = document.getElementById('navUser');
+            navUser.style.display = 'flex';
+            navUser.classList.add('authenticated'); // Add authenticated class for green color
             document.getElementById('userWelcome').textContent = `Welcome, ${data.username}`;
             
-            // Set user icon tooltip with user ID
+            // Set user icon tooltip with welcome message
             const userIcon = document.getElementById('userIcon');
             if (userIcon && data.user_id) {
-              userIcon.title = `User ID: ${data.user_id} | ${data.username}`;
+              userIcon.title = `Welcome, ${data.username}`;
             }
             
             // Enable Tools dropdown for authenticated users

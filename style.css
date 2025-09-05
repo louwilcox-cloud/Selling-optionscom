@@ -194,12 +194,12 @@ body {
 .nav-user {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  position: relative;
 }
 
 .user-welcome {
-  color: #374151;
-  font-weight: 500;
+  display: none; /* Hide welcome text */
 }
 
 .admin-only {
@@ -227,12 +227,22 @@ body {
 }
 
 .user-icon {
-  font-size: 20px;
-  color: #00d4aa;
-  background: rgba(0, 212, 170, 0.1);
-  padding: 8px;
-  border-radius: 50%;
-  border: 2px solid #00d4aa;
+  font-size: 1.2rem;
+  color: #9ca3af; /* Gray by default */
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding: 0; /* Remove padding */
+  background: none; /* Remove background circle */
+  border-radius: 0; /* Remove border radius */
+}
+
+/* Green color when user is authenticated */
+.nav-user.authenticated .user-icon {
+  color: #10b981; /* Green when logged in */
+}
+
+.nav-user.authenticated .user-icon:hover {
+  color: #059669; /* Darker green on hover */
 }
 
 .btn-login, .btn-signup {

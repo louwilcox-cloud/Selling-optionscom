@@ -908,8 +908,8 @@ LOGIN_TEMPLATE = '''
         .flash-messages { margin-bottom: 20px; }
         .flash-error { background: #fee2e2; color: #dc2626; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
         .flash-success { background: #d1fae5; color: #059669; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
-        .nav-user-login { opacity: 0.4; cursor: not-allowed; }
-        .nav-user-login .user-icon { color: #9ca3af; }
+        .nav-user-login { opacity: 0.6; cursor: not-allowed; }
+        .nav-user-login .user-icon { color: #9ca3af; font-size: 1.2rem; }
     </style>
 </head>
 <body>
