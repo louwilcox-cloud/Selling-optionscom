@@ -118,7 +118,23 @@ body {
 
 .nav-actions {
   display: flex;
+  align-items: center;
   gap: 15px;
+}
+
+.user-status {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.user-icon {
+  font-size: 20px;
+  color: #00d4aa;
+  background: rgba(0, 212, 170, 0.1);
+  padding: 8px;
+  border-radius: 50%;
+  border: 2px solid #00d4aa;
 }
 
 .btn-login, .btn-signup {
