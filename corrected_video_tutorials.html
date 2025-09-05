@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Tutorials - Selling-options.com</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="favicon-16x16.png" type="image/png" sizes="16x16">
+    <style>
+        .tutorials-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4rem 0;
+            text-align: center;
+        }
+        
+        .tutorials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 2rem 0;
+        }
+        
+        .tutorial-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        
+        .tutorial-card:hover {
+            transform: translateY(-4px);
+        }
+        
+        .tutorial-thumbnail {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+        }
+        
+        .tutorial-content {
+            padding: 1.5rem;
+        }
+        
+        .tutorial-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        
+        .tutorial-description {
+            color: #666;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+        
+        .tutorial-duration {
+            color: #888;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+        
+        .btn-watch {
+            background: #4f46e5;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn-watch:hover {
+            background: #3730a3;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav-container">
+            <div class="logo">
+                <img src="attached_assets/generated_images/Clean_upward_chart_icon_3aeef765.png" alt="Chart Logo" class="logo-image">
+                <a href="/" style="text-decoration: none; color: inherit;">
+                    <strong>Selling-options.com</strong>
+                </a>
+            </div>
+            <div class="nav-center">
+                <div class="nav-quote">
+                    <input type="text" id="navQuoteSymbol" placeholder="Enter symbol..." class="nav-quote-input">
+                    <button onclick="getNavQuote()" class="nav-quote-btn">Quote</button>
+                    <div id="navQuoteResult" class="nav-quote-result"></div>
+                </div>
+            </div>
+            <div class="nav-right">
+                <a href="/" class="btn-nav">Market Pulse</a>
+                <a href="/calculator.html" class="btn-nav">Calculator</a>
+                <a href="/forecast" class="btn-nav">Watchlist Forecast</a>
+                <a href="/admin" class="btn-login">Admin</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="tutorials-hero">
+            <div class="container">
+                <h1>Video Tutorials</h1>
+                <p>Master options trading with our comprehensive video guides</p>
+            </div>
+        </section>
+
+        <section class="tutorials-content">
+            <div class="container">
+                <div class="tutorials-grid">
+                    <div class="tutorial-card">
+                        <div class="tutorial-thumbnail">
+                            📊
+                        </div>
+                        <div class="tutorial-content">
+                            <div class="tutorial-title">Getting Started with Options</div>
+                            <div class="tutorial-description">Learn the basics of options trading, including calls, puts, and key terminology.</div>
+                            <div class="tutorial-duration">Duration: 12:30</div>
+                            <a href="#" class="btn-watch">Watch Now</a>
+                        </div>
+                    </div>
+
+                    <div class="tutorial-card">
+                        <div class="tutorial-thumbnail">
+                            🧮
+                        </div>
+                        <div class="tutorial-content">
+                            <div class="tutorial-title">Using the Options Calculator</div>
+                            <div class="tutorial-description">Step-by-step guide to calculating Bulls Want and Bears Want values.</div>
+                            <div class="tutorial-duration">Duration: 8:45</div>
+                            <a href="#" class="btn-watch">Watch Now</a>
+                        </div>
+                    </div>
+
+                    <div class="tutorial-card">
+                        <div class="tutorial-thumbnail">
+                            📈
+                        </div>
+                        <div class="tutorial-content">
+                            <div class="tutorial-title">Market Pulse Overview</div>
+                            <div class="tutorial-description">Understanding real-time market data and sentiment indicators.</div>
+                            <div class="tutorial-duration">Duration: 15:20</div>
+                            <a href="#" class="btn-watch">Watch Now</a>
+                        </div>
+                    </div>
+
+                    <div class="tutorial-card">
+                        <div class="tutorial-thumbnail">
+                            📋
+                        </div>
+                        <div class="tutorial-content">
+                            <div class="tutorial-title">Watchlist Forecast Tool</div>
+                            <div class="tutorial-description">Create and manage your stock watchlist with predictive analysis.</div>
+                            <div class="tutorial-duration">Duration: 10:15</div>
+                            <a href="#" class="btn-watch">Watch Now</a>
+                        </div>
+                    </div>
+
+                    <div class="tutorial-card">
+                        <div class="tutorial-thumbnail">
+                            ⚡
+                        </div>
+                        <div class="tutorial-content">
+                            <div class="tutorial-title">Advanced Trading Strategies</div>
+                            <div class="tutorial-description">Explore advanced options strategies for experienced traders.</div>
+                            <div class="tutorial-duration">Duration: 22:10</div>
+                            <a href="#" class="btn-watch">Watch Now</a>
+                        </div>
+                    </div>
+
+                    <div class="tutorial-card">
+                        <div class="tutorial-thumbnail">
+                            🎯
+                        </div>
+                        <div class="tutorial-content">
+                            <div class="tutorial-title">Risk Management</div>
+                            <div class="tutorial-description">Essential risk management techniques for options trading.</div>
+                            <div class="tutorial-duration">Duration: 18:30</div>
+                            <a href="#" class="btn-watch">Watch Now</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Navigation quote functionality
+        async function getNavQuote() {
+            const symbol = document.getElementById('navQuoteSymbol').value.toUpperCase();
+            const result = document.getElementById('navQuoteResult');
+            
+            if (!symbol) {
+                result.innerHTML = '<div class="error">Please enter a symbol</div>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/quote?symbol=${symbol}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    result.innerHTML = `<div class="error">${data.error}</div>`;
+                } else {
+                    const changeClass = data.change >= 0 ? 'positive' : 'negative';
+                    result.innerHTML = `
+                        <div class="quote-result">
+                            <strong>${symbol}</strong>: $${data.price} 
+                            <span class="${changeClass}">(${data.change >= 0 ? '+' : ''}${data.change})</span>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = '<div class="error">Error fetching quote</div>';
+            }
+        }
+        
+        // Enter key support for quote input
+        document.getElementById('navQuoteSymbol').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                getNavQuote();
+            }
+        });
+    </script>
+</body>
+</html>
