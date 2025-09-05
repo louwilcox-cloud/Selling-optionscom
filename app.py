@@ -273,7 +273,7 @@ def api_auth_status():
         cur = conn.cursor()
         
         # Get user info
-        cur.execute('SELECT username FROM users WHERE id = %s', (session['user_id'],))
+        cur.execute('SELECT email FROM users WHERE id = %s', (session['user_id'],))
         user_result = cur.fetchone()
         
         if not user_result:
