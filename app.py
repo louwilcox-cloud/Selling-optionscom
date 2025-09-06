@@ -510,16 +510,16 @@ def api_market_data():
         # Row 1: S&P500, DOW, NASDAQ, Russell, VIX
         # Row 2: DXY, Gold, TLT, Bitcoin, ETH
         symbols_ordered = [
-            ('S&P 500', '^GSPC'),
-            ('Dow Jones', '^DJI'),
-            ('NASDAQ', '^IXIC'),
-            ('Russell 2000', '^RUT'),
-            ('VIX', '^VIX'),
-            ('US Dollar Index', 'DX=F'),
-            ('Gold', 'GC=F'),
-            ('TLT', 'TLT'),
-            ('Bitcoin', 'BTC-USD'),
-            ('Ethereum', 'ETH-USD'),
+            ('S&P 500', 'SPY'),  # Use SPY ETF instead of ^GSPC index
+            ('Dow Jones', 'DIA'),  # Use DIA ETF instead of ^DJI index  
+            ('NASDAQ', 'QQQ'),  # Use QQQ ETF instead of ^IXIC index
+            ('Russell 2000', 'IWM'),  # Use IWM ETF instead of ^RUT index
+            ('VIX', 'VXX'),  # Use VXX ETF instead of ^VIX index
+            ('Gold', 'GLD'),  # Use GLD ETF instead of GC=F futures
+            ('TLT', 'TLT'),  # Keep TLT as is (valid stock)
+            ('US Dollar', 'UUP'),  # Use UUP ETF instead of DX=F futures
+            ('Oil', 'USO'),  # Add oil ETF instead of crypto
+            ('Tech', 'XLK'),  # Add technology sector ETF
         ]
         
         # Extract just the symbols for batch download
