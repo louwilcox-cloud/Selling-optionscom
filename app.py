@@ -645,18 +645,6 @@ def api_results_both():
     except Exception as e:
         return jsonify({"error": f"Computation failed: {e}"}), 500
 
-@app.route("/debug/yahoo")
-def debug_yahoo():
-    """Debug endpoint to test Yahoo Finance API directly"""
-    sym = request.args.get("symbol", "UPS")
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=1d&interval=1m&includePrePost=true"
-    r = requests_session.get(url, timeout=12)
-    return jsonify({
-        "symbol": sym,
-        "status": r.status_code,
-        "y-rid": r.headers.get("y-rid"),
-        "content_len": len(r.content),
-    })
 
 # Authentication routes
 @app.route('/signup', methods=['GET', 'POST'])
