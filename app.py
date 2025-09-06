@@ -82,6 +82,14 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
+
+# Secure session configuration
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=True,  # Enable when behind HTTPS
+)
+
 Session(app)
 
 # Database connection
@@ -651,7 +659,7 @@ def logout():
     return redirect('/')
 
 @app.route('/admin')
-# @admin_required  # Temporarily disabled for testing
+@admin_required
 def admin_dashboard():
     conn = get_db_connection()
     cur = conn.cursor()

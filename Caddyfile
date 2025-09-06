@@ -21,6 +21,22 @@
     # Compression
     encode zstd gzip
     
+    # Admin route protection - IP allowlist only
+    @admin path /admin* /admin/*
+    @notallowed not remote_ip 192.168.0.0/16 10.0.0.0/8 172.16.0.0/12 127.0.0.1/32
+    
+    handle @admin {
+        # Block unauthorized IPs from accessing admin
+        respond @notallowed "Access Denied - Admin area restricted" 403
+        
+        reverse_proxy selling-options-app:5000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+    
     # API routes
     handle /api/* {
         reverse_proxy selling-options-app:5000 {
