@@ -515,14 +515,15 @@ def api_get_options_data():
         return jsonify({"error": f"Failed to fetch options chain: {e}"}), 500
 
 # Market data API with batched downloading
-@app.route("/api/market-data") 
+@app.route("/api/market-data")
+@retry_with_backoff(max_retries=2, base_delay=1)
 def api_market_data():
-    """TEMPORARILY DISABLED - Get major market indices (causing rate limits)"""
-    # Return simple response to stop API spam while rate limits settle
-    return jsonify([
-        {'name': 'Market Data', 'symbol': 'INFO', 'price': 'Temporarily Disabled', 'change': 0, 'change_percent': 0, 'volume': 0},
-        {'name': 'API Status', 'symbol': 'STATUS', 'price': 'Rate Limiting Active', 'change': 0, 'change_percent': 0, 'volume': 0}
-    ])
+    """Get major market indices and assets using batched download"""
+    # Check cache first
+    cache_key = "market_data"
+    cached = quotes_cache.get(cache_key)
+    if cached is not None:
+        return jsonify(cached)
     
     try:
         # Ordered by importance as requested
