@@ -20,11 +20,96 @@ from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from functools import wraps
 from polygon import RESTClient
+import datetime as dt
 
 # Note: Removed Yahoo Finance session handling - using pure Polygon.io now
 
 # Initialize Polygon.io client
 polygon_client = RESTClient(api_key=os.getenv('POLYGON_API_KEY'))
+POLY_KEY = os.getenv('POLYGON_API_KEY')
+_poly = requests.Session()
+_poly.headers["Accept-Encoding"] = "gzip"
+
+# Market status cache
+_status_cache = {"at": 0, "data": None}
+
+def get_market_phase(ttl=15):
+    """Return one of: 'open', 'afterhours', 'pre', 'closed' (ET clock)."""
+    now = time.time()
+    if now - _status_cache["at"] < ttl and _status_cache["data"]:
+        return _status_cache["data"]
+    
+    try:
+        r = _poly.get("https://api.polygon.io/v1/marketstatus/now",
+                      params={"apiKey": POLY_KEY}, timeout=3)
+        phase = "closed"
+        if r.ok:
+            j = r.json()
+            # polygon returns 'market': 'open' or 'closed'; 'afterHours' boolean.
+            if j.get("market") == "open":
+                phase = "open"
+            elif j.get("afterHours"):
+                phase = "afterhours"
+            else:
+                # crude pre-market check based on ET hour (optional)
+                et = dt.datetime.now(dt.timezone(dt.timedelta(hours=-4)))  # EDT
+                if et.hour < 9 or (et.hour == 9 and et.minute < 30):
+                    phase = "pre"
+                else:
+                    phase = "closed"
+        _status_cache.update({"at": now, "data": phase})
+        return phase
+    except Exception as e:
+        print(f"Market status check failed: {e}")
+        # Default to closed if we can't determine status
+        return "closed"
+
+# Previous close cache for efficient bulk requests
+_prev_cache = {"at": 0, "blob": None}
+
+def get_prev_close(symbol: str, ttl=120):
+    """Return previous close for symbol (float) using grouped prev."""
+    now = time.time()
+    if not POLY_KEY:
+        return None
+    
+    if now - _prev_cache["at"] >= ttl or not _prev_cache["blob"]:
+        try:
+            url = "https://api.polygon.io/v2/aggs/grouped/locale/us/market/stocks/prev"
+            r = _poly.get(url, params={"adjusted":"true","apiKey": POLY_KEY}, timeout=5)
+            if r.ok:
+                _prev_cache.update({"at": now, "blob": r.json()})
+            else:
+                print(f"Failed to get grouped previous close: {r.status_code}")
+                return None
+        except Exception as e:
+            print(f"Previous close fetch failed: {e}")
+            return None
+    
+    results = (_prev_cache["blob"] or {}).get("results") or []
+    for row in results:
+        if row.get("T") == symbol:
+            return float(row.get("c", 0))  # close
+    return None
+
+def get_display_stock_price(symbol: str):
+    """Get appropriate stock price based on market phase."""
+    phase = get_market_phase()
+    price, src, asof = None, None, None
+
+    if phase == "open":
+        # Market is open but we'll use previous close to avoid rate limits
+        price = get_prev_close(symbol)
+        src = "prev_close (market open; avoiding rate limits)"
+    elif phase in ("afterhours", "pre"):
+        price = get_prev_close(symbol)
+        src = f"prev_close ({phase})"
+    else:  # closed
+        price = get_prev_close(symbol)
+        src = "prev_close (market closed)"
+
+    asof = "previous session close"
+    return {"symbol": symbol, "price": price, "phase": phase, "source": src, "asof": asof}
 
 # Note: Removed Yahoo Finance throttling - Polygon.io handles rate limiting internally
 
