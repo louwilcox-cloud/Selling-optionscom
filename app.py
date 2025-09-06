@@ -400,10 +400,17 @@ def api_get_options_data():
     except Exception as e:
         return jsonify({"error": f"Failed to fetch options chain: {e}"}), 500
 
-# Market data API
+# Market data API with batched downloading
 @app.route("/api/market-data")
+@retry_with_backoff(max_retries=2, base_delay=1)
 def api_market_data():
-    """Get major market indices and assets"""
+    """Get major market indices and assets using batched download"""
+    # Check cache first
+    cache_key = "market_data"
+    cached = quotes_cache.get(cache_key)
+    if cached is not None:
+        return jsonify(cached)
+    
     try:
         # Ordered by importance as requested
         # Row 1: S&P500, DOW, NASDAQ, Russell, VIX
@@ -421,37 +428,86 @@ def api_market_data():
             ('Ethereum', 'ETH-USD'),
         ]
         
-        market_data = []
-        for name, symbol in symbols_ordered:
-            try:
-                ticker = yf.Ticker(symbol, session=requests_session)
-                hist = ticker.history(period="2d")  # Get 2 days to calculate change
-                if not hist.empty:
-                    current = float(hist['Close'].iloc[-1])
-                    previous = float(hist['Close'].iloc[-2]) if len(hist) > 1 else current
-                    change = current - previous
-                    change_pct = (change / previous * 100) if previous != 0 else 0
-                    
-                    market_data.append({
-                        'name': name,
-                        'symbol': symbol,
-                        'price': round(current, 2),
-                        'change': round(change, 2),
-                        'change_pct': round(change_pct, 2)
-                    })
-            except Exception as e:
-                print(f"Error fetching {name}: {e}")
-                market_data.append({
-                    'name': name,
-                    'symbol': symbol,
-                    'price': 0,
-                    'change': 0,
-                    'change_pct': 0
-                })
+        # Extract just the symbols for batch download
+        symbols = [symbol for _, symbol in symbols_ordered]
         
+        # Batch download all symbols at once (more efficient)
+        try:
+            hist_data = yf.download(symbols, period="2d", group_by='ticker', progress=False)
+            
+            market_data = []
+            for name, symbol in symbols_ordered:
+                try:
+                    if len(symbols) == 1:
+                        # Single symbol case
+                        data = hist_data
+                    else:
+                        # Multiple symbols case
+                        data = hist_data[symbol] if symbol in hist_data.columns.levels[0] else None
+                    
+                    if data is not None and not data.empty:
+                        current = float(data['Close'].iloc[-1])
+                        previous = float(data['Close'].iloc[-2]) if len(data) > 1 else current
+                        change = current - previous
+                        change_pct = (change / previous * 100) if previous != 0 else 0
+                        
+                        market_data.append({
+                            'name': name,
+                            'symbol': symbol,
+                            'price': round(current, 2),
+                            'change': round(change, 2),
+                            'change_pct': round(change_pct, 2)
+                        })
+                    else:
+                        # Fallback to individual ticker if batch failed for this symbol
+                        market_data.append(_get_individual_market_data(name, symbol))
+                        
+                except Exception as e:
+                    print(f"Error processing {name}: {e}")
+                    market_data.append(_get_individual_market_data(name, symbol))
+            
+        except Exception as e:
+            print(f"Batch download failed: {e}. Falling back to individual calls...")
+            # Fallback to individual calls if batch fails
+            market_data = []
+            for name, symbol in symbols_ordered:
+                market_data.append(_get_individual_market_data(name, symbol))
+        
+        # Cache the result
+        quotes_cache.set(cache_key, market_data)
         return jsonify(market_data)
+        
     except Exception as e:
         return jsonify({"error": f"Market data fetch failed: {e}"}), 500
+
+def _get_individual_market_data(name, symbol):
+    """Fallback function for individual market data fetching"""
+    try:
+        ticker = yf.Ticker(symbol)
+        hist = ticker.history(period="2d")
+        if not hist.empty:
+            current = float(hist['Close'].iloc[-1])
+            previous = float(hist['Close'].iloc[-2]) if len(hist) > 1 else current
+            change = current - previous
+            change_pct = (change / previous * 100) if previous != 0 else 0
+            
+            return {
+                'name': name,
+                'symbol': symbol,
+                'price': round(current, 2),
+                'change': round(change, 2),
+                'change_pct': round(change_pct, 2)
+            }
+    except Exception as e:
+        print(f"Error fetching {name}: {e}")
+    
+    return {
+        'name': name,
+        'symbol': symbol,
+        'price': 0,
+        'change': 0,
+        'change_pct': 0
+    }
 
 @app.route("/api/auth-status")
 def api_auth_status():
@@ -857,16 +913,24 @@ def run_forecast():
         
         for symbol in symbols:
             try:
-                # Get current price
-                ticker = yf.Ticker(symbol, session=requests_session)
-                info = ticker.info
-                current_price = info.get('currentPrice') or info.get('regularMarketPrice', 0)
+                # Get current price using fast_info -> history fallback
+                ticker = yf.Ticker(symbol)
+                current_price = 0
+                
+                try:
+                    # Try fast_info first (more reliable)
+                    current_price = ticker.fast_info.get('last_price', 0)
+                except Exception:
+                    pass
                 
                 if current_price == 0:
-                    # Try getting it from history if info doesn't have current price
-                    hist = ticker.history(period='1d')
-                    if not hist.empty:
-                        current_price = float(hist['Close'].iloc[-1])
+                    # Fallback to history if fast_info fails
+                    try:
+                        hist = ticker.history(period='1d')
+                        if not hist.empty:
+                            current_price = float(hist['Close'].iloc[-1])
+                    except Exception:
+                        current_price = 0
                 
                 # Get available expiration dates using yfinance (same as calculator)
                 expirations = _fetch_expirations(symbol)
