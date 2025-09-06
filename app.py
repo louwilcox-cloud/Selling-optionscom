@@ -297,14 +297,30 @@ def _fetch_expirations(symbol: str):
     if cached is not None:
         return cached
     
-    # Fetch from yfinance (remove session to avoid curl_cffi error)
-    t = yf.Ticker(symbol)  # No session parameter
-    exps = t.options or []
-    result = [str(e) for e in exps]
-    
-    # Cache the result
-    expirations_cache.set(cache_key, result)
-    return result
+    try:
+        # Get options contracts from Polygon.io
+        contracts = polygon_client.list_options_contracts(
+            underlying_ticker=symbol,
+            limit=1000  # Get many contracts to extract unique expiration dates
+        )
+        
+        # Extract unique expiration dates
+        expirations = set()
+        for contract in contracts:
+            if hasattr(contract, 'expiration_date'):
+                expirations.add(str(contract.expiration_date))
+        
+        # Sort expiration dates
+        result = sorted(list(expirations))
+        
+        # Cache the result
+        expirations_cache.set(cache_key, result)
+        return result
+        
+    except Exception as e:
+        print(f"Polygon.io options expirations failed for {symbol}: {e}")
+        # Return empty list if API fails
+        return []
 
 @retry_with_backoff(max_retries=3, base_delay=1)
 def _fetch_chain(symbol: str, date: str):
@@ -314,18 +330,63 @@ def _fetch_chain(symbol: str, date: str):
     if cached is not None:
         return cached
     
-    # Fetch from yfinance (remove session to avoid curl_cffi error)
-    t = yf.Ticker(symbol)  # No session parameter
-    chain = t.option_chain(date)
-    calls_df = chain.calls.copy()
-    puts_df = chain.puts.copy()
-    calls = _to_rows(calls_df, "Call")
-    puts = _to_rows(puts_df, "Put")
-    result = (calls, puts)
-    
-    # Cache the result
-    chains_cache.set(cache_key, result)
-    return result
+    try:
+        # Get options contracts for specific expiration from Polygon.io
+        contracts = polygon_client.list_options_contracts(
+            underlying_ticker=symbol,
+            expiration_date=date,
+            limit=1000
+        )
+        
+        calls = []
+        puts = []
+        
+        for contract in contracts:
+            if hasattr(contract, 'contract_type') and hasattr(contract, 'strike_price'):
+                # Get the last quote for this contract
+                try:
+                    quote = polygon_client.get_last_quote(ticker=contract.ticker)
+                    last_price = (quote.bid + quote.ask) / 2.0 if quote and hasattr(quote, 'bid') and hasattr(quote, 'ask') else 0
+                    
+                    # Get additional contract details (volume, open interest would need snapshot API)
+                    option_data = {
+                        "strike": float(contract.strike_price),
+                        "lastPrice": last_price,
+                        "volume": 0,  # Would need snapshot API for real volume
+                        "openInterest": 0,  # Would need snapshot API for real open interest
+                        "type": "Call" if contract.contract_type == "call" else "Put"
+                    }
+                    
+                    if contract.contract_type == "call":
+                        calls.append(option_data)
+                    else:
+                        puts.append(option_data)
+                        
+                except Exception as e:
+                    # If quote fails, still add the contract with basic info
+                    option_data = {
+                        "strike": float(contract.strike_price),
+                        "lastPrice": 0,
+                        "volume": 0,
+                        "openInterest": 0,
+                        "type": "Call" if contract.contract_type == "call" else "Put"
+                    }
+                    
+                    if contract.contract_type == "call":
+                        calls.append(option_data)
+                    else:
+                        puts.append(option_data)
+        
+        result = (calls, puts)
+        
+        # Cache the result
+        chains_cache.set(cache_key, result)
+        return result
+        
+    except Exception as e:
+        print(f"Polygon.io options chain failed for {symbol} {date}: {e}")
+        # Return empty chains if API fails
+        return ([], [])
 
 def _compute_results(symbol: str, exp_date: str, calls, puts):
     """
@@ -538,21 +599,17 @@ def _get_individual_market_data(name, symbol):
         except Exception as e:
             print(f"Polygon.io failed for {name}: {e}")
         
-        # Fallback to yfinance (remove session to avoid curl_cffi error)
-        ticker = yf.Ticker(symbol)  # No session parameter
-        hist = ticker.history(period="2d")
-        if not hist.empty:
-            current = float(hist['Close'].iloc[-1])
-            previous = float(hist['Close'].iloc[-2]) if len(hist) > 1 else current
-            change = current - previous
-            change_pct = (change / previous * 100) if previous != 0 else 0
-            
+        # If not enough historical data, try previous close API
+        prev_close = polygon_client.get_previous_close_agg(ticker=symbol)
+        if prev_close and len(prev_close) > 0:
+            current = float(prev_close[0].close)
+            # Without historical data, assume no change
             return {
                 'name': name,
                 'symbol': symbol,
                 'price': round(current, 2),
-                'change': round(change, 2),
-                'change_pct': round(change_pct, 2)
+                'change': 0,
+                'change_pct': 0
             }
     except Exception as e:
         print(f"Error fetching {name}: {e}")
