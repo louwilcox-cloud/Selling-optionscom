@@ -18,6 +18,21 @@ import time
 import threading
 from functools import wraps
 
+# Global request throttle to prevent overwhelming Yahoo Finance
+_last_request_time = 0
+_request_lock = threading.Lock()
+
+def throttle_requests(min_delay=0.1):
+    """Ensure minimum delay between Yahoo Finance requests"""
+    global _last_request_time
+    with _request_lock:
+        current_time = time.time()
+        time_since_last = current_time - _last_request_time
+        if time_since_last < min_delay:
+            sleep_time = min_delay - time_since_last
+            time.sleep(sleep_time)
+        _last_request_time = time.time()
+
 # TTL Cache implementation
 class TTLCache:
     def __init__(self, ttl_seconds):
@@ -339,6 +354,9 @@ def _get_quote_price(symbol: str) -> float:
     cached = quotes_cache.get(cache_key)
     if cached is not None:
         return cached
+    
+    # Throttle requests to prevent rate limiting
+    throttle_requests(0.1)
     
     # Fetch from yfinance using fast_info -> history fallback
     t = yf.Ticker(symbol)
