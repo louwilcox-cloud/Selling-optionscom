@@ -1,5 +1,5 @@
 Flask==2.3.3
-Flask-Session==0.5.0
+Flask-Session==0.6.0
 psycopg2-binary==2.9.7
 bcrypt==4.0.1
 # Pin NumPy to a version compatible with pandas wheels
@@ -10,3 +10,5 @@ requests==2.31.0
 
 # production WSGI server
 gunicorn==21.2.0
+
+Werkzeug==3.0.3
