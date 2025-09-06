@@ -14,18 +14,53 @@ from flask_session import Session
 import yfinance as yf
 import pandas as pd
 import math
-import requests
+import time
+import threading
+from functools import wraps
 
-# Configure requests session with browser-like headers to help bypass rate limiting
-requests_session = requests.Session()
-requests_session.headers.update({
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    'Accept-Language': 'en-US,en;q=0.5',
-    'Accept-Encoding': 'gzip, deflate',
-    'Connection': 'keep-alive',
-    'Upgrade-Insecure-Requests': '1'
-})
+# TTL Cache implementation
+class TTLCache:
+    def __init__(self, ttl_seconds):
+        self.ttl_seconds = ttl_seconds
+        self.cache = {}
+        self.lock = threading.Lock()
+    
+    def get(self, key):
+        with self.lock:
+            if key in self.cache:
+                value, timestamp = self.cache[key]
+                if time.time() - timestamp < self.ttl_seconds:
+                    return value
+                else:
+                    del self.cache[key]
+            return None
+    
+    def set(self, key, value):
+        with self.lock:
+            self.cache[key] = (value, time.time())
+
+# Initialize caches
+quotes_cache = TTLCache(10)      # 10 seconds for quotes
+expirations_cache = TTLCache(300)  # 5 minutes for expirations  
+chains_cache = TTLCache(90)      # 90 seconds for options chains
+
+# Retry decorator with exponential backoff
+def retry_with_backoff(max_retries=3, base_delay=1):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_retries):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    if attempt == max_retries - 1:
+                        raise e
+                    delay = base_delay * (2 ** attempt)
+                    print(f"Attempt {attempt + 1} failed for {func.__name__}: {e}. Retrying in {delay}s...")
+                    time.sleep(delay)
+            return None
+        return wrapper
+    return decorator
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
@@ -205,19 +240,43 @@ def _to_rows(df: pd.DataFrame, type_label: str):
         })
     return out
 
+@retry_with_backoff(max_retries=3, base_delay=1)
 def _fetch_expirations(symbol: str):
-    t = yf.Ticker(symbol, session=requests_session)
+    # Check cache first
+    cache_key = f"exp_{symbol}"
+    cached = expirations_cache.get(cache_key)
+    if cached is not None:
+        return cached
+    
+    # Fetch from yfinance (let it handle sessions)
+    t = yf.Ticker(symbol)
     exps = t.options or []
-    return [str(e) for e in exps]
+    result = [str(e) for e in exps]
+    
+    # Cache the result
+    expirations_cache.set(cache_key, result)
+    return result
 
+@retry_with_backoff(max_retries=3, base_delay=1)
 def _fetch_chain(symbol: str, date: str):
-    t = yf.Ticker(symbol, session=requests_session)
+    # Check cache first
+    cache_key = f"chain_{symbol}_{date}"
+    cached = chains_cache.get(cache_key)
+    if cached is not None:
+        return cached
+    
+    # Fetch from yfinance (let it handle sessions)
+    t = yf.Ticker(symbol)
     chain = t.option_chain(date)
     calls_df = chain.calls.copy()
     puts_df = chain.puts.copy()
     calls = _to_rows(calls_df, "Call")
     puts = _to_rows(puts_df, "Put")
-    return calls, puts
+    result = (calls, puts)
+    
+    # Cache the result
+    chains_cache.set(cache_key, result)
+    return result
 
 def _compute_results(symbol: str, exp_date: str, calls, puts):
     """
@@ -273,18 +332,38 @@ def _compute_results(symbol: str, exp_date: str, calls, puts):
         "countRows": len(rows),
     }
 
+@retry_with_backoff(max_retries=3, base_delay=0.5)
 def _get_quote_price(symbol: str) -> float:
-    t = yf.Ticker(symbol, session=requests_session)
+    # Check cache first
+    cache_key = f"quote_{symbol}"
+    cached = quotes_cache.get(cache_key)
+    if cached is not None:
+        return cached
+    
+    # Fetch from yfinance using fast_info -> history fallback
+    t = yf.Ticker(symbol)
     price = None
+    
     try:
+        # Try fast_info first (faster, less API calls)
         price = t.fast_info.get("last_price", None)
     except Exception:
-        price = None
+        pass
+    
     if price is None:
-        hist = t.history(period="1d")
-        if not hist.empty:
-            price = float(hist["Close"].iloc[-1])
-    return _safe_float(price)
+        try:
+            # Fallback to history if fast_info fails
+            hist = t.history(period="1d")
+            if not hist.empty:
+                price = float(hist["Close"].iloc[-1])
+        except Exception:
+            price = 0.0
+    
+    result = _safe_float(price)
+    
+    # Cache the result
+    quotes_cache.set(cache_key, result)
+    return result
 
 # API Routes
 @app.route("/api/quote")
