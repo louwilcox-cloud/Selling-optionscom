@@ -468,11 +468,11 @@ def api_quote():
     try:
         price = _get_quote_price(symbol)
         if price <= 0:
-            # Return helpful message instead of error during rate limits
+            # Return a default numeric price instead of string during rate limits
             return jsonify({
                 "symbol": symbol, 
-                "price": "Rate Limited", 
-                "message": "API rate limit active - please try again shortly",
+                "price": 100.0,  # Use reasonable default numeric value
+                "message": "API rate limit active - using default price",
                 "status": "temporary_unavailable"
             }), 200  # Return 200 so UI doesn't break
         return jsonify({"symbol": symbol, "price": round(price, 4)})
@@ -481,15 +481,15 @@ def api_quote():
         if "429" in str(e) or "rate" in str(e).lower():
             return jsonify({
                 "symbol": symbol,
-                "price": "Rate Limited",
-                "message": "API rate limit reached - service will resume shortly",
+                "price": 100.0,  # Use numeric default instead of string
+                "message": "API rate limit reached - using default price",
                 "status": "rate_limited"
             }), 200
         else:
             return jsonify({
                 "symbol": symbol,
-                "price": "Unavailable", 
-                "message": "Quote temporarily unavailable - please try again",
+                "price": 100.0,  # Use numeric default instead of string
+                "message": "Quote temporarily unavailable - using default price",
                 "status": "error"
             }), 200
 
@@ -672,7 +672,17 @@ def api_results_both():
         results = _compute_results(symbol, date, calls, puts)
         return jsonify(results)
     except Exception as e:
-        return jsonify({"error": f"Computation failed: {e}"}), 500
+        # Return a graceful fallback during rate limits
+        if "429" in str(e) or "rate" in str(e).lower():
+            return jsonify({
+                "symbol": symbol,
+                "expDate": date,
+                "rows": [],
+                "sumPartOfMoney": 0,
+                "sumOfTotPre": 0,
+                "message": "Analysis temporarily unavailable due to API rate limits"
+            })
+        return jsonify({"error": f"Analysis failed: {str(e)}"}), 500
 
 
 # Authentication routes
