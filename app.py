@@ -14,6 +14,18 @@ from flask_session import Session
 import yfinance as yf
 import pandas as pd
 import math
+import requests
+
+# Configure requests session with browser-like headers to help bypass rate limiting
+requests_session = requests.Session()
+requests_session.headers.update({
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Accept-Encoding': 'gzip, deflate',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1'
+})
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
@@ -194,12 +206,12 @@ def _to_rows(df: pd.DataFrame, type_label: str):
     return out
 
 def _fetch_expirations(symbol: str):
-    t = yf.Ticker(symbol)
+    t = yf.Ticker(symbol, session=requests_session)
     exps = t.options or []
     return [str(e) for e in exps]
 
 def _fetch_chain(symbol: str, date: str):
-    t = yf.Ticker(symbol)
+    t = yf.Ticker(symbol, session=requests_session)
     chain = t.option_chain(date)
     calls_df = chain.calls.copy()
     puts_df = chain.puts.copy()
@@ -262,7 +274,7 @@ def _compute_results(symbol: str, exp_date: str, calls, puts):
     }
 
 def _get_quote_price(symbol: str) -> float:
-    t = yf.Ticker(symbol)
+    t = yf.Ticker(symbol, session=requests_session)
     price = None
     try:
         price = t.fast_info.get("last_price", None)
@@ -333,7 +345,7 @@ def api_market_data():
         market_data = []
         for name, symbol in symbols_ordered:
             try:
-                ticker = yf.Ticker(symbol)
+                ticker = yf.Ticker(symbol, session=requests_session)
                 hist = ticker.history(period="2d")  # Get 2 days to calculate change
                 if not hist.empty:
                     current = float(hist['Close'].iloc[-1])
@@ -767,7 +779,7 @@ def run_forecast():
         for symbol in symbols:
             try:
                 # Get current price
-                ticker = yf.Ticker(symbol)
+                ticker = yf.Ticker(symbol, session=requests_session)
                 info = ticker.info
                 current_price = info.get('currentPrice') or info.get('regularMarketPrice', 0)
                 
