@@ -17,35 +17,28 @@ import math
 import time
 import threading
 import requests
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 from functools import wraps
 
-# Configure yfinance with the exact headers that bypass rate limiting
-# Based on your successful curl test
-import yfinance.scrapers.holders
-yf.scrapers.holders.requests = requests  # Use requests module
+# Shared HTTP session for yfinance with retries and proper headers
+requests_session = requests.Session()
+requests_session.headers.update({
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/123 Safari/537.36",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+})
 
-# Set global headers for all yfinance requests
-original_get = requests.Session.get
-
-def patched_get(self, url, **kwargs):
-    # Add the headers that work on your NAS
-    headers = kwargs.get('headers', {})
-    headers.update({
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none'
-    })
-    kwargs['headers'] = headers
-    return original_get(self, url, **kwargs)
-
-# Monkey patch requests to use our headers
-requests.Session.get = patched_get
+retry = Retry(
+    total=6,
+    backoff_factor=0.8,
+    status_forcelist=(429, 500, 502, 503, 504),
+    allowed_methods=frozenset(["GET", "HEAD"]),
+    raise_on_status=False,
+)
+adapter = HTTPAdapter(max_retries=retry, pool_connections=20, pool_maxsize=20)
+requests_session.mount("https://", adapter)
+requests_session.mount("http://", adapter)
 
 # Global request throttle to prevent overwhelming Yahoo Finance
 _last_request_time = 0
@@ -300,8 +293,8 @@ def _fetch_expirations(symbol: str):
     if cached is not None:
         return cached
     
-    # Fetch from yfinance (let it handle sessions)
-    t = yf.Ticker(symbol)
+    # Fetch from yfinance with shared session
+    t = yf.Ticker(symbol, session=requests_session)
     exps = t.options or []
     result = [str(e) for e in exps]
     
@@ -317,8 +310,8 @@ def _fetch_chain(symbol: str, date: str):
     if cached is not None:
         return cached
     
-    # Fetch from yfinance (let it handle sessions)
-    t = yf.Ticker(symbol)
+    # Fetch from yfinance with shared session
+    t = yf.Ticker(symbol, session=requests_session)
     chain = t.option_chain(date)
     calls_df = chain.calls.copy()
     puts_df = chain.puts.copy()
@@ -395,30 +388,40 @@ def _get_quote_price(symbol: str) -> float:
     # Throttle requests to prevent rate limiting
     throttle_requests(0.1)
     
-    # Fetch from yfinance using fast_info -> history fallback
-    t = yf.Ticker(symbol)
-    price = None
-    
+    # Use direct Yahoo Finance API (bypasses yfinance session issues)
     try:
-        # Try fast_info first (faster, less API calls)
-        price = t.fast_info.get("last_price", None)
-    except Exception:
-        pass
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=1d&interval=1m&includePrePost=true"
+        response = requests_session.get(url, timeout=12)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('chart') and data['chart'].get('result'):
+                result = data['chart']['result'][0]
+                if result.get('meta') and 'regularMarketPrice' in result['meta']:
+                    price = float(result['meta']['regularMarketPrice'])
+                    # Cache the result
+                    quotes_cache.set(cache_key, price)
+                    return price
+    except Exception as e:
+        print(f"Direct API failed for {symbol}: {e}")
     
-    if price is None:
-        try:
-            # Fallback to history if fast_info fails
+    # Fallback to yfinance (remove session to avoid curl_cffi error)
+    try:
+        t = yf.Ticker(symbol)  # No session parameter
+        price = t.fast_info.get("last_price", None)
+        if price is None:
             hist = t.history(period="1d")
             if not hist.empty:
                 price = float(hist["Close"].iloc[-1])
-        except Exception:
-            price = 0.0
+        
+        result = _safe_float(price)
+        quotes_cache.set(cache_key, result)
+        return result
+    except Exception as e:
+        print(f"yfinance fallback failed for {symbol}: {e}")
     
-    result = _safe_float(price)
-    
-    # Cache the result
-    quotes_cache.set(cache_key, result)
-    return result
+    # Return 0 if all methods fail
+    return 0.0
 
 # API Routes
 @app.route("/api/quote")
@@ -501,7 +504,7 @@ def api_market_data():
 def _get_individual_market_data(name, symbol):
     """Fallback function for individual market data fetching"""
     try:
-        ticker = yf.Ticker(symbol)
+        ticker = yf.Ticker(symbol, session=requests_session)
         hist = ticker.history(period="2d")
         if not hist.empty:
             current = float(hist['Close'].iloc[-1])
@@ -589,6 +592,19 @@ def api_results_both():
         return jsonify(results)
     except Exception as e:
         return jsonify({"error": f"Computation failed: {e}"}), 500
+
+@app.route("/debug/yahoo")
+def debug_yahoo():
+    """Debug endpoint to test Yahoo Finance API directly"""
+    sym = request.args.get("symbol", "UPS")
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=1d&interval=1m&includePrePost=true"
+    r = requests_session.get(url, timeout=12)
+    return jsonify({
+        "symbol": sym,
+        "status": r.status_code,
+        "y-rid": r.headers.get("y-rid"),
+        "content_len": len(r.content),
+    })
 
 # Authentication routes
 @app.route('/signup', methods=['GET', 'POST'])
@@ -932,7 +948,7 @@ def run_forecast():
         for symbol in symbols:
             try:
                 # Get current price using fast_info -> history fallback
-                ticker = yf.Ticker(symbol)
+                ticker = yf.Ticker(symbol, session=requests_session)
                 current_price = 0
                 
                 try:
