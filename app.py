@@ -20,6 +20,7 @@ import requests
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from functools import wraps
+from polygon import RESTClient
 
 # Shared HTTP session for yfinance with retries and proper headers
 requests_session = requests.Session()
@@ -39,6 +40,9 @@ retry = Retry(
 adapter = HTTPAdapter(max_retries=retry, pool_connections=20, pool_maxsize=20)
 requests_session.mount("https://", adapter)
 requests_session.mount("http://", adapter)
+
+# Initialize Polygon.io client
+polygon_client = RESTClient(api_key=os.getenv('POLYGON_API_KEY'))
 
 # Global request throttle to prevent overwhelming Yahoo Finance
 _last_request_time = 0
@@ -385,10 +389,30 @@ def _get_quote_price(symbol: str) -> float:
     if cached is not None:
         return cached
     
-    # Throttle requests to prevent rate limiting
+    # Try Polygon.io first (most reliable)
+    try:
+        # Get latest quote from Polygon.io
+        quote = polygon_client.get_last_quote(ticker=symbol)
+        if quote and hasattr(quote, 'bid') and hasattr(quote, 'ask'):
+            # Use midpoint of bid/ask for most accurate price
+            price = (quote.bid + quote.ask) / 2.0
+            quotes_cache.set(cache_key, price)
+            return price
+        
+        # If quote doesn't have bid/ask, try previous close
+        agg = polygon_client.get_previous_close_agg(ticker=symbol)
+        if agg and len(agg) > 0:
+            price = float(agg[0].close)
+            quotes_cache.set(cache_key, price)
+            return price
+            
+    except Exception as e:
+        print(f"Polygon.io failed for {symbol}: {e}")
+    
+    # Throttle requests to prevent rate limiting on fallbacks
     throttle_requests(0.1)
     
-    # Use direct Yahoo Finance API (bypasses yfinance session issues)
+    # Fallback to direct Yahoo Finance API
     try:
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=1d&interval=1m&includePrePost=true"
         response = requests_session.get(url, timeout=12)
@@ -399,13 +423,12 @@ def _get_quote_price(symbol: str) -> float:
                 result = data['chart']['result'][0]
                 if result.get('meta') and 'regularMarketPrice' in result['meta']:
                     price = float(result['meta']['regularMarketPrice'])
-                    # Cache the result
                     quotes_cache.set(cache_key, price)
                     return price
     except Exception as e:
-        print(f"Direct API failed for {symbol}: {e}")
+        print(f"Direct API fallback failed for {symbol}: {e}")
     
-    # Fallback to yfinance (remove session to avoid curl_cffi error)
+    # Final fallback to yfinance (remove session to avoid curl_cffi error)
     try:
         t = yf.Ticker(symbol)  # No session parameter
         price = t.fast_info.get("last_price", None)
