@@ -550,17 +550,20 @@ def api_quote():
     symbol = (request.args.get("symbol") or "").strip().upper()
     if not symbol:
         return jsonify({"error": "Missing 'symbol'"}), 400
-    try:
-        price = _get_quote_price(symbol)
-        if price <= 0:
-            raise ValueError("No price found")
-        return jsonify({"symbol": symbol, "price": round(price, 4)})
-    except Exception as e:
-        # More user-friendly error handling
-        if "429" in str(e) or "rate" in str(e).lower():
-            return jsonify({"error": f"Rate limit reached for {symbol} - please try again shortly"}), 429
-        else:
-            return jsonify({"error": f"Quote fetch failed: {str(e)}"}), 500
+    
+    # Use market-aware pricing logic
+    quote_data = get_display_stock_price(symbol)
+    if not quote_data["price"] or quote_data["price"] <= 0:
+        return jsonify({"error": "No price available"}), 503
+    
+    # Return enriched quote data with market context
+    return jsonify({
+        "symbol": quote_data["symbol"],
+        "price": round(quote_data["price"], 4),
+        "market_phase": quote_data["phase"],
+        "source": quote_data["source"],
+        "asof": quote_data["asof"]
+    })
 
 @app.route("/api/get_options_data")
 def api_get_options_data():
