@@ -11,7 +11,6 @@ import psycopg2
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_from_directory, session, redirect, url_for, render_template_string, flash
 from flask_session import Session
-import yfinance as yf
 import pandas as pd
 import math
 import time
@@ -22,42 +21,12 @@ from requests.adapters import HTTPAdapter
 from functools import wraps
 from polygon import RESTClient
 
-# Shared HTTP session for yfinance with retries and proper headers
-requests_session = requests.Session()
-requests_session.headers.update({
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/123 Safari/537.36",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
-})
-
-retry = Retry(
-    total=6,
-    backoff_factor=0.8,
-    status_forcelist=(429, 500, 502, 503, 504),
-    allowed_methods=frozenset(["GET", "HEAD"]),
-    raise_on_status=False,
-)
-adapter = HTTPAdapter(max_retries=retry, pool_connections=20, pool_maxsize=20)
-requests_session.mount("https://", adapter)
-requests_session.mount("http://", adapter)
+# Note: Removed Yahoo Finance session handling - using pure Polygon.io now
 
 # Initialize Polygon.io client
 polygon_client = RESTClient(api_key=os.getenv('POLYGON_API_KEY'))
 
-# Global request throttle to prevent overwhelming Yahoo Finance
-_last_request_time = 0
-_request_lock = threading.Lock()
-
-def throttle_requests(min_delay=0.1):
-    """Ensure minimum delay between Yahoo Finance requests"""
-    global _last_request_time
-    with _request_lock:
-        current_time = time.time()
-        time_since_last = current_time - _last_request_time
-        if time_since_last < min_delay:
-            sleep_time = min_delay - time_since_last
-            time.sleep(sleep_time)
-        _last_request_time = time.time()
+# Note: Removed Yahoo Finance throttling - Polygon.io handles rate limiting internally
 
 # TTL Cache implementation
 class TTLCache:
