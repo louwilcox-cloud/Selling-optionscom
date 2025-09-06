@@ -389,59 +389,42 @@ def _get_quote_price(symbol: str) -> float:
     if cached is not None:
         return cached
     
-    # Try Polygon.io first (most reliable)
     try:
-        # Get latest quote from Polygon.io
-        quote = polygon_client.get_last_quote(ticker=symbol)
-        if quote and hasattr(quote, 'bid') and hasattr(quote, 'ask'):
-            # Use midpoint of bid/ask for most accurate price
-            price = (quote.bid + quote.ask) / 2.0
-            quotes_cache.set(cache_key, price)
-            return price
+        # Try real-time quote first (for upgraded subscriptions)
+        try:
+            quote = polygon_client.get_last_quote(ticker=symbol)
+            if quote and hasattr(quote, 'bid') and hasattr(quote, 'ask'):
+                # Use midpoint of bid/ask for most accurate price
+                price = (quote.bid + quote.ask) / 2.0
+                quotes_cache.set(cache_key, price)
+                return price
+        except Exception as e:
+            if "NOT_AUTHORIZED" not in str(e):
+                print(f"Polygon.io quote failed for {symbol}: {e}")
         
-        # If quote doesn't have bid/ask, try previous close
-        agg = polygon_client.get_previous_close_agg(ticker=symbol)
-        if agg and len(agg) > 0:
-            price = float(agg[0].close)
-            quotes_cache.set(cache_key, price)
-            return price
+        # Try latest trade price
+        try:
+            trade = polygon_client.get_last_trade(ticker=symbol)
+            if trade and hasattr(trade, 'price'):
+                price = float(trade.price)
+                quotes_cache.set(cache_key, price)
+                return price
+        except Exception as e:
+            if "NOT_AUTHORIZED" not in str(e):
+                print(f"Polygon.io trade failed for {symbol}: {e}")
+        
+        # Try previous close (should work with all plans)
+        try:
+            agg = polygon_client.get_previous_close_agg(ticker=symbol)
+            if agg and len(agg) > 0:
+                price = float(agg[0].close)
+                quotes_cache.set(cache_key, price)
+                return price
+        except Exception as e:
+            print(f"Polygon.io previous close failed for {symbol}: {e}")
             
     except Exception as e:
-        print(f"Polygon.io failed for {symbol}: {e}")
-    
-    # Throttle requests to prevent rate limiting on fallbacks
-    throttle_requests(0.1)
-    
-    # Fallback to direct Yahoo Finance API
-    try:
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=1d&interval=1m&includePrePost=true"
-        response = requests_session.get(url, timeout=12)
-        
-        if response.status_code == 200:
-            data = response.json()
-            if data.get('chart') and data['chart'].get('result'):
-                result = data['chart']['result'][0]
-                if result.get('meta') and 'regularMarketPrice' in result['meta']:
-                    price = float(result['meta']['regularMarketPrice'])
-                    quotes_cache.set(cache_key, price)
-                    return price
-    except Exception as e:
-        print(f"Direct API fallback failed for {symbol}: {e}")
-    
-    # Final fallback to yfinance (remove session to avoid curl_cffi error)
-    try:
-        t = yf.Ticker(symbol)  # No session parameter
-        price = t.fast_info.get("last_price", None)
-        if price is None:
-            hist = t.history(period="1d")
-            if not hist.empty:
-                price = float(hist["Close"].iloc[-1])
-        
-        result = _safe_float(price)
-        quotes_cache.set(cache_key, result)
-        return result
-    except Exception as e:
-        print(f"yfinance fallback failed for {symbol}: {e}")
+        print(f"Polygon.io completely failed for {symbol}: {e}")
     
     # Return 0 if all methods fail
     return 0.0
