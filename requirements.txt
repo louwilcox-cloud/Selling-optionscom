@@ -12,3 +12,5 @@ requests==2.31.0
 gunicorn==21.2.0
 
 Werkzeug==3.0.3
+polygon-api-client
+urllib3
