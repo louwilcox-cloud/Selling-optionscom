@@ -431,47 +431,10 @@ def api_market_data():
         # Extract just the symbols for batch download
         symbols = [symbol for _, symbol in symbols_ordered]
         
-        # Batch download all symbols at once (more efficient)
-        try:
-            hist_data = yf.download(symbols, period="2d", group_by='ticker', progress=False)
-            
-            market_data = []
-            for name, symbol in symbols_ordered:
-                try:
-                    if len(symbols) == 1:
-                        # Single symbol case
-                        data = hist_data
-                    else:
-                        # Multiple symbols case
-                        data = hist_data[symbol] if symbol in hist_data.columns.levels[0] else None
-                    
-                    if data is not None and not data.empty:
-                        current = float(data['Close'].iloc[-1])
-                        previous = float(data['Close'].iloc[-2]) if len(data) > 1 else current
-                        change = current - previous
-                        change_pct = (change / previous * 100) if previous != 0 else 0
-                        
-                        market_data.append({
-                            'name': name,
-                            'symbol': symbol,
-                            'price': round(current, 2),
-                            'change': round(change, 2),
-                            'change_pct': round(change_pct, 2)
-                        })
-                    else:
-                        # Fallback to individual ticker if batch failed for this symbol
-                        market_data.append(_get_individual_market_data(name, symbol))
-                        
-                except Exception as e:
-                    print(f"Error processing {name}: {e}")
-                    market_data.append(_get_individual_market_data(name, symbol))
-            
-        except Exception as e:
-            print(f"Batch download failed: {e}. Falling back to individual calls...")
-            # Fallback to individual calls if batch fails
-            market_data = []
-            for name, symbol in symbols_ordered:
-                market_data.append(_get_individual_market_data(name, symbol))
+        # Use individual calls for better reliability (markets are often closed)
+        market_data = []
+        for name, symbol in symbols_ordered:
+            market_data.append(_get_individual_market_data(name, symbol))
         
         # Cache the result
         quotes_cache.set(cache_key, market_data)
