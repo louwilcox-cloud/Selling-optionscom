@@ -297,8 +297,8 @@ def _fetch_expirations(symbol: str):
     if cached is not None:
         return cached
     
-    # Fetch from yfinance with shared session
-    t = yf.Ticker(symbol, session=requests_session)
+    # Fetch from yfinance (remove session to avoid curl_cffi error)
+    t = yf.Ticker(symbol)  # No session parameter
     exps = t.options or []
     result = [str(e) for e in exps]
     
@@ -314,8 +314,8 @@ def _fetch_chain(symbol: str, date: str):
     if cached is not None:
         return cached
     
-    # Fetch from yfinance with shared session
-    t = yf.Ticker(symbol, session=requests_session)
+    # Fetch from yfinance (remove session to avoid curl_cffi error)
+    t = yf.Ticker(symbol)  # No session parameter
     chain = t.option_chain(date)
     calls_df = chain.calls.copy()
     puts_df = chain.puts.copy()
@@ -525,9 +525,38 @@ def api_market_data():
         return jsonify({"error": f"Market data fetch failed: {e}"}), 500
 
 def _get_individual_market_data(name, symbol):
-    """Fallback function for individual market data fetching"""
+    """Get market data using Polygon.io with Yahoo Finance fallback"""
     try:
-        ticker = yf.Ticker(symbol, session=requests_session)
+        # Try Polygon.io first (daily aggregates should work with basic plan)
+        try:
+            # Get previous close and current close (fix API parameter names)
+            aggs = list(polygon_client.list_aggs(
+                ticker=symbol,
+                multiplier=1,
+                timespan="day",
+                from_=(datetime.now() - timedelta(days=5)).strftime("%Y-%m-%d"),
+                to=(datetime.now()).strftime("%Y-%m-%d"),
+                limit=5
+            ))
+            
+            if aggs and len(aggs) >= 2:
+                current = float(aggs[-1].close)
+                previous = float(aggs[-2].close)
+                change = current - previous
+                change_pct = (change / previous * 100) if previous != 0 else 0
+                
+                return {
+                    'name': name,
+                    'symbol': symbol,
+                    'price': round(current, 2),
+                    'change': round(change, 2),
+                    'change_pct': round(change_pct, 2)
+                }
+        except Exception as e:
+            print(f"Polygon.io failed for {name}: {e}")
+        
+        # Fallback to yfinance (remove session to avoid curl_cffi error)
+        ticker = yf.Ticker(symbol)  # No session parameter
         hist = ticker.history(period="2d")
         if not hist.empty:
             current = float(hist['Close'].iloc[-1])
@@ -970,8 +999,8 @@ def run_forecast():
         
         for symbol in symbols:
             try:
-                # Get current price using fast_info -> history fallback
-                ticker = yf.Ticker(symbol, session=requests_session)
+                # Get current price using fast_info -> history fallback  
+                ticker = yf.Ticker(symbol)  # No session parameter
                 current_price = 0
                 
                 try:
