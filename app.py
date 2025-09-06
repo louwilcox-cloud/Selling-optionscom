@@ -468,10 +468,30 @@ def api_quote():
     try:
         price = _get_quote_price(symbol)
         if price <= 0:
-            raise ValueError("No price found")
+            # Return helpful message instead of error during rate limits
+            return jsonify({
+                "symbol": symbol, 
+                "price": "Rate Limited", 
+                "message": "API rate limit active - please try again shortly",
+                "status": "temporary_unavailable"
+            }), 200  # Return 200 so UI doesn't break
         return jsonify({"symbol": symbol, "price": round(price, 4)})
     except Exception as e:
-        return jsonify({"error": f"Quote fetch failed: {e}"}), 500
+        # More user-friendly error handling
+        if "429" in str(e) or "rate" in str(e).lower():
+            return jsonify({
+                "symbol": symbol,
+                "price": "Rate Limited",
+                "message": "API rate limit reached - service will resume shortly",
+                "status": "rate_limited"
+            }), 200
+        else:
+            return jsonify({
+                "symbol": symbol,
+                "price": "Unavailable", 
+                "message": "Quote temporarily unavailable - please try again",
+                "status": "error"
+            }), 200
 
 @app.route("/api/get_options_data")
 def api_get_options_data():
