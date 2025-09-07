@@ -1,0 +1,140 @@
+🚀 SELLING-OPTIONS.COM NAS DEPLOYMENT CHECKLIST
+=================================================
+
+PRE-DEPLOYMENT REQUIREMENTS:
+===========================
+
+✅ HARDWARE/SOFTWARE:
+  □ NAS with Docker support
+  □ Docker & Docker Compose installed
+  □ At least 2GB RAM available
+  □ 10GB free disk space
+  □ Network access to internet
+
+✅ PORTS AVAILABLE:
+  □ Port 80 (HTTP) - or use alternative 8080
+  □ Port 443 (HTTPS) - for SSL
+  □ Port 5432 (PostgreSQL) - optional external access
+
+✅ POLYGON.IO API:
+  □ Active Polygon.io account
+  □ API key: sk1_s9gRnpyfld7a2ZLng3mEdpkaDrqB
+  □ Developer plan with options access
+  □ Verify API key works at: https://polygon.io/docs
+
+DEPLOYMENT STEPS:
+=================
+
+1. COPY FILES TO NAS:
+   □ Copy entire project folder to NAS
+   □ Ensure all files are present:
+     - .env.nas (template)
+     - docker-compose.nas.yml
+     - deploy-to-nas.sh
+     - Dockerfile
+     - app.py and all other source files
+
+2. SETUP ENVIRONMENT:
+   □ Copy .env.nas to .env
+   □ Edit .env file:
+     - Verify POLYGON_API_KEY is correct
+     - Change POSTGRES_PASSWORD from default
+     - Update SECRET_KEY to random value
+     - Set DOMAIN to your NAS IP/hostname (optional)
+
+3. MAKE SCRIPT EXECUTABLE:
+   □ chmod +x deploy-to-nas.sh
+
+4. RUN DEPLOYMENT:
+   □ ./deploy-to-nas.sh
+   □ Follow script output for any issues
+   □ Script will automatically:
+     - Check Docker installation
+     - Setup environment
+     - Build containers
+     - Start services
+     - Verify health
+
+POST-DEPLOYMENT VERIFICATION:
+============================
+
+✅ CONTAINER STATUS:
+  □ All containers running: docker compose -f docker-compose.nas.yml ps
+  □ No restart loops in container logs
+  □ Application logs show successful startup
+
+✅ WEB ACCESS:
+  □ Homepage loads: http://your-nas-ip:80
+  □ Market data displaying (may show cached/previous close when market closed)
+  □ Options calculator loads: http://your-nas-ip:80/calculator.html
+  □ Navigation search works
+
+✅ API ENDPOINTS:
+  □ Health check: http://your-nas-ip:80/health
+  □ Quote endpoint: http://your-nas-ip:80/api/quote?symbol=AAPL
+  □ Market data: http://your-nas-ip:80/api/market-data
+  □ No 429 rate limit errors in logs
+
+✅ DATABASE:
+  □ PostgreSQL container running
+  □ Database accessible (if external access enabled)
+  □ Application can connect to database
+
+TROUBLESHOOTING:
+===============
+
+CONTAINER RESTART LOOPS:
+  □ Check logs: docker logs selling-options-app
+  □ Common causes:
+    - Missing POLYGON_API_KEY in .env
+    - Database connection failed
+    - Port conflicts
+    - Permission issues
+
+RATE LIMITING ISSUES:
+  □ Verify Polygon.io API key is valid
+  □ Check API quota usage at Polygon.io dashboard
+  □ Look for 429 errors in application logs
+  □ Market hours logic should reduce API calls when market closed
+
+NO WEB ACCESS:
+  □ Check if ports 80/443 are blocked by firewall
+  □ Try alternative port 8080
+  □ Verify Caddy proxy is running
+  □ Check network connectivity to NAS
+
+USEFUL COMMANDS:
+===============
+
+VIEW LOGS:
+  docker compose -f docker-compose.nas.yml logs -f
+
+RESTART SERVICES:
+  docker compose -f docker-compose.nas.yml restart
+
+STOP ALL:
+  docker compose -f docker-compose.nas.yml down
+
+UPDATE APPLICATION:
+  git pull
+  docker compose -f docker-compose.nas.yml up -d --build
+
+EMERGENCY RESET:
+  docker compose -f docker-compose.nas.yml down -v
+  docker system prune -f
+  ./deploy-to-nas.sh
+
+SUCCESS INDICATORS:
+==================
+
+✅ DEPLOYMENT SUCCESSFUL WHEN:
+  □ All containers show "Up" status
+  □ Homepage displays market data
+  □ Calculator loads and functions
+  □ Search returns quote results
+  □ No continuous restarts in logs
+  □ API endpoints respond normally
+
+Your Selling-Options.com platform should now be running professionally on your NAS!
+
+Support: Check application logs and container status for any issues.

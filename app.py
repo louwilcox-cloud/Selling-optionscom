@@ -544,6 +544,27 @@ def _get_quote_price(symbol: str) -> float:
     # Return 0 if all methods fail
     return 0.0
 
+# Health check endpoint for Docker healthcheck
+@app.route("/health")
+def health_check():
+    """Health check endpoint for container monitoring"""
+    try:
+        # Basic health indicators
+        status = {
+            "status": "healthy",
+            "timestamp": datetime.now().isoformat(),
+            "polygon_api": "configured" if POLY_KEY else "missing",
+            "market_phase": get_market_phase(),
+            "uptime": "running"
+        }
+        return jsonify(status), 200
+    except Exception as e:
+        return jsonify({
+            "status": "unhealthy", 
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
 # API Routes
 @app.route("/api/quote")
 def api_quote():
