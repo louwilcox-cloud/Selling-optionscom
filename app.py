@@ -92,18 +92,20 @@ def quote_delayed(symbol: str, timeout=5):
     except Exception:
         pass
 
-    # 3) Stooq fallback
+    # 3) Yahoo Finance fallback
     try:
-        url = f"https://stooq.com/q/d/l/?s={symbol.lower()}&i=d"
+        url = f"https://query1.finance.yahoo.com/v7/finance/download/{symbol}?period1=1640995200&period2=9999999999&interval=1d&events=history"
         r = _http.get(url, timeout=timeout)
-        if r.ok:
-            lines = [ln for ln in r.text.splitlines() if ln and not ln.startswith("Date,")]
+        if r.ok and "Date,Open,High,Low,Close" in r.text:
+            lines = [ln for ln in r.text.splitlines() if ln and not ln.startswith("Date,") and "," in ln]
             if lines:
-                close = float(lines[-1].split(",")[4])
-                return close, "stooq-eod"
+                try:
+                    close = float(lines[-1].split(",")[4])  # Close price
+                    return close, "yahoo-eod"
+                except (ValueError, IndexError):
+                    pass
     except Exception:
         pass
-
     return None, None
 
 # Previous close cache for efficient bulk requests
