@@ -9,7 +9,6 @@ auth_bp = Blueprint('auth', __name__)
 def signup():
     """User registration"""
     if request.method == 'POST':
-        username = request.form['username']
         email = request.form['email']
         password = request.form['password']
         
@@ -24,8 +23,8 @@ def signup():
         try:
             cur = conn.cursor()
             cur.execute(
-                "INSERT INTO users (username, email, password_hash) VALUES (%s, %s, %s)",
-                (username, email, password_hash)
+                "INSERT INTO users (email, password_hash) VALUES (%s, %s)",
+                (email, password_hash)
             )
             conn.commit()
             cur.close()
@@ -59,10 +58,6 @@ def signup():
             {% endwith %}
             <form method="POST">
                 <div class="form-group">
-                    <label>Username:</label>
-                    <input type="text" name="username" required>
-                </div>
-                <div class="form-group">
                     <label>Email:</label>
                     <input type="email" name="email" required>
                 </div>
@@ -83,7 +78,7 @@ def signup():
 def login():
     """User login"""
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
         
         conn = get_db_connection()
@@ -93,17 +88,17 @@ def login():
         
         try:
             cur = conn.cursor()
-            cur.execute("SELECT id, password_hash FROM users WHERE username = %s AND active = true", (username,))
+            cur.execute("SELECT id, password_hash FROM users WHERE email = %s AND is_active = true", (email,))
             user = cur.fetchone()
             cur.close()
             conn.close()
             
             if user and bcrypt.checkpw(password.encode('utf-8'), user[1].encode('utf-8')):
                 session['user_id'] = user[0]
-                session['username'] = username
+                session['email'] = email
                 return redirect(url_for('main.index'))
             else:
-                flash('Invalid username or password', 'error')
+                flash('Invalid email or password', 'error')
                 
         except Exception as e:
             conn.close()
@@ -129,8 +124,8 @@ def login():
             {% endwith %}
             <form method="POST">
                 <div class="form-group">
-                    <label>Username:</label>
-                    <input type="text" name="username" required>
+                    <label>Email:</label>
+                    <input type="email" name="email" required>
                 </div>
                 <div class="form-group">
                     <label>Password:</label>
