@@ -1,0 +1,160 @@
+Absolutely. Here’s a tight, copy-paste brief you can give Replit’s AI (and/or drop in a GitHub issue/PR description). It covers what to build, what changed, the env setup, and how we stopped the reboot loop.
+
+Build brief for Replit AI
+Context (what broke & why)
+
+The container kept restarting because app.py instantiated a Polygon RESTClient at import time, and the container didn’t have POLYGON_API_KEY set.
+
+We regenerated the Polygon key (the old one was exposed), then recreated the container with --env-file env.list that includes POLYGON_API_KEY=sk1_.... Reboots stopped.
+
+Goal
+
+Make /api/quote?symbol=XYZ return a reliable delayed price 24/7 (market open/closed/holiday) without hanging or sleeping, and without requiring real-time quotes.
+
+Behavior spec (acceptance criteria)
+
+Endpoint: GET /api/quote?symbol=XYZ
+
+Response JSON:
+
+{ "symbol": "AAPL", "price": 231.45, "source": "polygon-prev", "note": "Delayed/EOD price; shows previous session close when market is closed." }
+
+
+Always returns a price if any upstream is working; never blocks longer than ~5 seconds.
+
+Fallback order (hard timeouts, no retry sleeps):
+
+Polygon Previous Day Bar: GET /v2/aggs/ticker/{symbol}/prev?adjusted=true
+
+Use results[0].c as price.
+
+Source string: "polygon-prev".
+
+Polygon Snapshot (stocks): GET /v2/snapshot/locale/us/markets/stocks/tickers/{symbol}
+
+Use prevDay.c or else lastTrade.p or else day.c.
+
+Source string: "polygon-snapshot".
+
+Stooq EOD CSV (free, no key): https://stooq.com/q/d/l/?s={symbol_lower}&i=d
+
+Use last row’s Close column.
+
+Source string: "stooq-eod".
+
+If all fail (should be rare): 503 { "error": "No price available" }.
+
+Code change (drop-in)
+
+In app.py:
+
+Add near the top:
+
+import time, requests, os
+
+
+Add helpers (place with other helpers):
+
+POLY_KEY = os.getenv("POLYGON_API_KEY")
+_http = requests.Session(); _http.headers["Accept-Encoding"] = "gzip"
+
+def quote_delayed(symbol: str, timeout=5):
+    # 1) Polygon prev close
+    try:
+        r = _http.get(f"https://api.polygon.io/v2/aggs/ticker/{symbol}/prev",
+                      params={"adjusted":"true","apiKey":POLY_KEY}, timeout=timeout)
+        if r.status_code == 200:
+            j = r.json()
+            if j.get("status") == "OK" and j.get("results"):
+                return float(j["results"][0]["c"]), "polygon-prev"
+    except Exception:
+        pass
+
+    # 2) Polygon snapshot
+    try:
+        r = _http.get(f"https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/tickers/{symbol}",
+                      params={"apiKey":POLY_KEY}, timeout=timeout)
+        if r.status_code == 200:
+            j = r.json()
+            if j.get("status") == "OK" and j.get("ticker"):
+                t = j["ticker"]
+                price = (t.get("prevDay",{}) or {}).get("c") \
+                        or (t.get("lastTrade",{}) or {}).get("p") \
+                        or (t.get("day",{}) or {}).get("c")
+                if price: return float(price), "polygon-snapshot"
+    except Exception:
+        pass
+
+    # 3) Stooq fallback
+    try:
+        url = f"https://stooq.com/q/d/l/?s={symbol.lower()}&i=d"
+        r = _http.get(url, timeout=timeout)
+        if r.ok:
+            lines = [ln for ln in r.text.splitlines() if ln and not ln.startswith("Date,")]
+            if lines:
+                close = float(lines[-1].split(",")[4])
+                return close, "stooq-eod"
+    except Exception:
+        pass
+
+    return None, None
+
+
+Replace the existing /api/quote with:
+
+@app.route("/api/quote")
+def api_quote():
+    symbol = (request.args.get("symbol") or "").strip().upper()
+    if not symbol:
+        return jsonify({"error": "Missing 'symbol'"}), 400
+    price, source = quote_delayed(symbol)
+    if price is None:
+        return jsonify({"error": "No price available"}), 503
+    return jsonify({
+        "symbol": symbol,
+        "price": round(float(price), 4),
+        "source": source,
+        "note": "Delayed/EOD price; shows previous session close when market is closed."
+    })
+
+
+Important: Do not instantiate polygon.RESTClient at import time. We’re using requests so the app starts even if the key is missing, and we degrade to Stooq.
+
+Env/secrets
+
+Replit: set Secret POLYGON_API_KEY to the new regenerated key (sk1_…).
+
+NAS/Docker: keep env.list with POLYGON_API_KEY=sk1_... and run container with --env-file env.list.
+
+Container reboot fix (what we already did)
+
+Root cause: RESTClient(...) was created at import; missing env → crash → restart loop.
+
+Fixes applied:
+
+Regenerated Polygon API key.
+
+Recreated container with --env-file env.list that includes POLYGON_API_KEY.
+
+Switched quote logic to on-demand HTTP (no import-time client), with safe fallbacks.
+
+Quick verification (after Replit builds & GHCR updates)
+
+On the NAS host:
+
+docker pull ghcr.io/louwilcox-cloud/selling-options-lab:latest
+docker rm -f selling-options-lab-app
+docker run -d --name selling-options-lab-app \
+  --env-file env.list \
+  --network selling-options-lab_lab-network \
+  -p 5082:5000 \
+  -v /volume1/docker/selling-options-lab/flask_session:/app/flask_session \
+  --restart unless-stopped \
+  ghcr.io/louwilcox-cloud/selling-options-lab:latest
+
+curl -sS "http://127.0.0.1:5082/api/quote?symbol=AAPL" | jq .
+
+
+Expected: JSON with price and source = polygon-prev or polygon-snapshot or stooq-eod.
+
+If you want Replit to also make a tiny cache (e.g., keep Polygon prev-day JSON for 5 minutes to reduce calls), say that and I’ll add a 10-line cache block, but the above already meets the “works every time, no hangs” requirement.

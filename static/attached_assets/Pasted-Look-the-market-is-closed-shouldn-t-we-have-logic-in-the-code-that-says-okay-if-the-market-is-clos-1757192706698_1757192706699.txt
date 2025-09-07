@@ -1,0 +1,130 @@
+Look the market is closed, shouldn't we have logic in the code that says, okay if the market is closed use the last traded price for options and last traded stocks price for stocks?  Isn't that what most trading sites use?  
+ChatGPT said:
+Thought for 37s
+
+Yep—that’s the right mental model. Most broker UIs do:
+
+if regular hours → show last trade (or last 1-min bar)
+
+if pre/after hours → show extended-hours last trade (labeled)
+
+if market closed → show previous close (with an “as of” time)
+
+Given your current Polygon access (you can hit marketstatus and aggregates, but not realtime last-trade/snapshot), here’s a clean way to implement that logic so your app never hangs and always shows something sensible.
+
+Step 1 — market phase helper (Polygon)
+
+Paste this in app.py (near your other helpers):
+
+import os, time, requests, datetime as dt
+from flask import jsonify
+
+POLY_KEY = os.getenv("POLYGON_API_KEY")
+_poly = requests.Session(); _poly.headers["Accept-Encoding"] = "gzip"
+
+_status_cache = {"at": 0, "data": None}
+def get_market_phase(ttl=15):
+    """Return one of: 'open', 'afterhours', 'pre', 'closed' (ET clock)."""
+    now = time.time()
+    if now - _status_cache["at"] < ttl and _status_cache["data"]:
+        return _status_cache["data"]
+    r = _poly.get("https://api.polygon.io/v1/marketstatus/now",
+                  params={"apiKey": POLY_KEY}, timeout=3)
+    phase = "closed"
+    if r.ok:
+        j = r.json()
+        # polygon returns 'market': 'open' or 'closed'; 'afterHours' boolean.
+        if j.get("market") == "open":
+            phase = "open"
+        elif j.get("afterHours"):
+            phase = "afterhours"
+        else:
+            # crude pre-market check based on ET hour (optional)
+            et = dt.datetime.now(dt.timezone(dt.timedelta(hours=-4)))  # EDT; adjust for EST if needed
+            if et.hour < 9 or (et.hour == 9 and et.minute < 30):
+                phase = "pre"
+            else:
+                phase = "closed"
+    _status_cache.update({"at": now, "data": phase})
+    return phase
+
+Step 2 — grouped “previous close” cache (one call/min, fast)
+_prev_cache = {"at": 0, "blob": None}
+def get_prev_close(symbol: str, ttl=120):
+    """Return previous close for symbol (float) using grouped prev."""
+    now = time.time()
+    if not POLY_KEY:
+        return None
+    if now - _prev_cache["at"] >= ttl or not _prev_cache["blob"]:
+        url = "https://api.polygon.io/v2/aggs/grouped/locale/us/market/stocks/prev"
+        r = _poly.get(url, params={"adjusted":"true","apiKey": POLY_KEY}, timeout=5)
+        if not r.ok:
+            return None
+        _prev_cache.update({"at": now, "blob": r.json()})
+    results = (_prev_cache["blob"] or {}).get("results") or []
+    for row in results:
+        if row.get("T") == symbol:
+            return float(row.get("c", 0))  # close
+    return None
+
+Step 3 — “display price” chooser
+
+This uses what you’re entitled to now: prev-close when closed; tries realtime only if available (and fails fast).
+
+def get_display_stock_price(symbol: str):
+    phase = get_market_phase()
+    # Try realtime if you later upgrade (kept here; returns None if 403)
+    price, src, asof = None, None, None
+
+    if phase == "open":
+        # Without realtime entitlement, we can’t show live ticks.
+        # Fall back to previous close but label it clearly.
+        price = get_prev_close(symbol)
+        src = "prev_close (market open; no realtime entitlement)"
+    elif phase in ("afterhours", "pre"):
+        # If you upgrade, prefer extended-hours last trade here.
+        price = get_prev_close(symbol)
+        src = f"prev_close ({phase})"
+    else:  # closed
+        price = get_prev_close(symbol)
+        src = "prev_close (market closed)"
+
+    asof = "previous session close"
+    return {"symbol": symbol, "price": price, "phase": phase, "source": src, "asof": asof}
+
+Step 4 — wire your /api/quote
+
+Replace your current quote handler body with:
+
+@app.route("/api/quote")
+def api_quote():
+    symbol = (request.args.get("symbol") or "").strip().upper()
+    if not symbol:
+        return jsonify({"error": "Missing 'symbol'"}), 400
+    q = get_display_stock_price(symbol)
+    if not q["price"]:
+        return jsonify({"error": "No price available"}), 503
+    q["price"] = round(q["price"], 4)
+    return jsonify(q)
+
+What this gives you now
+
+When the market is closed (your case), users see the previous close with a clear “as of” label.
+
+During pre/after hours, you still show previous close (until you enable extended-hours data).
+
+During regular hours, if you don’t have live entitlement, you won’t mislead—UI shows prev close with a note.
+
+All of this runs with one Polygon call per minute (grouped prev), so you won’t hit the 429 wall.
+
+Options price (when closed)
+
+For options, most sites display the last traded price from the previous session and label it with the previous date/time. You’re already getting lastPrice via your yfinance chain fetch; use that value when phase != 'open'. If you want, I can add a tiny get_display_option_price(symbol, expiry, strike, call_put) helper that:
+
+uses your existing _fetch_chain to pick the contract row,
+
+returns lastPrice + an “as of last session” label,
+
+skips any realtime calls.
+
+Say the word and I’ll drop that in too.
