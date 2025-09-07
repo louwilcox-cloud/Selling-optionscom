@@ -152,7 +152,7 @@ def manage_watchlists():
         cur.execute("""
             SELECT w.id, w.name, w.symbols, w.created_at, u.email 
             FROM watchlists w 
-            LEFT JOIN users u ON w.user_id = u.id 
+            LEFT JOIN users u ON w.created_by = u.id 
             ORDER BY w.created_at DESC
         """)
         watchlists = cur.fetchall()
