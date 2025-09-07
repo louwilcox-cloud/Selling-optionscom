@@ -1,13 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Options Sentiment Analyzer | Selling-options.com</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-    <link rel="icon" href="{{ url_for('static', filename='favicon-32x32.png') }}" type="image/png" sizes="32x32">
-    <link rel="icon" href="{{ url_for('static', filename='favicon-16x16.png') }}" type="image/png" sizes="16x16">
+{% extends "base.html" %}
+
+{% block title %}Options Sentiment Analyzer | Selling-options.com{% endblock %}
+
+{% block extra_head %}
     <style>
       .calculator-container {
         max-width: 1200px;
@@ -74,171 +69,164 @@
       }
       
       .form-input {
-        padding: 16px 20px;
+        padding: 12px 16px;
         border: 2px solid #e5e7eb;
-        border-radius: 12px;
-        font-size: 1.1rem;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.2s ease;
         background: rgba(255,255,255,0.8);
-        backdrop-filter: blur(5px);
-        transition: all 0.3s ease;
-        font-weight: 500;
       }
       
       .form-input:focus {
         outline: none;
         border-color: #1e40af;
-        background: rgba(255,255,255,0.95);
-        box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.1), 0 10px 30px rgba(30, 64, 175, 0.1);
-        transform: translateY(-1px);
+        box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        background: rgba(255,255,255,1);
       }
       
       .analyze-btn {
-        padding: 16px 40px;
+        padding: 12px 24px;
         background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
         color: white;
         border: none;
-        border-radius: 12px;
-        font-size: 1.1rem;
-        font-weight: 700;
+        border-radius: 10px;
+        font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
+        white-space: nowrap;
       }
       
-      .analyze-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(30, 64, 175, 0.4);
-        background: linear-gradient(135deg, #1d4ed8 0%, #8b5cf6 100%);
+      .analyze-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(30, 64, 175, 0.3);
       }
       
       .analyze-btn:disabled {
-        background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+        opacity: 0.6;
         cursor: not-allowed;
         transform: none;
-        box-shadow: 0 2px 8px rgba(156, 163, 175, 0.2);
+      }
+      
+      .loading, .error {
+        text-align: center;
+        padding: 30px;
+        margin: 20px 0;
+        border-radius: 12px;
+      }
+      
+      .loading {
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        color: #6b7280;
+        font-size: 1.1rem;
+      }
+      
+      .error {
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        color: #dc2626;
+        border: 1px solid #fecaca;
+      }
+      
+      .hidden {
+        display: none;
+      }
+      
+      #resultsSection {
+        margin-top: 40px;
       }
       
       .current-price {
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-        padding: 15px;
-        border-radius: 12px;
         text-align: center;
-        margin-bottom: 20px;
-        border: 1px solid rgba(255,255,255,0.3);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        margin-bottom: 30px;
+        padding: 25px;
+        background: linear-gradient(135deg, rgba(30, 64, 175, 0.05) 0%, rgba(124, 58, 237, 0.05) 100%);
+        border-radius: 16px;
+        border: 1px solid rgba(30, 64, 175, 0.1);
       }
       
       .current-price h3 {
-        font-size: 0.9rem;
-        color: #64748b;
-        margin-bottom: 8px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 600;
+        color: #374151;
+        margin-bottom: 10px;
+        font-size: 1.3rem;
       }
       
       .price-display {
-        font-size: 1.8rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, #1e40af 0%, #059669 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #1e40af;
       }
       
       .results-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
-        margin-bottom: 30px;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        margin-bottom: 40px;
       }
       
       .sentiment-card {
-        background: rgba(255,255,255,0.95);
-        backdrop-filter: blur(10px);
-        padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-        border: 1px solid rgba(255,255,255,0.3);
+        padding: 30px;
+        border-radius: 16px;
         text-align: center;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
         transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-      }
-      
-      .sentiment-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 5px;
-        background: var(--gradient);
       }
       
       .sentiment-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        transform: translateY(-5px);
+        box-shadow: 0 15px 50px rgba(0,0,0,0.15);
       }
       
       .sentiment-card.bulls {
-        --gradient: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(21, 128, 61, 0.05) 100%);
+        border-color: rgba(34, 197, 94, 0.2);
       }
       
       .sentiment-card.consensus {
-        --gradient: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(30, 64, 175, 0.05) 100%);
+        border-color: rgba(59, 130, 246, 0.2);
       }
       
       .sentiment-card.bears {
-        --gradient: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(185, 28, 28, 0.05) 100%);
+        border-color: rgba(239, 68, 68, 0.2);
       }
       
       .sentiment-card h3 {
-        font-size: 0.9rem;
-        font-weight: 600;
+        font-size: 1.2rem;
         margin-bottom: 15px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-      
-      .sentiment-card.bulls h3 {
-        color: #059669;
-      }
-      
-      .sentiment-card.consensus h3 {
-        color: #1e40af;
-      }
-      
-      .sentiment-card.bears h3 {
-        color: #dc2626;
+        color: #374151;
       }
       
       .sentiment-value {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #1f2937;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        font-size: 2rem;
+        font-weight: 800;
+      }
+      
+      .sentiment-card.bulls .sentiment-value {
+        color: #22c55e;
+      }
+      
+      .sentiment-card.consensus .sentiment-value {
+        color: #3b82f6;
+      }
+      
+      .sentiment-card.bears .sentiment-value {
+        color: #ef4444;
       }
       
       .pc-ratios {
-        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.9) 100%);
-        backdrop-filter: blur(15px);
-        padding: 20px;
+        background: rgba(255,255,255,0.9);
+        padding: 30px;
         border-radius: 16px;
         box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-        border: 1px solid rgba(255,255,255,0.3);
+        border: 1px solid rgba(255,255,255,0.2);
       }
       
       .pc-ratios h3 {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: #1f2937;
-        margin-bottom: 15px;
         text-align: center;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        margin-bottom: 25px;
+        color: #374151;
+        font-size: 1.4rem;
       }
       
       .ratio-grid {
@@ -249,120 +237,43 @@
       
       .ratio-item {
         text-align: center;
-        padding: 15px;
-        background: rgba(255,255,255,0.8);
-        backdrop-filter: blur(5px);
-        border-radius: 10px;
-        border: 1px solid rgba(255,255,255,0.4);
-        transition: all 0.3s ease;
-      }
-      
-      .ratio-item:hover {
-        transform: translateY(-3px);
-        background: rgba(255,255,255,0.95);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        padding: 20px;
+        background: rgba(249,250,251,0.8);
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
       }
       
       .ratio-label {
         font-size: 0.9rem;
-        color: #64748b;
-        margin-bottom: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        color: #6b7280;
+        margin-bottom: 8px;
+        font-weight: 500;
       }
       
       .ratio-value {
-        font-size: 1.3rem;
+        font-size: 1.4rem;
         font-weight: 700;
-        color: #1f2937;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-      }
-      
-      .loading {
-        text-align: center;
-        padding: 40px;
-        color: #6b7280;
-      }
-      
-      .error {
-        background: #fef2f2;
-        border: 1px solid #fecaca;
-        color: #dc2626;
-        padding: 15px;
-        border-radius: 8px;
-        margin: 20px 0;
-      }
-      
-      .hidden {
-        display: none;
+        color: #1e40af;
       }
       
       @media (max-width: 768px) {
         .form-grid {
           grid-template-columns: 1fr;
-        }
-        
-        .calculator-header h1 {
-          font-size: 2rem;
+          gap: 15px;
         }
         
         .results-grid {
           grid-template-columns: 1fr;
         }
+        
+        .ratio-grid {
+          grid-template-columns: 1fr 1fr;
+        }
       }
     </style>
-  </head>
-  <body>
-    <header class="header">
-      <nav class="nav-container">
-        <div class="logo">
-          <img src="{{ url_for('static', filename='attached_assets/generated_images/Clean_financial_chart_logo_a5295a8c.png') }}" alt="Chart Logo" class="logo-image">
-          <a href="/" style="text-decoration: none; color: inherit;">
-            <strong>Selling-options.com</strong>
-          </a>
-        </div>
-        <div class="nav-center">
-          <div class="nav-quote">
-            <input type="text" id="navQuoteSymbol" placeholder="Enter symbol..." class="nav-quote-input">
-            <button onclick="getNavQuote()" class="nav-quote-btn">Quote</button>
-            <div id="navQuoteResult" class="nav-quote-result"></div>
-          </div>
-        </div>
-        <div class="nav-right">
-          <div class="nav-dropdown disabled">
-            <span class="nav-dropdown-label">Tools</span>
-            <div class="nav-dropdown-content">
-              <a href="/calculator.html">Options Calculator</a>
-              <a href="/forecast">Watchlist Forecast</a>
-            </div>
-          </div>
-          <div class="nav-dropdown">
-            <span class="nav-dropdown-label">Education</span>
-            <div class="nav-dropdown-content">
-              <a href="/video-tutorials.html">Video Tutorials</a>
-            </div>
-          </div>
-          <div class="nav-dropdown" id="adminDropdown" style="display: none;">
-            <span class="nav-dropdown-label">Admin</span>
-            <div class="nav-dropdown-content">
-              <a href="/admin/users">Manage Users</a>
-              <a href="/admin/watchlists">Manage Watchlists</a>
-            </div>
-          </div>
-          <div class="nav-auth" id="navAuth">
-            <a href="/login" class="btn-login">Log In</a>
-            <a href="/signup" class="btn-signup">Sign Up</a>
-          </div>
-          <div class="nav-user" id="navUser" style="display: none;">
-            <span class="user-icon" id="userIcon" title="">👤</span>
-            <span class="user-welcome" id="userWelcome">Welcome, User</span>
-            <a href="/logout" class="btn-logout">Logout</a>
-          </div>
-        </div>
-      </nav>
-    </header>
+{% endblock %}
 
+{% block content %}
     <main class="calculator-container">
       <div class="calculator-header">
         <h1>Options Sentiment Analyzer</h1>
@@ -432,201 +343,19 @@
               <div class="ratio-value" id="moneyRatio">--</div>
             </div>
             <div class="ratio-item">
-              <div class="ratio-label">True P/C Ratio</div>
-              <div class="ratio-value" id="trueRatio">--</div>
-            </div>
-            <div class="ratio-item">
-              <div class="ratio-label">Premium P/C Ratio</div>
-              <div class="ratio-value" id="premiumRatio">--</div>
-            </div>
-            <div class="ratio-item">
               <div class="ratio-label">Volume P/C Ratio</div>
               <div class="ratio-value" id="volumeRatio">--</div>
             </div>
             <div class="ratio-item">
-              <div class="ratio-label">Vol/OI P/C Ratio</div>
-              <div class="ratio-value" id="volOiRatio">--</div>
+              <div class="ratio-label">OI P/C Ratio</div>
+              <div class="ratio-value" id="oiRatio">--</div>
             </div>
           </div>
         </div>
       </div>
     </main>
+{% endblock %}
 
-    <footer class="footer">
-      <div class="container">
-        <div class="footer-content">
-          <div class="footer-section">
-            <h4>Tools</h4>
-            <ul>
-              <li><a href="/calculator.html">Options Calculator</a></li>
-              <li><a href="#">Risk Assessment</a></li>
-              <li><a href="#">Strategy Builder</a></li>
-              <li><a href="#">IV Screener</a></li>
-            </ul>
-          </div>
-          <div class="footer-section">
-            <h4>Education</h4>
-            <ul>
-              <li><a href="#">Options Basics</a></li>
-              <li><a href="#">Advanced Strategies</a></li>
-              <li><a href="#">Risk Management</a></li>
-              <li><a href="#">Video Library</a></li>
-            </ul>
-          </div>
-          <div class="footer-section">
-            <h4>Company</h4>
-            <ul>
-              <li><a href="#">About Us</a></li>
-              <li><a href="#">Contact</a></li>
-              <li><a href="#">Premium Plans</a></li>
-              <li><a href="#">Affiliate Program</a></li>
-            </ul>
-          </div>
-          <div class="footer-section">
-            <h4>Legal</h4>
-            <ul>
-              <li><a href="#">Privacy Policy</a></li>
-              <li><a href="#">Terms of Service</a></li>
-              <li><a href="#">Disclaimer</a></li>
-              <li><a href="#">Risk Warning</a></li>
-            </ul>
-          </div>
-        </div>
-        <div class="footer-bottom">
-          <p>&copy; 2025 Selling-options.com. All rights reserved.</p>
-        </div>
-      </div>
-    </footer>
-
+{% block extra_scripts %}
     <script src="{{ url_for('static', filename='calculator.js') }}"></script>
-    <script>
-      // Navigation stock quote functionality
-      async function getNavQuote() {
-        const symbol = document.getElementById('navQuoteSymbol').value.trim().toUpperCase();
-        const resultDiv = document.getElementById('navQuoteResult');
-        
-        if (!symbol) {
-          resultDiv.innerHTML = '<div class="nav-quote-error">Enter symbol</div>';
-          setTimeout(() => resultDiv.innerHTML = '', 3000);
-          return;
-        }
-        
-        resultDiv.innerHTML = '<div class="nav-quote-loading">Loading...</div>';
-        
-        try {
-          const response = await fetch(`/api/quote?symbol=${symbol}`);
-          const data = await response.json();
-          
-          if (data.error) {
-            resultDiv.innerHTML = `<div class="nav-quote-error">Not found</div>`;
-          } else {
-            resultDiv.innerHTML = `
-              <div class="nav-quote-success">
-                ${data.symbol}: $${data.price}
-              </div>
-            `;
-          }
-          
-          // Clear result after 5 seconds
-          setTimeout(() => resultDiv.innerHTML = '', 5000);
-        } catch (error) {
-          resultDiv.innerHTML = '<div class="nav-quote-error">Error</div>';
-          setTimeout(() => resultDiv.innerHTML = '', 3000);
-        }
-      }
-
-      // Authentication status checking
-      async function checkAuthStatus() {
-        try {
-          const response = await fetch('/api/auth-status');
-          const data = await response.json();
-          
-          console.log('Auth status response:', data);
-          
-          const toolsDropdown = document.querySelector('.nav-dropdown:first-child');
-          const adminDropdown = document.getElementById('adminDropdown');
-          
-          if (data.authenticated) {
-            console.log('User is authenticated, username:', data.username, 'is_admin:', data.is_admin, 'user_id:', data.user_id);
-            
-            // User is logged in
-            document.getElementById('navAuth').style.display = 'none';
-            const navUser = document.getElementById('navUser');
-            navUser.style.display = 'flex';
-            navUser.classList.add('authenticated'); // Add authenticated class for green color
-            document.getElementById('userWelcome').textContent = `Welcome, ${data.username}`;
-            
-            // Set user icon tooltip with welcome message
-            const userIcon = document.getElementById('userIcon');
-            if (userIcon && data.user_id) {
-              userIcon.title = `Welcome, ${data.username}`;
-            }
-            
-            // Enable Tools dropdown for authenticated users
-            if (toolsDropdown) {
-              toolsDropdown.classList.remove('disabled');
-              toolsDropdown.style.opacity = '1';
-              toolsDropdown.style.pointerEvents = 'auto';
-            }
-            
-            // Show admin dropdown if user is admin
-            if (data.is_admin) {
-              console.log('Showing admin dropdown');
-              adminDropdown.style.display = 'inline-block';
-            } else {
-              console.log('Hiding admin dropdown - not admin');
-              adminDropdown.style.display = 'none';
-            }
-          } else {
-            console.log('User is NOT authenticated');
-            
-            // User is not logged in
-            document.getElementById('navAuth').style.display = 'flex';
-            document.getElementById('navUser').style.display = 'none';
-            
-            // Disable Tools dropdown for non-authenticated users
-            if (toolsDropdown) {
-              toolsDropdown.classList.add('disabled');
-              toolsDropdown.style.opacity = '0.5';
-              toolsDropdown.style.pointerEvents = 'none';
-            }
-            
-            // Hide admin dropdown
-            if (adminDropdown) {
-              adminDropdown.style.display = 'none';
-            }
-          }
-        } catch (error) {
-          console.error('Error checking authentication status:', error);
-          
-          // Default to not authenticated on error
-          document.getElementById('navAuth').style.display = 'flex';
-          document.getElementById('navUser').style.display = 'none';
-          
-          const toolsDropdown = document.querySelector('.nav-dropdown:first-child');
-          if (toolsDropdown) {
-            toolsDropdown.classList.add('disabled');
-            toolsDropdown.style.opacity = '0.5';
-            toolsDropdown.style.pointerEvents = 'none';
-          }
-        }
-      }
-
-      // Initialize everything when page loads
-      document.addEventListener('DOMContentLoaded', function() {
-        // Check authentication status immediately
-        checkAuthStatus();
-        
-        // Set up nav quote search
-        const navQuoteInput = document.getElementById('navQuoteSymbol');
-        if (navQuoteInput) {
-          navQuoteInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-              getNavQuote();
-            }
-          });
-        }
-      });
-    </script>
-  </body>
-</html>
+{% endblock %}

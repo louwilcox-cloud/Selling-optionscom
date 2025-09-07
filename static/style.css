@@ -22,6 +22,28 @@ body {
   z-index: 100;
 }
 
+/* User Icon Styling - CENTRALIZED */
+.user-icon {
+  font-size: 1.2rem;
+  margin-right: 8px;
+  transition: color 0.3s ease;
+  color: #9ca3af; /* Gray by default */
+  cursor: pointer;
+}
+
+.nav-user.authenticated .user-icon {
+  color: #c084fc; /* Light purple when authenticated */
+}
+
+.nav-user.authenticated .user-icon:hover {
+  color: #6d28d9; /* Darker purple on hover */
+}
+
+.nav-user.authenticated .user-welcome {
+  color: #1e40af;
+  font-weight: 500;
+}
+
 .nav-container {
   display: flex;
   align-items: center;
@@ -236,14 +258,6 @@ body {
   border-radius: 0; /* Remove border radius */
 }
 
-/* Purple color when user is authenticated */
-.user-icon.logged-in {
-  color: #c084fc; /* Light purple when logged in */
-}
-
-.user-icon.logged-in:hover {
-  color: #6d28d9; /* Darker purple on hover */
-}
 
 .btn-login, .btn-signup {
   padding: 8px 16px;

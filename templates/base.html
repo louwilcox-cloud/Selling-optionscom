@@ -55,7 +55,8 @@
             <a href="{{ url_for('auth.signup') }}" class="nav-signup-btn">Sign Up</a>
           </div>
           <div class="nav-user" id="navUser" style="display: none;">
-            <span class="nav-username" id="navUsername"></span>
+            <span class="user-icon" id="userIcon" title="">👤</span>
+            <span class="user-welcome" id="userWelcome">Welcome, User</span>
             <a href="{{ url_for('auth.logout') }}" class="nav-logout-btn">Log Out</a>
           </div>
         </div>
@@ -110,8 +111,16 @@
           if (data.authenticated) {
             // User is logged in
             document.getElementById('navAuth').style.display = 'none';
-            document.getElementById('navUser').style.display = 'flex';
-            document.getElementById('navUsername').textContent = data.email || 'User';
+            const navUser = document.getElementById('navUser');
+            navUser.style.display = 'flex';
+            navUser.classList.add('authenticated'); // Add authenticated class for purple styling
+            document.getElementById('userWelcome').textContent = `Welcome, ${data.email || 'User'}`;
+            
+            // Set user icon tooltip with user email and welcome message
+            const userIcon = document.getElementById('userIcon');
+            if (userIcon && data.email) {
+              userIcon.title = `Welcome, ${data.email}`;
+            }
             
             // Show admin dropdown if user is admin
             if (data.is_admin) {

@@ -1,14 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Video Tutorials | Selling-options.com</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-    <link rel="icon" href="{{ url_for('static', filename='favicon-32x32.png') }}" type="image/png" sizes="32x32">
-    <link rel="icon" href="{{ url_for('static', filename='favicon-16x16.png') }}" type="image/png" sizes="16x16">
-    <meta name="theme-color" content="#1e40af">
+{% extends "base.html" %}
+
+{% block title %}Video Tutorials | Selling-options.com{% endblock %}
+
+{% block extra_head %}
     <style>
       .tutorials-container {
         max-width: 1200px;
@@ -36,6 +30,63 @@
         color: #6b7280;
         max-width: 700px;
         margin: 0 auto;
+        line-height: 1.6;
+      }
+      
+      .learning-path {
+        margin-bottom: 80px;
+        text-align: center;
+      }
+      
+      .learning-path h2 {
+        font-size: 2.5rem;
+        color: #1f2937;
+        margin-bottom: 40px;
+      }
+      
+      .learning-steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+        margin-top: 40px;
+      }
+      
+      .step {
+        background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(249,250,251,0.8) 100%);
+        padding: 30px 25px;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        transition: all 0.3s ease;
+      }
+      
+      .step:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      }
+      
+      .step-number {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin: 0 auto 20px;
+      }
+      
+      .step h3 {
+        font-size: 1.4rem;
+        color: #1f2937;
+        margin-bottom: 15px;
+      }
+      
+      .step p {
+        color: #6b7280;
         line-height: 1.6;
       }
       
@@ -83,377 +134,189 @@
       }
       
       .video-info h3 {
-        font-size: 1.3rem;
-        font-weight: 700;
+        font-size: 1.4rem;
         color: #1f2937;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
+        font-weight: 700;
       }
       
       .video-info p {
-        font-size: 1rem;
         color: #6b7280;
-        line-height: 1.5;
+        line-height: 1.6;
+        font-size: 1rem;
       }
       
-      .back-section {
+      .cta-section {
         text-align: center;
-        padding: 40px 0;
-        border-top: 1px solid rgba(229, 231, 235, 0.5);
-      }
-      
-      .back-button {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 16px 32px;
-        background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
-        color: white;
-        text-decoration: none;
-        font-size: 1.1rem;
-        font-weight: 600;
-        border-radius: 12px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
-      }
-      
-      .back-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(30, 64, 175, 0.4);
-        background: linear-gradient(135deg, #1d4ed8 0%, #8b5cf6 100%);
-      }
-      
-      .learning-path {
+        padding: 80px 40px;
         background: linear-gradient(135deg, rgba(30, 64, 175, 0.05) 0%, rgba(124, 58, 237, 0.05) 100%);
-        padding: 40px;
-        border-radius: 20px;
-        margin-bottom: 40px;
+        border-radius: 25px;
+        margin-top: 60px;
         border: 1px solid rgba(30, 64, 175, 0.1);
       }
       
-      .learning-path h2 {
-        font-size: 2rem;
-        font-weight: 700;
+      .cta-section h2 {
+        font-size: 2.5rem;
         color: #1f2937;
         margin-bottom: 20px;
-        text-align: center;
+        font-weight: 800;
       }
       
-      .learning-steps {
-        display: flex;
-        justify-content: space-around;
-        flex-wrap: wrap;
-        gap: 20px;
+      .cta-section p {
+        font-size: 1.2rem;
+        color: #6b7280;
+        margin-bottom: 40px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.6;
       }
       
-      .step {
-        text-align: center;
-        flex: 1;
-        min-width: 200px;
-      }
-      
-      .step-number {
-        width: 50px;
-        height: 50px;
+      .cta-button {
+        display: inline-block;
+        padding: 18px 40px;
         background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
         color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        text-decoration: none;
+        border-radius: 12px;
         font-weight: 700;
-        font-size: 1.2rem;
-        margin: 0 auto 15px;
-      }
-      
-      .step h3 {
         font-size: 1.1rem;
-        font-weight: 600;
-        color: #1f2937;
-        margin-bottom: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 25px rgba(30, 64, 175, 0.3);
       }
       
-      .step p {
-        font-size: 0.9rem;
-        color: #6b7280;
-        line-height: 1.4;
+      .cta-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 35px rgba(30, 64, 175, 0.4);
       }
       
       @media (max-width: 768px) {
-        .videos-grid {
-          grid-template-columns: 1fr;
-        }
-        
         .tutorials-header h1 {
           font-size: 2.5rem;
         }
         
+        .videos-grid {
+          grid-template-columns: 1fr;
+        }
+        
         .learning-steps {
-          flex-direction: column;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+        
+        .video-card {
+          padding: 20px;
+        }
+        
+        .cta-section {
+          padding: 60px 30px;
+        }
+        
+        .cta-section h2 {
+          font-size: 2rem;
         }
       }
     </style>
-  </head>
-  <body>
-    <header class="header">
-      <nav class="nav-container">
-        <div class="logo">
-          <img src="{{ url_for('static', filename='attached_assets/generated_images/Clean_financial_chart_logo_a5295a8c.png') }}" alt="Chart Logo" class="logo-image">
-          <a href="/" style="text-decoration: none; color: inherit;">
-            <strong>Selling-options.com</strong>
-          </a>
-        </div>
-        <div class="nav-center">
-          <div class="nav-quote">
-            <input type="text" id="navQuoteSymbol" placeholder="Enter symbol..." class="nav-quote-input">
-            <button onclick="getNavQuote()" class="nav-quote-btn">Quote</button>
-            <div id="navQuoteResult" class="nav-quote-result"></div>
-          </div>
-        </div>
-        <div class="nav-right">
-          <div class="nav-dropdown disabled">
-            <span class="nav-dropdown-label">Tools</span>
-            <div class="nav-dropdown-content">
-              <a href="/calculator.html">Options Calculator</a>
-              <a href="/forecast">Watchlist Forecast</a>
-            </div>
-          </div>
-          <div class="nav-dropdown">
-            <span class="nav-dropdown-label">Education</span>
-            <div class="nav-dropdown-content">
-              <a href="/video-tutorials.html">Video Tutorials</a>
-            </div>
-          </div>
-          <div class="nav-dropdown" id="adminDropdown" style="display: none;">
-            <span class="nav-dropdown-label">Admin</span>
-            <div class="nav-dropdown-content">
-              <a href="/admin/users">Manage Users</a>
-              <a href="/admin/watchlists">Manage Watchlists</a>
-            </div>
-          </div>
-          <div class="nav-auth" id="navAuth">
-            <a href="/login" class="btn-login">Log In</a>
-            <a href="/signup" class="btn-signup">Sign Up</a>
-          </div>
-          <div class="nav-user" id="navUser" style="display: none;">
-            <span class="user-icon" id="userIcon" title="">👤</span>
-            <span class="user-welcome" id="userWelcome">Welcome, User</span>
-            <a href="/logout" class="btn-logout">Logout</a>
-          </div>
-        </div>
-      </nav>
-    </header>
+{% endblock %}
 
-    <main class="main-content">
-      <div class="tutorials-container">
-        <div class="tutorials-header">
-          <h1>Video Tutorials</h1>
-          <p>Master options income strategies with our comprehensive video library. Learn from basics to advanced techniques for consistent weekly and monthly income.</p>
-        </div>
+{% block content %}
+    <div class="tutorials-container">
+      <div class="tutorials-header">
+        <h1>Video Tutorials</h1>
+        <p>Master options income strategies with our comprehensive video library. Learn from basics to advanced techniques for consistent weekly and monthly income.</p>
+      </div>
 
-        <div class="learning-path">
-          <h2>Your Learning Path</h2>
-          <div class="learning-steps">
-            <div class="step">
-              <div class="step-number">1</div>
-              <h3>Foundation</h3>
-              <p>Start with basic options concepts and terminology</p>
-            </div>
-            <div class="step">
-              <div class="step-number">2</div>
-              <h3>Strategy</h3>
-              <p>Learn the Wheel Strategy for consistent income</p>
-            </div>
-            <div class="step">
-              <div class="step-number">3</div>
-              <h3>Weekly Income</h3>
-              <p>Master weekly options for passive income</p>
-            </div>
-            <div class="step">
-              <div class="step-number">4</div>
-              <h3>Advanced</h3>
-              <p>Implement advanced techniques and risk management</p>
-            </div>
+      <div class="learning-path">
+        <h2>Your Learning Path</h2>
+        <div class="learning-steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <h3>Foundation</h3>
+            <p>Start with basic options concepts and terminology</p>
           </div>
-        </div>
-
-        <div class="videos-grid">
-          <div class="video-card">
-            <div class="video-wrapper">
-              <iframe src="https://www.youtube.com/embed/LjQOcYTCybY" title="Options Trading Fundamentals" allowfullscreen></iframe>
-            </div>
-            <div class="video-info">
-              <h3>Options Trading Fundamentals</h3>
-              <p>Learn the essential concepts of options trading including calls, puts, and basic strategies. Perfect for beginners looking to understand the foundation of options income strategies.</p>
-            </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <h3>Strategy</h3>
+            <p>Learn the Wheel Strategy for consistent income</p>
           </div>
-
-          <div class="video-card">
-            <div class="video-wrapper">
-              <iframe src="https://www.youtube.com/embed/qKdadAp2ed0" title="The Wheel Strategy Explained" allowfullscreen></iframe>
-            </div>
-            <div class="video-info">
-              <h3>The Wheel Strategy Explained</h3>
-              <p>Discover the powerful Wheel Strategy - a systematic approach to generating consistent income from options. Learn how to implement this strategy step-by-step.</p>
-            </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <h3>Weekly Income</h3>
+            <p>Master weekly options for passive income</p>
           </div>
-
-          <div class="video-card">
-            <div class="video-wrapper">
-              <iframe src="https://www.youtube.com/embed/1HXDto7qXaU" title="Weekly Passive Income Strategy" allowfullscreen></iframe>
-            </div>
-            <div class="video-info">
-              <h3>Weekly Passive Income Strategy</h3>
-              <p>Master the art of weekly options trading for consistent passive income. Learn timing, stock selection, and risk management for weekly strategies.</p>
-            </div>
+          <div class="step">
+            <div class="step-number">4</div>
+            <h3>Advanced</h3>
+            <p>Implement advanced techniques and risk management</p>
           </div>
-
-          <div class="video-card">
-            <div class="video-wrapper">
-              <iframe src="https://www.youtube.com/embed/xiiWMo2sfqc" title="Advanced Wheel Strategy Techniques" allowfullscreen></iframe>
-            </div>
-            <div class="video-info">
-              <h3>Advanced Wheel Strategy Techniques</h3>
-              <p>Take your Wheel Strategy to the next level with advanced techniques, position sizing, and portfolio management for maximum income generation.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="back-section">
-          <a href="/" class="back-button">
-            <span>←</span>
-            Back to Home
-          </a>
         </div>
       </div>
-    </main>
-    <script>
-      // Navigation stock quote functionality
-      async function getNavQuote() {
-        const symbol = document.getElementById('navQuoteSymbol').value.trim().toUpperCase();
-        const resultDiv = document.getElementById('navQuoteResult');
-        
-        if (!symbol) {
-          resultDiv.innerHTML = '<div class="nav-quote-error">Enter symbol</div>';
-          setTimeout(() => resultDiv.innerHTML = '', 3000);
-          return;
-        }
-        
-        resultDiv.innerHTML = '<div class="nav-quote-loading">Loading...</div>';
-        
-        try {
-          const response = await fetch(`/api/quote?symbol=${symbol}`);
-          const data = await response.json();
-          
-          if (data.error) {
-            resultDiv.innerHTML = `<div class="nav-quote-error">Not found</div>`;
-          } else {
-            resultDiv.innerHTML = `
-              <div class="nav-quote-success">
-                ${data.symbol}: $${data.price}
-              </div>
-            `;
-          }
-          
-          // Clear result after 5 seconds
-          setTimeout(() => resultDiv.innerHTML = '', 5000);
-        } catch (error) {
-          resultDiv.innerHTML = '<div class="nav-quote-error">Error</div>';
-          setTimeout(() => resultDiv.innerHTML = '', 3000);
-        }
-      }
 
-      // Authentication status checking
-      async function checkAuthStatus() {
-        try {
-          const response = await fetch('/api/auth-status');
-          const data = await response.json();
-          
-          console.log('Auth status response:', data);
-          
-          const toolsDropdown = document.querySelector('.nav-dropdown:first-child');
-          const adminDropdown = document.getElementById('adminDropdown');
-          
-          if (data.authenticated) {
-            console.log('User is authenticated, username:', data.username, 'is_admin:', data.is_admin, 'user_id:', data.user_id);
-            
-            // User is logged in
-            document.getElementById('navAuth').style.display = 'none';
-            const navUser = document.getElementById('navUser');
-            navUser.style.display = 'flex';
-            navUser.classList.add('authenticated'); // Add authenticated class for green color
-            document.getElementById('userWelcome').textContent = `Welcome, ${data.username}`;
-            
-            // Set user icon tooltip with welcome message
-            const userIcon = document.getElementById('userIcon');
-            if (userIcon && data.user_id) {
-              userIcon.title = `Welcome, ${data.username}`;
-            }
-            
-            // Enable Tools dropdown for authenticated users
-            if (toolsDropdown) {
-              toolsDropdown.classList.remove('disabled');
-              toolsDropdown.style.opacity = '1';
-              toolsDropdown.style.pointerEvents = 'auto';
-            }
-            
-            // Show admin dropdown if user is admin
-            if (data.is_admin) {
-              console.log('Showing admin dropdown');
-              adminDropdown.style.display = 'inline-block';
-            } else {
-              console.log('Hiding admin dropdown - not admin');
-              adminDropdown.style.display = 'none';
-            }
-          } else {
-            console.log('User is NOT authenticated');
-            
-            // User is not logged in
-            document.getElementById('navAuth').style.display = 'flex';
-            document.getElementById('navUser').style.display = 'none';
-            
-            // Disable Tools dropdown for non-authenticated users
-            if (toolsDropdown) {
-              toolsDropdown.classList.add('disabled');
-              toolsDropdown.style.opacity = '0.5';
-              toolsDropdown.style.pointerEvents = 'none';
-            }
-            
-            // Hide admin dropdown
-            if (adminDropdown) {
-              adminDropdown.style.display = 'none';
-            }
-          }
-        } catch (error) {
-          console.error('Error checking authentication status:', error);
-          
-          // Default to not authenticated on error
-          document.getElementById('navAuth').style.display = 'flex';
-          document.getElementById('navUser').style.display = 'none';
-          
-          const toolsDropdown = document.querySelector('.nav-dropdown:first-child');
-          if (toolsDropdown) {
-            toolsDropdown.classList.add('disabled');
-            toolsDropdown.style.opacity = '0.5';
-            toolsDropdown.style.pointerEvents = 'none';
-          }
-        }
-      }
+      <div class="videos-grid">
+        <div class="video-card">
+          <div class="video-wrapper">
+            <iframe src="https://www.youtube.com/embed/LjQOcYTCybY" title="Options Trading Fundamentals" allowfullscreen></iframe>
+          </div>
+          <div class="video-info">
+            <h3>Options Trading Fundamentals</h3>
+            <p>Learn the essential concepts of options trading including calls, puts, and basic strategies. Perfect for beginners looking to understand the foundation of options income strategies.</p>
+          </div>
+        </div>
 
-      // Initialize everything when page loads
-      document.addEventListener('DOMContentLoaded', function() {
-        // Check authentication status immediately
-        checkAuthStatus();
-        
-        // Set up nav quote search
-        const navQuoteInput = document.getElementById('navQuoteSymbol');
-        if (navQuoteInput) {
-          navQuoteInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-              getNavQuote();
-            }
-          });
-        }
-      });
-    </script>
-  </body>
-</html>
+        <div class="video-card">
+          <div class="video-wrapper">
+            <iframe src="https://www.youtube.com/embed/qKdadAp2ed0" title="The Wheel Strategy Explained" allowfullscreen></iframe>
+          </div>
+          <div class="video-info">
+            <h3>The Wheel Strategy Explained</h3>
+            <p>Discover the powerful Wheel Strategy - a systematic approach to generating consistent income from options. Learn how to implement this strategy step-by-step.</p>
+          </div>
+        </div>
+
+        <div class="video-card">
+          <div class="video-wrapper">
+            <iframe src="https://www.youtube.com/embed/1HXDto7qXaU" title="Weekly Passive Income Strategy" allowfullscreen></iframe>
+          </div>
+          <div class="video-info">
+            <h3>Weekly Passive Income Strategy</h3>
+            <p>Master the art of weekly options trading for consistent passive income. Learn timing, stock selection, and risk management for weekly strategies.</p>
+          </div>
+        </div>
+
+        <div class="video-card">
+          <div class="video-wrapper">
+            <iframe src="https://www.youtube.com/embed/xiiWMo2sfqc" title="Advanced Wheel Strategy Techniques" allowfullscreen></iframe>
+          </div>
+          <div class="video-info">
+            <h3>Advanced Wheel Strategy Techniques</h3>
+            <p>Take your Wheel Strategy to the next level with advanced techniques for maximizing returns and minimizing risk in various market conditions.</p>
+          </div>
+        </div>
+
+        <div class="video-card">
+          <div class="video-wrapper">
+            <iframe src="https://www.youtube.com/embed/VsOu3lTAHkY" title="Managing Early Assignment" allowfullscreen></iframe>
+          </div>
+          <div class="video-info">
+            <h3>Managing Early Assignment</h3>
+            <p>Learn how to handle early assignments and turn them into profitable opportunities. Essential knowledge for any options income trader.</p>
+          </div>
+        </div>
+
+        <div class="video-card">
+          <div class="video-wrapper">
+            <iframe src="https://www.youtube.com/embed/3sT7IHaG8eY" title="Portfolio Risk Management" allowfullscreen></iframe>
+          </div>
+          <div class="video-info">
+            <h3>Portfolio Risk Management</h3>
+            <p>Discover advanced risk management techniques to protect your capital while maximizing income from your options strategies.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="cta-section">
+        <h2>Ready to Start Your Options Journey?</h2>
+        <p>Apply what you've learned with our powerful options calculators and analysis tools. Start generating consistent income today.</p>
+        <a href="{{ url_for('calculator.calculator') }}" class="cta-button">Try Our Calculator</a>
+      </div>
+    </div>
+{% endblock %}
