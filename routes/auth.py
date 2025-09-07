@@ -45,7 +45,7 @@ def signup():
     <html>
     <head>
         <title>Sign Up - Selling-options.com</title>
-        <link rel="stylesheet" href="/static/style.css">
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     </head>
     <body>
         <div class="auth-container">
@@ -115,7 +115,7 @@ def login():
     <html>
     <head>
         <title>Login - Selling-options.com</title>
-        <link rel="stylesheet" href="/static/style.css">
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     </head>
     <body>
         <div class="auth-container">
