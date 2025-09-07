@@ -17,15 +17,17 @@ def admin_panel():
         cur = conn.cursor()
         
         # Get user statistics
-        cur.execute("SELECT COUNT(*) FROM users WHERE active = true")
-        active_users = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM users WHERE is_active = true")
+        active_users_result = cur.fetchone()
+        active_users = active_users_result[0] if active_users_result else 0
         
         cur.execute("SELECT COUNT(*) FROM watchlists")
-        total_watchlists = cur.fetchone()[0]
+        watchlists_result = cur.fetchone()
+        total_watchlists = watchlists_result[0] if watchlists_result else 0
         
         # Get recent users
         cur.execute("""
-            SELECT id, username, email, created_at, active 
+            SELECT id, email, created_at, is_active 
             FROM users 
             ORDER BY created_at DESC 
             LIMIT 10
@@ -40,7 +42,7 @@ def admin_panel():
         <html>
         <head>
             <title>Admin Panel - Selling-options.com</title>
-            <link rel="stylesheet" href="/static/style.css">
+            <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
         </head>
         <body>
             <div class="admin-container">
@@ -63,7 +65,6 @@ def admin_panel():
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Username</th>
                                 <th>Email</th>
                                 <th>Created</th>
                                 <th>Status</th>
@@ -123,7 +124,7 @@ def toggle_user(user_id):
     
     try:
         cur = conn.cursor()
-        cur.execute("UPDATE users SET active = NOT active WHERE id = %s", (user_id,))
+        cur.execute("UPDATE users SET is_active = NOT is_active WHERE id = %s", (user_id,))
         conn.commit()
         cur.close()
         conn.close()

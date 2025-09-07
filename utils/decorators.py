@@ -22,8 +22,9 @@ def admin_required(f):
                 return jsonify({'error': 'Authentication required'}), 401
             return redirect(url_for('auth.login'))
         
-        # Check if user is admin (you might want to add this to user table)
-        if session.get('username') != 'admin':  # Simplified check
+        # Check if user is admin (simplified check using email)
+        admin_email = session.get('email', '')
+        if not admin_email.endswith('@admin.com') and admin_email != 'admin@selling-options.com':  # Simplified check
             if request.is_json:
                 return jsonify({'error': 'Admin privileges required'}), 403
             return redirect(url_for('main.index'))
