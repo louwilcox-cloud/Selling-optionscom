@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # Main Flask application
+  selling-options-app:
+    build: .
+    container_name: selling-options-app
+    expose:
+      - "5000"
+    environment:
+      # Load from .env file
+      - POLYGON_API_KEY=${POLYGON_API_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - FLASK_ENV=${FLASK_ENV}
+      - FLASK_APP=${FLASK_APP}
+      - SECRET_KEY=${SECRET_KEY}
+      - APP_HOST=${APP_HOST}
+      - APP_PORT=${APP_PORT}
+      - APP_DEBUG=${APP_DEBUG}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./flask_session:/app/flask_session
+    networks:
+      - selling-options-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Database
+  db:
+    image: postgres:16
+    container_name: selling-options-db
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - selling-options-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"  # Expose for external access if needed
+
+  # Caddy reverse proxy
+  caddy:
+    image: caddy:2-alpine
+    container_name: selling-options-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Alternative port if 80 is in use
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      selling-options-app:
+        condition: service_healthy
+    networks:
+      - selling-options-net
+    restart: unless-stopped
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+
+volumes:
+  postgres_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+
+networks:
+  selling-options-net:
+    driver: bridge
