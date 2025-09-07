@@ -24,11 +24,10 @@ import datetime as dt
 
 # Note: Removed Yahoo Finance session handling - using pure Polygon.io now
 
-# Initialize Polygon.io client
-polygon_client = RESTClient(api_key=os.getenv('POLYGON_API_KEY'))
-POLY_KEY = os.getenv('POLYGON_API_KEY')
-_poly = requests.Session()
-_poly.headers["Accept-Encoding"] = "gzip"
+# ChatGPT's improved setup - no import-time client instantiation
+POLY_KEY = os.getenv("POLYGON_API_KEY")
+_http = requests.Session()
+_http.headers["Accept-Encoding"] = "gzip"
 
 # Market status cache
 _status_cache = {"at": 0, "data": None}
@@ -40,7 +39,7 @@ def get_market_phase(ttl=15):
         return _status_cache["data"]
     
     try:
-        r = _poly.get("https://api.polygon.io/v1/marketstatus/now",
+        r = _http.get("https://api.polygon.io/v1/marketstatus/now",
                       params={"apiKey": POLY_KEY}, timeout=3)
         phase = "closed"
         if r.ok:
