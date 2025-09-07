@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watchlist Forecast - Selling-options.com</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='../favicon.ico') }}">
+    <style>
+        .forecast-container { max-width: 1400px; margin: 40px auto; padding: 20px; }
+        .forecast-header { text-align: center; margin-bottom: 40px; }
+        .forecast-header h1 { color: #1f2937; margin-bottom: 10px; }
+        .forecast-controls { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .controls-row { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 20px; align-items: end; }
+        .form-group { margin-bottom: 0; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #374151; }
+        .form-group select, .form-group input { width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem; }
+        .form-group select:focus, .form-group input:focus { outline: none; border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
+        .btn { padding: 12px 24px; background: #1e40af; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-block; }
+        .btn:hover { background: #1d4ed8; }
+        .btn:disabled { background: #9ca3af; cursor: not-allowed; }
+        .results-container { display: none; }
+        .loading { text-align: center; padding: 40px; font-size: 1.1rem; color: #6b7280; }
+        .forecast-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .forecast-table th, .forecast-table td { padding: 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        .forecast-table th { background: #f9fafb; font-weight: 600; color: #374151; }
+        .forecast-table tr:hover { background: #f9fafb; }
+        .symbol-cell { font-weight: 600; color: #1e40af; }
+        .price-cell { font-weight: 600; }
+        .positive { color: #16a34a; }
+        .negative { color: #dc2626; }
+        .forecast-ready { color: #16a34a; font-weight: 600; margin: 20px 0; }
+        .error-message { color: #dc2626; padding: 20px; text-align: center; }
+    </style>
+</head>
+<body>
+    <!-- Navigation will be injected here -->
+    <nav class="main-nav">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <img src="{{ url_for('static', filename='../attached_assets/generated_images/Clean_financial_chart_logo_a5295a8c.png') }}" alt="Selling-options.com">
+                <span>Selling-options.com</span>
+            </div>
+            <div class="nav-links">
+                <a href="{{ url_for('main.index') }}">Market Pulse</a>
+                <div class="nav-dropdown">
+                    <span class="nav-dropdown-label">Tools</span>
+                    <div class="nav-dropdown-content">
+                        <a href="{{ url_for('calculator.calculator') }}">Options Calculator</a>
+                        <a href="{{ url_for('forecast.forecast') }}">Watchlist Forecast</a>
+                    </div>
+                </div>
+                <div class="nav-dropdown">
+                    <span class="nav-dropdown-label">Account</span>
+                    <div class="nav-dropdown-content">
+                        <a href="{{ url_for('auth.login') }}">Login</a>
+                        <a href="{{ url_for('auth.signup') }}">Sign Up</a>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-search">
+                <input type="text" id="navQuoteInput" placeholder="Enter symbol (e.g., AAPL)">
+                <button id="navQuoteBtn">Get Quote</button>
+                <div id="navQuoteResult"></div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="forecast-container">
+        <div class="forecast-header">
+            <h1>📊 Watchlist Forecast</h1>
+            <p>Analyze options sentiment across your watchlist for the next 4 expiration cycles</p>
+        </div>
+
+        <div class="forecast-controls">
+            <div class="controls-row">
+                <div class="form-group">
+                    <label for="watchlistSelect">Select Watchlist:</label>
+                    <select id="watchlistSelect">
+                        {% for watchlist in watchlists %}
+                        <option value="{{ watchlist[0] }}">{{ watchlist[1] }} ({{ watchlist[2] }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="startDate">Analysis Start Date:</label>
+                    <input type="date" id="startDate" value="">
+                </div>
+                <button id="runForecast" class="btn">Run Forecast</button>
+                <a href="{{ url_for('admin.admin_panel') }}" class="btn" style="background: #6b7280;">Manage Watchlists</a>
+            </div>
+            <div id="forecastStatus"></div>
+        </div>
+
+        <div id="resultsContainer" class="results-container">
+            <div class="loading" id="loadingIndicator">
+                Analyzing options data across watchlist...
+            </div>
+            <div id="forecastResults" style="display: none;"></div>
+        </div>
+
+        <div style="text-align: center;">
+            <p style="color: #6b7280; font-style: italic;">
+                Forecast uses advanced options sentiment analysis to predict price movements
+            </p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='nav.js') }}"></script>
+    <script>
+        // Set today's date as default
+        document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
+        
+        document.getElementById('runForecast').addEventListener('click', runForecast);
+        
+        async function runForecast() {
+            const watchlistId = document.getElementById('watchlistSelect').value;
+            const startDate = document.getElementById('startDate').value;
+            
+            if (!watchlistId) {
+                alert('Please select a watchlist');
+                return;
+            }
+            
+            const btn = document.getElementById('runForecast');
+            const status = document.getElementById('forecastStatus');
+            const container = document.getElementById('resultsContainer');
+            const loading = document.getElementById('loadingIndicator');
+            const results = document.getElementById('forecastResults');
+            
+            // Show loading state
+            btn.disabled = true;
+            btn.textContent = 'Running...';
+            status.innerHTML = '<div class="forecast-ready">Fetching options data and calculating predictions...</div>';
+            container.style.display = 'block';
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            
+            try {
+                const response = await fetch('{{ url_for("forecast.run_forecast") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        watchlist_id: parseInt(watchlistId),
+                        start_date: startDate
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResults(data.results);
+                    status.innerHTML = '<div class="forecast-ready">✓ Forecast ready for ' + data.results.length + ' symbols</div>';
+                } else {
+                    throw new Error(data.error || 'Forecast failed');
+                }
+            } catch (error) {
+                status.innerHTML = '<div class="error-message">Error: ' + error.message + '</div>';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Run Forecast';
+                loading.style.display = 'none';
+            }
+        }
+        
+        function displayResults(data) {
+            const results = document.getElementById('forecastResults');
+            
+            if (!data || data.length === 0) {
+                results.innerHTML = '<div class="error-message">No forecast data available</div>';
+                results.style.display = 'block';
+                return;
+            }
+            
+            let html = '<table class="forecast-table"><thead><tr>';
+            html += '<th>Symbol</th><th>Current Price</th>';
+            
+            // Add columns for each expiration
+            if (data[0] && data[0].predictions) {
+                data[0].predictions.forEach((pred, i) => {
+                    html += `<th>Exp ${i + 1} (${pred.expiration})</th>`;
+                });
+            }
+            
+            html += '</tr></thead><tbody>';
+            
+            data.forEach(item => {
+                html += '<tr>';
+                html += `<td class="symbol-cell">${item.symbol}</td>`;
+                html += `<td class="price-cell">$${item.current_price}</td>`;
+                
+                if (item.predictions) {
+                    item.predictions.forEach(pred => {
+                        const changeClass = pred.percent_change >= 0 ? 'positive' : 'negative';
+                        const changeSign = pred.percent_change >= 0 ? '+' : '';
+                        html += `<td class="${changeClass}">$${pred.predicted_price} (${changeSign}${pred.percent_change}%)</td>`;
+                    });
+                }
+                
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            results.innerHTML = html;
+            results.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
