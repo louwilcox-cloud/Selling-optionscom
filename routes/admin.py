@@ -25,11 +25,14 @@ def admin_panel():
         watchlists_result = cur.fetchone()
         total_watchlists = watchlists_result[0] if watchlists_result else 0
         
-        # Get recent users
+        # Get recent users with admin status and login info
         cur.execute("""
-            SELECT id, email, created_at, is_active 
-            FROM users 
-            ORDER BY created_at DESC 
+            SELECT u.id, u.email, u.created_at, u.is_active, u.last_login, u.login_count,
+                   CASE WHEN a.user_id IS NOT NULL THEN 'Admin' ELSE 'User' END as role,
+                   CASE WHEN a.user_id IS NOT NULL THEN true ELSE false END as is_admin
+            FROM users u
+            LEFT JOIN admin_users a ON u.id = a.user_id 
+            ORDER BY u.created_at DESC 
             LIMIT 10
         """)
         recent_users = cur.fetchall()
@@ -120,3 +123,76 @@ def delete_watchlist(watchlist_id):
         if conn:
             conn.close()
         return f"Error deleting watchlist: {str(e)}", 500
+
+@admin_bp.route('/make-admin/<int:user_id>')
+@admin_required
+def make_admin(user_id):
+    """Make user an admin"""
+    conn = get_db_connection()
+    if not conn:
+        return "Database connection error", 500
+    
+    try:
+        cur = conn.cursor()
+        # Check if user is already admin
+        cur.execute("SELECT 1 FROM admin_users WHERE user_id = %s", (user_id,))
+        if not cur.fetchone():
+            # Add to admin_users table
+            cur.execute("INSERT INTO admin_users (user_id, granted_at) VALUES (%s, NOW())", (user_id,))
+            conn.commit()
+        cur.close()
+        conn.close()
+        
+        return redirect(url_for('admin.admin_panel'))
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return f"Error making user admin: {str(e)}", 500
+
+@admin_bp.route('/remove-admin/<int:user_id>')
+@admin_required  
+def remove_admin(user_id):
+    """Remove admin privileges from user"""
+    conn = get_db_connection()
+    if not conn:
+        return "Database connection error", 500
+    
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM admin_users WHERE user_id = %s", (user_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return redirect(url_for('admin.admin_panel'))
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return f"Error removing admin privileges: {str(e)}", 500
+
+@admin_bp.route('/delete-user/<int:user_id>')
+@admin_required
+def delete_user(user_id):
+    """Delete a user permanently"""
+    conn = get_db_connection()
+    if not conn:
+        return "Database connection error", 500
+    
+    try:
+        cur = conn.cursor()
+        # First remove from admin_users if they are admin
+        cur.execute("DELETE FROM admin_users WHERE user_id = %s", (user_id,))
+        # Then delete the user
+        cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return redirect(url_for('admin.admin_panel'))
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return f"Error deleting user: {str(e)}", 500
