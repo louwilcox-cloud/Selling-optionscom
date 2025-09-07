@@ -22,9 +22,23 @@ def admin_required(f):
                 return jsonify({'error': 'Authentication required'}), 401
             return redirect(url_for('auth.login'))
         
-        # Check if user is admin (simplified check using email)
-        admin_email = session.get('email', '')
-        if not admin_email.endswith('@admin.com') and admin_email != 'admin@selling-options.com':  # Simplified check
+        # Check if user is admin by looking up admin_users table
+        user_id = session['user_id']
+        is_admin = False
+        
+        try:
+            from services.database import get_db_connection
+            conn = get_db_connection()
+            if conn:
+                cur = conn.cursor()
+                cur.execute("SELECT 1 FROM admin_users WHERE user_id = %s", (user_id,))
+                is_admin = cur.fetchone() is not None
+                cur.close()
+                conn.close()
+        except Exception as e:
+            print(f"Error checking admin status: {e}")
+        
+        if not is_admin:
             if request.is_json:
                 return jsonify({'error': 'Admin privileges required'}), 403
             return redirect(url_for('main.index'))

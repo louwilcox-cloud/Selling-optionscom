@@ -390,15 +390,6 @@ body {
   cursor: pointer;
 }
 
-.user-icon {
-  font-size: 1.2rem;
-  color: #9ca3af; /* Gray by default */
-  cursor: pointer;
-  transition: color 0.2s ease;
-  padding: 0; /* Remove padding */
-  background: none; /* Remove background circle */
-  border-radius: 0; /* Remove border radius */
-}
 
 
 .btn-login, .btn-signup {
