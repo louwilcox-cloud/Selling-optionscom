@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Watchlists | Admin | Selling-options.com{% endblock %}
+
+{% block content %}
+    <div class="admin-container">
+        <h1>Manage Watchlists</h1>
+        
+        <div class="watchlists-section">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Symbols</th>
+                        <th>Owner</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for watchlist in watchlists %}
+                    <tr>
+                        <td>{{ watchlist[0] }}</td>
+                        <td>{{ watchlist[1] }}</td>
+                        <td>{{ watchlist[2][:50] }}{% if watchlist[2]|length > 50 %}...{% endif %}</td>
+                        <td>{{ watchlist[4] or 'Unknown' }}</td>
+                        <td>{{ watchlist[3].strftime('%Y-%m-%d') if watchlist[3] else 'N/A' }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.delete_watchlist', watchlist_id=watchlist[0]) }}" 
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('Delete this watchlist?')">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="admin-actions">
+            <a href="{{ url_for('admin.admin_panel') }}" class="btn">Back to Admin</a>
+        </div>
+    </div>
+{% endblock %}

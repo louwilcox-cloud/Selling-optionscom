@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel | Selling-options.com{% endblock %}
+
+{% block content %}
+    <div class="admin-container">
+        <h1>Admin Panel</h1>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Active Users</h3>
+                <p class="stat-number">{{ active_users }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Total Watchlists</h3>
+                <p class="stat-number">{{ total_watchlists }}</p>
+            </div>
+        </div>
+        
+        <div class="users-section">
+            <h2>Recent Users</h2>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Email</th>
+                        <th>Created</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in recent_users %}
+                    <tr>
+                        <td>{{ user[0] }}</td>
+                        <td>{{ user[1] }}</td>
+                        <td>{{ user[2].strftime('%Y-%m-%d') if user[2] else 'N/A' }}</td>
+                        <td>
+                            <span class="status-badge {{ 'active' if user[3] else 'inactive' }}">
+                                {{ 'Active' if user[3] else 'Inactive' }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.toggle_user', user_id=user[0]) }}" 
+                               class="btn btn-sm">
+                                {{ 'Deactivate' if user[3] else 'Activate' }}
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="admin-actions">
+            <a href="{{ url_for('admin.manage_watchlists') }}" class="btn">Manage Watchlists</a>
+        </div>
+    </div>
+{% endblock %}
