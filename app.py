@@ -63,6 +63,49 @@ def get_market_phase(ttl=15):
         # Default to closed if we can't determine status
         return "closed"
 
+# ChatGPT's improved quote function with reliable fallbacks
+def quote_delayed(symbol: str, timeout=5):
+    """Reliable delayed quote with multiple fallbacks - never hangs"""
+    # 1) Polygon prev close
+    try:
+        r = _http.get(f"https://api.polygon.io/v2/aggs/ticker/{symbol}/prev",
+                      params={"adjusted":"true","apiKey":POLY_KEY}, timeout=timeout)
+        if r.status_code == 200:
+            j = r.json()
+            if j.get("status") == "OK" and j.get("results"):
+                return float(j["results"][0]["c"]), "polygon-prev"
+    except Exception:
+        pass
+
+    # 2) Polygon snapshot
+    try:
+        r = _http.get(f"https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/tickers/{symbol}",
+                      params={"apiKey":POLY_KEY}, timeout=timeout)
+        if r.status_code == 200:
+            j = r.json()
+            if j.get("status") == "OK" and j.get("ticker"):
+                t = j["ticker"]
+                price = (t.get("prevDay",{}) or {}).get("c") \
+                        or (t.get("lastTrade",{}) or {}).get("p") \
+                        or (t.get("day",{}) or {}).get("c")
+                if price: return float(price), "polygon-snapshot"
+    except Exception:
+        pass
+
+    # 3) Stooq fallback
+    try:
+        url = f"https://stooq.com/q/d/l/?s={symbol.lower()}&i=d"
+        r = _http.get(url, timeout=timeout)
+        if r.ok:
+            lines = [ln for ln in r.text.splitlines() if ln and not ln.startswith("Date,")]
+            if lines:
+                close = float(lines[-1].split(",")[4])
+                return close, "stooq-eod"
+    except Exception:
+        pass
+
+    return None, None
+
 # Previous close cache for efficient bulk requests
 _prev_cache = {"at": 0, "blob": None}
 
@@ -75,7 +118,7 @@ def get_prev_close(symbol: str, ttl=120):
     if now - _prev_cache["at"] >= ttl or not _prev_cache["blob"]:
         try:
             url = "https://api.polygon.io/v2/aggs/grouped/locale/us/market/stocks/prev"
-            r = _poly.get(url, params={"adjusted":"true","apiKey": POLY_KEY}, timeout=5)
+            r = _http.get(url, params={"adjusted":"true","apiKey": POLY_KEY}, timeout=5)
             if r.ok:
                 _prev_cache.update({"at": now, "blob": r.json()})
             else:
@@ -570,19 +613,14 @@ def api_quote():
     symbol = (request.args.get("symbol") or "").strip().upper()
     if not symbol:
         return jsonify({"error": "Missing 'symbol'"}), 400
-    
-    # Use market-aware pricing logic
-    quote_data = get_display_stock_price(symbol)
-    if not quote_data["price"] or quote_data["price"] <= 0:
+    price, source = quote_delayed(symbol)
+    if price is None:
         return jsonify({"error": "No price available"}), 503
-    
-    # Return enriched quote data with market context
     return jsonify({
-        "symbol": quote_data["symbol"],
-        "price": round(quote_data["price"], 4),
-        "market_phase": quote_data["phase"],
-        "source": quote_data["source"],
-        "asof": quote_data["asof"]
+        "symbol": symbol,
+        "price": round(float(price), 4),
+        "source": source,
+        "note": "Delayed/EOD price; shows previous session close when market is closed."
     })
 
 @app.route("/api/get_options_data")
