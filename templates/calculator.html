@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Options Sentiment Analyzer | Selling-options.com</title>
-    <link rel="stylesheet" href="style.css" />
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <link rel="icon" href="{{ url_for('static', filename='../favicon.ico') }}" type="image/x-icon">
     <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
     <link rel="icon" href="favicon-16x16.png" type="image/png" sizes="16x16">
     <style>
@@ -498,7 +498,7 @@
       </div>
     </footer>
 
-    <script src="calculator.js"></script>
+    <script src="{{ url_for('static', filename='calculator.js') }}"></script>
     <script>
       // Navigation stock quote functionality
       async function getNavQuote() {

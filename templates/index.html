@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Selling-options.com | Options Trading Tools & Insights</title>
-    <link rel="stylesheet" href="style.css" />
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <link rel="icon" href="{{ url_for('static', filename='../favicon.ico') }}" type="image/x-icon">
     <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
     <link rel="icon" href="favicon-16x16.png" type="image/png" sizes="16x16">
   </head>
@@ -27,14 +27,14 @@
           <div class="nav-dropdown">
             <span class="nav-dropdown-label">Tools</span>
             <div class="nav-dropdown-content">
-              <a href="/calculator.html">Options Calculator</a>
+              <a href="{{ url_for('calculator.calculator') }}">Options Calculator</a>
               <a href="/forecast">Watchlist Forecast</a>
             </div>
           </div>
           <div class="nav-dropdown">
             <span class="nav-dropdown-label">Education</span>
             <div class="nav-dropdown-content">
-              <a href="/video-tutorials.html">Video Tutorials</a>
+              <a href="{{ url_for('main.video_tutorials') }}">Video Tutorials</a>
             </div>
           </div>
           <div class="nav-dropdown admin-only" id="adminDropdown" style="display: none;">
