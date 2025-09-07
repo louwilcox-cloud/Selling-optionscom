@@ -4,30 +4,212 @@
 
 {% block extra_head %}
     <style>
-        .forecast-container { max-width: 1400px; margin: 40px auto; padding: 20px; }
-        .forecast-header { text-align: center; margin-bottom: 40px; }
-        .forecast-header h1 { color: #1f2937; margin-bottom: 10px; }
-        .forecast-controls { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px; }
-        .controls-row { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 20px; align-items: end; }
-        .form-group { margin-bottom: 0; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #374151; }
-        .form-group select, .form-group input { width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem; }
-        .form-group select:focus, .form-group input:focus { outline: none; border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
-        .btn { padding: 12px 24px; background: #1e40af; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-block; }
-        .btn:hover { background: #1d4ed8; }
-        .btn:disabled { background: #9ca3af; cursor: not-allowed; }
-        .results-container { display: none; }
-        .loading { text-align: center; padding: 40px; font-size: 1.1rem; color: #6b7280; }
-        .forecast-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .forecast-table th, .forecast-table td { padding: 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
-        .forecast-table th { background: #f9fafb; font-weight: 600; color: #374151; }
-        .forecast-table tr:hover { background: #f9fafb; }
-        .symbol-cell { font-weight: 600; color: #1e40af; }
-        .price-cell { font-weight: 600; }
-        .positive { color: #16a34a; }
-        .negative { color: #dc2626; }
-        .forecast-ready { color: #16a34a; font-weight: 600; margin: 20px 0; }
-        .error-message { color: #dc2626; padding: 20px; text-align: center; }
+      .forecast-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 30px 20px;
+      }
+      
+      .forecast-header {
+        text-align: center;
+        margin-bottom: 25px;
+      }
+      
+      .forecast-header h1 {
+        font-size: 2.5rem;
+        color: #1f2937;
+        margin-bottom: 10px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      
+      .forecast-header p {
+        font-size: 1.1rem;
+        color: #6b7280;
+        max-width: 700px;
+        margin: 0 auto;
+        line-height: 1.5;
+      }
+      
+      .forecast-controls {
+        background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(249,250,251,0.8) 100%);
+        backdrop-filter: blur(10px);
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 30px;
+        transition: all 0.3s ease;
+      }
+      
+      .forecast-controls:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+      }
+      
+      .controls-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto auto;
+        gap: 20px;
+        align-items: end;
+      }
+      
+      .form-group {
+        margin-bottom: 0;
+      }
+      
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #374151;
+      }
+      
+      .form-group select, .form-group input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        background: rgba(255,255,255,0.8);
+      }
+      
+      .form-group select:focus, .form-group input:focus {
+        outline: none;
+        border-color: #1e40af;
+        box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        background: rgba(255,255,255,1);
+      }
+      
+      .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+        color: white;
+      }
+      
+      .btn:first-of-type {
+        background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+      }
+      
+      .btn:last-of-type {
+        background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
+      }
+      
+      .btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(30, 64, 175, 0.3);
+      }
+      
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+      
+      .results-container {
+        display: none;
+      }
+      
+      .loading {
+        text-align: center;
+        padding: 30px;
+        margin: 20px 0;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        color: #6b7280;
+        font-size: 1.1rem;
+      }
+      
+      .forecast-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(249,250,251,0.8) 100%);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+      }
+      
+      .forecast-table th, .forecast-table td {
+        padding: 16px;
+        text-align: left;
+        border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+      }
+      
+      .forecast-table th {
+        background: linear-gradient(135deg, rgba(249,250,251,0.9) 0%, rgba(243,244,246,0.8) 100%);
+        font-weight: 600;
+        color: #374151;
+      }
+      
+      .forecast-table tr:hover {
+        background: rgba(249,250,251,0.5);
+      }
+      
+      .symbol-cell {
+        font-weight: 600;
+        color: #1e40af;
+      }
+      
+      .price-cell {
+        font-weight: 600;
+      }
+      
+      .positive {
+        color: #16a34a;
+        font-weight: 600;
+      }
+      
+      .negative {
+        color: #dc2626;
+        font-weight: 600;
+      }
+      
+      .forecast-ready {
+        color: #16a34a;
+        font-weight: 600;
+        margin: 20px 0;
+        text-align: center;
+        padding: 20px;
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border-radius: 12px;
+        border: 1px solid #bbf7d0;
+      }
+      
+      .error-message {
+        color: #dc2626;
+        padding: 20px;
+        text-align: center;
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        border-radius: 12px;
+        border: 1px solid #fecaca;
+      }
+      
+      @media (max-width: 768px) {
+        .controls-row {
+          grid-template-columns: 1fr;
+          gap: 15px;
+        }
+        
+        .forecast-table {
+          font-size: 0.9rem;
+        }
+        
+        .forecast-table th, .forecast-table td {
+          padding: 12px 8px;
+        }
+      }
     </style>
 {% endblock %}
 
