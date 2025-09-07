@@ -96,6 +96,7 @@ def admin_panel():
                 </div>
                 
                 <div class="admin-actions">
+                    <a href="{{ url_for('admin.manage_watchlists') }}" class="btn">Manage Watchlists</a>
                     <a href="{{ url_for('main.index') }}" class="btn">Back to Site</a>
                     <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary">Logout</a>
                 </div>
@@ -135,3 +136,105 @@ def toggle_user(user_id):
         if conn:
             conn.close()
         return f"Error toggling user: {str(e)}", 500
+
+@admin_bp.route('/watchlists')
+@admin_required
+def manage_watchlists():
+    """Manage watchlists"""
+    conn = get_db_connection()
+    if not conn:
+        return "Database connection error", 500
+    
+    try:
+        cur = conn.cursor()
+        
+        # Get all watchlists with user info
+        cur.execute("""
+            SELECT w.id, w.name, w.symbols, w.created_at, u.email 
+            FROM watchlists w 
+            LEFT JOIN users u ON w.user_id = u.id 
+            ORDER BY w.created_at DESC
+        """)
+        watchlists = cur.fetchall()
+        
+        cur.close()
+        conn.close()
+        
+        watchlist_html = '''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Manage Watchlists - Admin</title>
+            <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        </head>
+        <body>
+            <div class="admin-container">
+                <h1>Manage Watchlists</h1>
+                
+                <div class="watchlists-section">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Symbols</th>
+                                <th>Owner</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for watchlist in watchlists %}
+                            <tr>
+                                <td>{{ watchlist[0] }}</td>
+                                <td>{{ watchlist[1] }}</td>
+                                <td>{{ watchlist[2][:50] }}{% if watchlist[2]|length > 50 %}...{% endif %}</td>
+                                <td>{{ watchlist[4] or 'Unknown' }}</td>
+                                <td>{{ watchlist[3].strftime('%Y-%m-%d') if watchlist[3] else 'N/A' }}</td>
+                                <td>
+                                    <a href="{{ url_for('admin.delete_watchlist', watchlist_id=watchlist[0]) }}" 
+                                       class="btn btn-sm btn-danger"
+                                       onclick="return confirm('Delete this watchlist?')">Delete</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="admin-actions">
+                    <a href="{{ url_for('admin.admin_panel') }}" class="btn">Back to Admin</a>
+                </div>
+            </div>
+        </body>
+        </html>
+        '''
+        
+        return render_template_string(watchlist_html, watchlists=watchlists)
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return f"Error loading watchlists: {str(e)}", 500
+
+@admin_bp.route('/watchlist/<int:watchlist_id>/delete')
+@admin_required
+def delete_watchlist(watchlist_id):
+    """Delete a watchlist"""
+    conn = get_db_connection()
+    if not conn:
+        return "Database connection error", 500
+    
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM watchlists WHERE id = %s", (watchlist_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return redirect(url_for('admin.manage_watchlists'))
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return f"Error deleting watchlist: {str(e)}", 500
