@@ -4,6 +4,16 @@
 
 This is a Flask-based web application for options trading analysis, inspired by TipRanks.com. The system provides a comprehensive suite of tools for options traders including sentiment analysis, options calculators, risk assessment, and data visualization. The application focuses on helping traders make data-driven decisions by analyzing options chains, calculating probabilities, and providing real-time market insights.
 
+## Recent Changes
+
+**September 7, 2025** - Implemented centralized navigation system
+- Created Flask template inheritance with `base.html` master template  
+- All pages now extend base.html for consistent navigation
+- Dynamic admin dropdown (shows only for admin users)
+- Tools dropdown greys out for non-authenticated users
+- Admin pages converted from inline HTML to proper templates
+- Single point of maintenance for navigation changes
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
