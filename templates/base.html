@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Selling-options.com | Options Trading Tools & Insights{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <link rel="icon" href="{{ url_for('static', filename='favicon-32x32.png') }}" type="image/png" sizes="32x32">
+    <link rel="icon" href="{{ url_for('static', filename='favicon-16x16.png') }}" type="image/png" sizes="16x16">
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body>
+    <!-- CENTRALIZED NAVIGATION - EDIT ONCE, AFFECTS ALL PAGES -->
+    <header class="header">
+      <nav class="nav-container">
+        <div class="logo">
+          <img src="{{ url_for('static', filename='attached_assets/generated_images/Clean_financial_chart_logo_a5295a8c.png') }}" alt="Chart Logo" class="logo-image">
+          <a href="{{ url_for('main.index') }}" style="text-decoration: none; color: inherit;">
+            <strong>Selling-options.com</strong>
+          </a>
+        </div>
+        <div class="nav-center">
+          <div class="nav-quote">
+            <input type="text" id="navQuoteSymbol" placeholder="Enter symbol..." class="nav-quote-input">
+            <button onclick="getNavQuote()" class="nav-quote-btn">Quote</button>
+            <div id="navQuoteResult" class="nav-quote-result"></div>
+          </div>
+        </div>
+        <div class="nav-right">
+          <div class="nav-dropdown">
+            <span class="nav-dropdown-label">Tools</span>
+            <div class="nav-dropdown-content">
+              <a href="{{ url_for('calculator.calculator') }}">Options Calculator</a>
+              <a href="{{ url_for('forecast.forecast') }}">Watchlist Forecast</a>
+            </div>
+          </div>
+          <div class="nav-dropdown">
+            <span class="nav-dropdown-label">Education</span>
+            <div class="nav-dropdown-content">
+              <a href="{{ url_for('main.video_tutorials') }}">Video Tutorials</a>
+            </div>
+          </div>
+          <!-- ADMIN DROPDOWN - ONLY SHOWS FOR ADMIN USERS -->
+          <div class="nav-dropdown admin-only" id="adminDropdown" style="display: none;">
+            <span class="nav-dropdown-label">Admin</span>
+            <div class="nav-dropdown-content">
+              <a href="{{ url_for('admin.admin_panel') }}">Manage Users</a>
+              <a href="{{ url_for('admin.manage_watchlists') }}">Manage Watchlists</a>
+            </div>
+          </div>
+          <!-- AUTH SECTION - LOGIN/SIGNUP OR USER INFO -->
+          <div class="nav-auth" id="navAuth">
+            <a href="{{ url_for('auth.login') }}" class="nav-login-btn">Login</a>
+            <a href="{{ url_for('auth.signup') }}" class="nav-signup-btn">Sign Up</a>
+          </div>
+          <div class="nav-user" id="navUser" style="display: none;">
+            <span class="nav-username" id="navUsername"></span>
+            <a href="{{ url_for('auth.logout') }}" class="nav-logout-btn">Log Out</a>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- PAGE CONTENT -->
+    <main class="main-content">
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- CENTRALIZED NAVIGATION JAVASCRIPT -->
+    <script>
+      // Navigation functionality
+      async function getNavQuote() {
+        const symbol = document.getElementById('navQuoteSymbol').value.trim().toUpperCase();
+        if (!symbol) return;
+        
+        const resultDiv = document.getElementById('navQuoteResult');
+        resultDiv.innerHTML = 'Loading...';
+        
+        try {
+          const response = await fetch(`/api/quote?symbol=${symbol}`);
+          const data = await response.json();
+          
+          if (data.error) {
+            resultDiv.innerHTML = `<span class="quote-error">${data.error}</span>`;
+          } else {
+            const changeClass = data.change >= 0 ? 'positive' : 'negative';
+            resultDiv.innerHTML = `
+              <div class="quote-result">
+                <strong>${data.symbol}</strong> $${data.price} 
+                <span class="change ${changeClass}">${data.change >= 0 ? '+' : ''}${data.change} (${data.change_percent}%)</span>
+              </div>
+            `;
+          }
+        } catch (error) {
+          resultDiv.innerHTML = '<span class="quote-error">Error fetching quote</span>';
+        }
+        
+        setTimeout(() => {
+          resultDiv.innerHTML = '';
+        }, 5000);
+      }
+
+      // CENTRALIZED AUTHENTICATION STATUS CHECKING
+      async function checkAuthStatus() {
+        try {
+          const response = await fetch('/api/auth-status');
+          const data = await response.json();
+          
+          if (data.authenticated) {
+            // User is logged in
+            document.getElementById('navAuth').style.display = 'none';
+            document.getElementById('navUser').style.display = 'flex';
+            document.getElementById('navUsername').textContent = data.email || 'User';
+            
+            // Show admin dropdown if user is admin
+            if (data.is_admin) {
+              document.getElementById('adminDropdown').style.display = 'block';
+            }
+            
+            // Enable Tools dropdown for authenticated users
+            const toolsDropdown = document.querySelector('.nav-dropdown:first-child');
+            if (toolsDropdown) {
+              toolsDropdown.classList.remove('disabled');
+              toolsDropdown.style.opacity = '1';
+              toolsDropdown.style.pointerEvents = 'auto';
+            }
+          } else {
+            // User is not logged in
+            document.getElementById('navAuth').style.display = 'flex';
+            document.getElementById('navUser').style.display = 'none';
+            document.getElementById('adminDropdown').style.display = 'none';
+            
+            // Grey out Tools dropdown for unauthenticated users
+            const toolsDropdown = document.querySelector('.nav-dropdown:first-child');
+            if (toolsDropdown) {
+              toolsDropdown.classList.add('disabled');
+              toolsDropdown.style.opacity = '0.5';
+              toolsDropdown.style.pointerEvents = 'none';
+            }
+          }
+        } catch (error) {
+          console.error('Error checking auth status:', error);
+          // Default to not authenticated
+          document.getElementById('navAuth').style.display = 'flex';
+          document.getElementById('navUser').style.display = 'none';
+          document.getElementById('adminDropdown').style.display = 'none';
+          
+          // Grey out Tools dropdown
+          const toolsDropdown = document.querySelector('.nav-dropdown:first-child');
+          if (toolsDropdown) {
+            toolsDropdown.classList.add('disabled');
+            toolsDropdown.style.opacity = '0.5';
+            toolsDropdown.style.pointerEvents = 'none';
+          }
+        }
+      }
+
+      // Initialize navigation on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        const navQuoteInput = document.getElementById('navQuoteSymbol');
+        if (navQuoteInput) {
+          navQuoteInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+              getNavQuote();
+            }
+          });
+        }
+        
+        // Check authentication status on page load
+        checkAuthStatus();
+      });
+    </script>
+    
+    <!-- Include nav.js for additional functionality -->
+    <script src="{{ url_for('static', filename='nav.js') }}"></script>
+    
+    <!-- Page-specific JavaScript -->
+    {% block extra_scripts %}{% endblock %}
+  </body>
+</html>

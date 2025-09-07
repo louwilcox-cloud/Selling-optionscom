@@ -1,77 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Selling-options.com | Options Trading Tools & Insights</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-    <link rel="icon" href="{{ url_for('static', filename='favicon-32x32.png') }}" type="image/png" sizes="32x32">
-    <link rel="icon" href="{{ url_for('static', filename='favicon-16x16.png') }}" type="image/png" sizes="16x16">
-  </head>
-  <body>
-    <header class="header">
-      <nav class="nav-container">
-        <div class="logo">
-          <img src="{{ url_for('static', filename='attached_assets/generated_images/Clean_financial_chart_logo_a5295a8c.png') }}" alt="Chart Logo" class="logo-image">
-          <strong>Selling-options.com</strong>
-        </div>
-        <div class="nav-center">
-          <div class="nav-quote">
-            <input type="text" id="navQuoteSymbol" placeholder="Enter symbol..." class="nav-quote-input">
-            <button onclick="getNavQuote()" class="nav-quote-btn">Quote</button>
-            <div id="navQuoteResult" class="nav-quote-result"></div>
-          </div>
-        </div>
-        <div class="nav-right">
-          <div class="nav-dropdown">
-            <span class="nav-dropdown-label">Tools</span>
-            <div class="nav-dropdown-content">
-              <a href="{{ url_for('calculator.calculator') }}">Options Calculator</a>
-              <a href="{{ url_for('forecast.forecast') }}">Watchlist Forecast</a>
-            </div>
-          </div>
-          <div class="nav-dropdown">
-            <span class="nav-dropdown-label">Education</span>
-            <div class="nav-dropdown-content">
-              <a href="{{ url_for('main.video_tutorials') }}">Video Tutorials</a>
-            </div>
-          </div>
-          <div class="nav-dropdown admin-only" id="adminDropdown" style="display: none;">
-            <span class="nav-dropdown-label">Admin</span>
-            <div class="nav-dropdown-content">
-              <a href="{{ url_for('admin.admin_panel') }}">Manage Users</a>
-              <a href="/admin/watchlists">Manage Watchlists</a>
-            </div>
-          </div>
-          <div class="nav-auth" id="navAuth">
-            <a href="/login" class="btn-login">Log In</a>
-            <a href="/signup" class="btn-signup">Sign Up</a>
-          </div>
-          <div class="nav-user" id="navUser" style="display: none;">
-            <span class="user-icon" id="userIcon" title="">👤</span>
-            <span class="user-welcome" id="userWelcome">Welcome, User</span>
-            <a href="/logout" class="btn-logout">Logout</a>
-          </div>
-        </div>
-      </nav>
-    </header>
+{% extends "base.html" %}
 
-    <main class="main-content">
+{% block title %}Selling-options.com | Options Trading Tools & Insights{% endblock %}
+
+{% block content %}
       <!-- Market Overview Section -->
       <section class="market-overview">
         <div class="container">
-          <h1>Market Overview</h1>
+          <h1>Market Pulse</h1>
           <div class="market-grid" id="marketGrid">
             <div class="loading-message">Loading market data...</div>
           </div>
         </div>
       </section>
-
-
-
-
-    </main>
 
     <section class="cta-section">
       <div class="container">
@@ -79,7 +19,7 @@
           <h2>Start Trading Options Like a Pro</h2>
           <p>Join thousands of traders using our tools to generate consistent income from options</p>
           <div class="cta-form">
-            <a href="/signup" class="btn-primary">Get Free Access</a>
+            <a href="{{ url_for('auth.signup') }}" class="btn-primary">Get Free Access</a>
             <p class="form-note">Start with our free tools • No credit card required</p>
           </div>
         </div>
@@ -92,7 +32,7 @@
           <div class="footer-section">
             <h4>Tools</h4>
             <ul>
-              <li><a href="#">Options Calculator</a></li>
+              <li><a href="{{ url_for('calculator.calculator') }}">Options Calculator</a></li>
               <li><a href="#">Risk Assessment</a></li>
               <li><a href="#">Strategy Builder</a></li>
               <li><a href="#">IV Screener</a></li>
@@ -104,7 +44,7 @@
               <li><a href="#">Options Basics</a></li>
               <li><a href="#">Advanced Strategies</a></li>
               <li><a href="#">Risk Management</a></li>
-              <li><a href="#">Video Library</a></li>
+              <li><a href="{{ url_for('main.video_tutorials') }}">Video Library</a></li>
             </ul>
           </div>
           <div class="footer-section">
@@ -131,14 +71,11 @@
         </div>
       </div>
     </footer>
+{% endblock %}
 
+{% block extra_scripts %}
     <script>
-      // Load market data on page load
-      document.addEventListener('DOMContentLoaded', function() {
-        loadMarketData();
-        setInterval(loadMarketData, 60000); // Refresh every minute
-      });
-
+      // Market data management - HOME PAGE SPECIFIC
       async function loadMarketData() {
         try {
           const response = await fetch('/api/market-data');
@@ -166,144 +103,23 @@
           }
         } catch (error) {
           console.error('Error loading market data:', error);
-          document.getElementById('marketGrid').innerHTML = '<div class="error-message">Unable to load market data</div>';
+          document.getElementById('marketGrid').innerHTML = 
+            '<div class="error-message">Failed to load market data</div>';
         }
       }
 
       function formatPrice(price, name) {
-        if (name.includes('Bitcoin') || name.includes('Ethereum')) {
-          return '$' + price.toLocaleString();
-        }
-        if (name.includes('Dollar')) {
-          return price.toFixed(3);
-        }
-        return price.toFixed(2);
+        if (name === 'VIX') return price.toFixed(2);
+        if (price >= 1000) return `$${(price/1000).toFixed(1)}K`;
+        if (price >= 100) return `$${price.toFixed(0)}`;
+        if (price >= 10) return `$${price.toFixed(1)}`;
+        return `$${price.toFixed(2)}`;
       }
 
-      // Navigation stock quote functionality
-      async function getNavQuote() {
-        const symbol = document.getElementById('navQuoteSymbol').value.trim().toUpperCase();
-        const resultDiv = document.getElementById('navQuoteResult');
-        
-        if (!symbol) {
-          resultDiv.innerHTML = '<div class="nav-quote-error">Enter symbol</div>';
-          setTimeout(() => resultDiv.innerHTML = '', 3000);
-          return;
-        }
-        
-        resultDiv.innerHTML = '<div class="nav-quote-loading">Loading...</div>';
-        
-        try {
-          const response = await fetch(`/api/quote?symbol=${symbol}`);
-          const data = await response.json();
-          
-          if (data.error) {
-            resultDiv.innerHTML = `<div class="nav-quote-error">Not found</div>`;
-          } else {
-            resultDiv.innerHTML = `
-              <div class="nav-quote-success">
-                ${data.symbol}: $${data.price}
-              </div>
-            `;
-          }
-          
-          // Clear result after 5 seconds
-          setTimeout(() => resultDiv.innerHTML = '', 5000);
-        } catch (error) {
-          resultDiv.innerHTML = '<div class="nav-quote-error">Error</div>';
-          setTimeout(() => resultDiv.innerHTML = '', 3000);
-        }
-      }
-
-      // Navigation authentication handling
-      async function checkAuthStatus() {
-        try {
-          const response = await fetch('/api/auth-status');
-          const data = await response.json();
-          
-          console.log('Auth Status Response:', data); // Debug logging
-          
-          const toolsDropdown = document.querySelector('.nav-dropdown:first-child');
-          const adminDropdown = document.getElementById('adminDropdown');
-          
-          if (data.authenticated) {
-            console.log('User is authenticated, username:', data.username, 'is_admin:', data.is_admin, 'user_id:', data.user_id);
-            
-            // User is logged in
-            document.getElementById('navAuth').style.display = 'none';
-            const navUser = document.getElementById('navUser');
-            navUser.style.display = 'flex';
-            navUser.classList.add('authenticated'); // Add authenticated class for green color
-            document.getElementById('userWelcome').textContent = `Welcome, ${data.username}`;
-            
-            // Set user icon tooltip with user ID and welcome message
-            const userIcon = document.getElementById('userIcon');
-            if (userIcon && data.user_id) {
-              userIcon.title = `Welcome, ${data.username}`;
-            }
-            
-            // Enable Tools dropdown for authenticated users
-            if (toolsDropdown) {
-              toolsDropdown.classList.remove('disabled');
-              toolsDropdown.style.opacity = '1';
-              toolsDropdown.style.pointerEvents = 'auto';
-            }
-            
-            // Show admin dropdown if user is admin
-            if (data.is_admin) {
-              console.log('Showing admin dropdown');
-              adminDropdown.style.display = 'inline-block';
-            } else {
-              console.log('Hiding admin dropdown - not admin');
-              adminDropdown.style.display = 'none';
-            }
-          } else {
-            console.log('User is NOT authenticated');
-            
-            // User is not logged in
-            document.getElementById('navAuth').style.display = 'flex';
-            document.getElementById('navUser').style.display = 'none';
-            adminDropdown.style.display = 'none';
-            
-            // Grey out Tools dropdown for non-authenticated users
-            if (toolsDropdown) {
-              toolsDropdown.classList.add('disabled');
-              toolsDropdown.style.opacity = '0.5';
-              toolsDropdown.style.pointerEvents = 'none';
-            }
-          }
-        } catch (error) {
-          console.error('Error checking auth status:', error);
-          // Default to not authenticated
-          document.getElementById('navAuth').style.display = 'flex';
-          document.getElementById('navUser').style.display = 'none';
-          document.getElementById('adminDropdown').style.display = 'none';
-          
-          // Grey out Tools dropdown
-          const toolsDropdown = document.querySelector('.nav-dropdown:first-child');
-          if (toolsDropdown) {
-            toolsDropdown.classList.add('disabled');
-            toolsDropdown.style.opacity = '0.5';
-            toolsDropdown.style.pointerEvents = 'none';
-          }
-        }
-      }
-
-      // Allow Enter key for nav quote search
+      // Load market data on page load
       document.addEventListener('DOMContentLoaded', function() {
-        const navQuoteInput = document.getElementById('navQuoteSymbol');
-        if (navQuoteInput) {
-          navQuoteInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-              getNavQuote();
-            }
-          });
-        }
-        
-        // Check authentication status on page load
-        checkAuthStatus();
+        loadMarketData();
+        setInterval(loadMarketData, 25000); // Refresh every 25 seconds
       });
     </script>
-    <script src="{{ url_for('static', filename='nav.js') }}"></script>
-  </body>
-</html>
+{% endblock %}
