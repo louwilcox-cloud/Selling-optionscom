@@ -6,14 +6,14 @@
     <title>Selling-options.com | Options Trading Tools & Insights</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
     <link rel="icon" href="{{ url_for('static', filename='../favicon.ico') }}" type="image/x-icon">
-    <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
-    <link rel="icon" href="favicon-16x16.png" type="image/png" sizes="16x16">
+    <link rel="icon" href="{{ url_for('static', filename='../favicon-32x32.png') }}" type="image/png" sizes="32x32">
+    <link rel="icon" href="{{ url_for('static', filename='../favicon-16x16.png') }}" type="image/png" sizes="16x16">
   </head>
   <body>
     <header class="header">
       <nav class="nav-container">
         <div class="logo">
-          <img src="attached_assets/generated_images/Clean_upward_chart_icon_3aeef765.png" alt="Chart Logo" class="logo-image">
+          <img src="{{ url_for('static', filename='../attached_assets/generated_images/Clean_upward_chart_icon_3aeef765.png') }}" alt="Chart Logo" class="logo-image">
           <strong>Selling-options.com</strong>
         </div>
         <div class="nav-center">
@@ -28,7 +28,7 @@
             <span class="nav-dropdown-label">Tools</span>
             <div class="nav-dropdown-content">
               <a href="{{ url_for('calculator.calculator') }}">Options Calculator</a>
-              <a href="/forecast">Watchlist Forecast</a>
+              <a href="{{ url_for('forecast.forecast') }}">Watchlist Forecast</a>
             </div>
           </div>
           <div class="nav-dropdown">
@@ -40,7 +40,7 @@
           <div class="nav-dropdown admin-only" id="adminDropdown" style="display: none;">
             <span class="nav-dropdown-label">Admin</span>
             <div class="nav-dropdown-content">
-              <a href="/admin">Manage Users</a>
+              <a href="{{ url_for('admin.admin_panel') }}">Manage Users</a>
               <a href="/admin/watchlists">Manage Watchlists</a>
             </div>
           </div>
@@ -304,5 +304,6 @@
         checkAuthStatus();
       });
     </script>
+    <script src="{{ url_for('static', filename='nav.js') }}"></script>
   </body>
 </html>
