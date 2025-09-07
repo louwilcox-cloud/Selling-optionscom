@@ -88,9 +88,33 @@ def market_data():
 def auth_status():
     """Get current authentication status"""
     from flask import session
+    from services.database import get_db_connection
+    
+    if 'user_id' not in session:
+        return jsonify({
+            'authenticated': False,
+            'email': '',
+            'is_admin': False
+        })
+    
+    user_id = session['user_id']
+    email = session.get('email', '')
+    
+    # Check if user is admin by looking up admin_users table
+    is_admin = False
+    try:
+        conn = get_db_connection()
+        if conn:
+            cur = conn.cursor()
+            cur.execute("SELECT 1 FROM admin_users WHERE user_id = %s", (user_id,))
+            is_admin = cur.fetchone() is not None
+            cur.close()
+            conn.close()
+    except Exception as e:
+        print(f"Error checking admin status: {e}")
     
     return jsonify({
-        'authenticated': 'user_id' in session,
-        'username': session.get('username', ''),
-        'is_admin': session.get('username') == 'admin'
+        'authenticated': True,
+        'email': email,
+        'is_admin': is_admin
     })
