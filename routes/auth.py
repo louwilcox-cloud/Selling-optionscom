@@ -1,6 +1,6 @@
 """Authentication routes for Selling-Options.com"""
 import bcrypt
-from flask import Blueprint, request, session, redirect, url_for, render_template_string, flash
+from flask import Blueprint, request, session, redirect, url_for, render_template, flash
 from services.database import get_db_connection
 
 auth_bp = Blueprint('auth', __name__)
@@ -39,40 +39,7 @@ def signup():
             return redirect(url_for('auth.signup'))
     
     # GET request - show signup form
-    signup_html = '''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Sign Up - Selling-options.com</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    </head>
-    <body>
-        <div class="auth-container">
-            <h1>Create Account</h1>
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-            <form method="POST">
-                <div class="form-group">
-                    <label>Email:</label>
-                    <input type="email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label>Password:</label>
-                    <input type="password" name="password" required>
-                </div>
-                <button type="submit">Sign Up</button>
-            </form>
-            <p><a href="{{ url_for('auth.login') }}">Already have an account? Login</a></p>
-        </div>
-    </body>
-    </html>
-    '''
-    return render_template_string(signup_html)
+    return render_template('signup.html')
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -105,40 +72,7 @@ def login():
             flash(f'Login failed: {str(e)}', 'error')
     
     # GET request - show login form
-    login_html = '''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Login - Selling-options.com</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    </head>
-    <body>
-        <div class="auth-container">
-            <h1>Login</h1>
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-            <form method="POST">
-                <div class="form-group">
-                    <label>Email:</label>
-                    <input type="email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label>Password:</label>
-                    <input type="password" name="password" required>
-                </div>
-                <button type="submit">Login</button>
-            </form>
-            <p><a href="{{ url_for('auth.signup') }}">Don't have an account? Sign up</a></p>
-        </div>
-    </body>
-    </html>
-    '''
-    return render_template_string(login_html)
+    return render_template('login.html')
 
 @auth_bp.route('/logout')
 def logout():

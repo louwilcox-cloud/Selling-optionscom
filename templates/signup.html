@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign Up | Selling-options.com</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <link rel="icon" href="{{ url_for('static', filename='favicon-32x32.png') }}" type="image/png" sizes="32x32">
+    <link rel="icon" href="{{ url_for('static', filename='favicon-16x16.png') }}" type="image/png" sizes="16x16">
+  </head>
+  <body>
+    <header class="header">
+      <nav class="nav-container">
+        <div class="logo">
+          <img src="{{ url_for('static', filename='attached_assets/generated_images/Clean_financial_chart_logo_a5295a8c.png') }}" alt="Chart Logo" class="logo-image">
+          <a href="{{ url_for('main.index') }}" style="text-decoration: none; color: inherit;">
+            <strong>Selling-options.com</strong>
+          </a>
+        </div>
+        <div class="nav-center">
+          <div class="nav-quote">
+            <input type="text" id="navQuoteSymbol" placeholder="Enter symbol..." class="nav-quote-input">
+            <button onclick="getNavQuote()" class="nav-quote-btn">Quote</button>
+            <div id="navQuoteResult" class="nav-quote-result"></div>
+          </div>
+        </div>
+        <div class="nav-right">
+          <div class="nav-dropdown">
+            <span class="nav-dropdown-label">Tools</span>
+            <div class="nav-dropdown-content">
+              <a href="{{ url_for('calculator.calculator') }}">Options Calculator</a>
+              <a href="{{ url_for('forecast.forecast') }}">Watchlist Forecast</a>
+            </div>
+          </div>
+          <div class="nav-dropdown">
+            <span class="nav-dropdown-label">Education</span>
+            <div class="nav-dropdown-content">
+              <a href="{{ url_for('main.video_tutorials') }}">Video Tutorials</a>
+            </div>
+          </div>
+          <div class="nav-dropdown admin-only" id="adminDropdown" style="display: none;">
+            <span class="nav-dropdown-label">Admin</span>
+            <div class="nav-dropdown-content">
+              <a href="{{ url_for('admin.admin_panel') }}">Manage Users</a>
+              <a href="{{ url_for('admin.manage_watchlists') }}">Manage Watchlists</a>
+            </div>
+          </div>
+          <div class="nav-auth" id="navAuth">
+            <a href="{{ url_for('auth.login') }}" class="nav-login-btn">Login</a>
+            <a href="{{ url_for('auth.signup') }}" class="nav-signup-btn">Sign Up</a>
+          </div>
+          <div class="nav-user" id="navUser" style="display: none;">
+            <span class="nav-username" id="navUsername"></span>
+            <a href="{{ url_for('auth.logout') }}" class="nav-logout-btn">Log Out</a>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="main-content">
+      <div class="auth-container">
+        <div class="auth-form-wrapper">
+          <h1>Join Selling-options.com</h1>
+          <p class="auth-subtitle">Create your account to start trading options like a pro</p>
+          
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+          
+          <form method="POST" class="auth-form">
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input type="email" id="email" name="email" required class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input type="password" id="password" name="password" required class="form-input">
+            </div>
+            <button type="submit" class="auth-submit-btn">Create Account</button>
+          </form>
+          
+          <div class="auth-footer">
+            <p>Already have an account? <a href="{{ url_for('auth.login') }}" class="auth-link">Sign in here</a></p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      // Navigation functionality
+      async function getNavQuote() {
+        const symbol = document.getElementById('navQuoteSymbol').value.trim().toUpperCase();
+        if (!symbol) return;
+        
+        const resultDiv = document.getElementById('navQuoteResult');
+        resultDiv.innerHTML = 'Loading...';
+        
+        try {
+          const response = await fetch(`/api/quote?symbol=${symbol}`);
+          const data = await response.json();
+          
+          if (data.error) {
+            resultDiv.innerHTML = `<span class="quote-error">${data.error}</span>`;
+          } else {
+            const changeClass = data.change >= 0 ? 'positive' : 'negative';
+            resultDiv.innerHTML = `
+              <div class="quote-result">
+                <strong>${data.symbol}</strong> $${data.price} 
+                <span class="change ${changeClass}">${data.change >= 0 ? '+' : ''}${data.change} (${data.change_percent}%)</span>
+              </div>
+            `;
+          }
+        } catch (error) {
+          resultDiv.innerHTML = '<span class="quote-error">Error fetching quote</span>';
+        }
+        
+        setTimeout(() => {
+          resultDiv.innerHTML = '';
+        }, 5000);
+      }
+
+      // Check authentication status
+      async function checkAuthStatus() {
+        try {
+          const response = await fetch('/api/auth-status');
+          const data = await response.json();
+          
+          if (data.authenticated) {
+            // User is logged in
+            document.getElementById('navAuth').style.display = 'none';
+            document.getElementById('navUser').style.display = 'flex';
+            document.getElementById('navUsername').textContent = data.email || 'User';
+            
+            // Show admin dropdown if user is admin
+            if (data.is_admin) {
+              document.getElementById('adminDropdown').style.display = 'block';
+            }
+          } else {
+            // User is not logged in
+            document.getElementById('navAuth').style.display = 'flex';
+            document.getElementById('navUser').style.display = 'none';
+            document.getElementById('adminDropdown').style.display = 'none';
+            
+            // Grey out Tools dropdown
+            const toolsDropdown = document.querySelector('.nav-dropdown:first-child');
+            if (toolsDropdown) {
+              toolsDropdown.classList.add('disabled');
+              toolsDropdown.style.opacity = '0.5';
+              toolsDropdown.style.pointerEvents = 'none';
+            }
+          }
+        } catch (error) {
+          console.error('Error checking auth status:', error);
+          // Default to not authenticated
+          document.getElementById('navAuth').style.display = 'flex';
+          document.getElementById('navUser').style.display = 'none';
+          document.getElementById('adminDropdown').style.display = 'none';
+          
+          // Grey out Tools dropdown
+          const toolsDropdown = document.querySelector('.nav-dropdown:first-child');
+          if (toolsDropdown) {
+            toolsDropdown.classList.add('disabled');
+            toolsDropdown.style.opacity = '0.5';
+            toolsDropdown.style.pointerEvents = 'none';
+          }
+        }
+      }
+
+      // Allow Enter key for nav quote search
+      document.addEventListener('DOMContentLoaded', function() {
+        const navQuoteInput = document.getElementById('navQuoteSymbol');
+        if (navQuoteInput) {
+          navQuoteInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+              getNavQuote();
+            }
+          });
+        }
+        
+        // Check authentication status on page load
+        checkAuthStatus();
+      });
+    </script>
+    <script src="{{ url_for('static', filename='nav.js') }}"></script>
+  </body>
+</html>
