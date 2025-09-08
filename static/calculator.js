@@ -53,6 +53,10 @@ class OptionsCalculator {
         }
         const data = await response.json();
 
+        // Display raw expirations data for debugging
+        document.getElementById('rawExpirations').textContent = JSON.stringify(data, null, 2);
+        console.log('Raw expirations response:', data);
+
         // Handle both array of dates (when no date param) and options chain object (when date param provided)
         if (Array.isArray(data)) {
             return data;
@@ -99,7 +103,14 @@ class OptionsCalculator {
             return;
         }
 
-        this.showLoading();
+        // Show results section immediately so we can see debug data
+        this.showResults();
+        document.getElementById('rawExpirations').textContent = 'Loading...';
+        document.getElementById('rawOptionsChain').textContent = 'Loading...';
+        document.getElementById('calculationSteps').innerHTML = 'Loading calculations...';
+
+        this.analyzeBtn.disabled = true;
+        this.analyzeBtn.textContent = 'Analyzing...';
 
         try {
             const [currentPrice, analysisData] = await Promise.all([
@@ -110,6 +121,9 @@ class OptionsCalculator {
             await this.displayResults(symbol, currentPrice, analysisData);
         } catch (error) {
             this.showError(`Analysis failed: ${error.message}`);
+        } finally {
+            this.analyzeBtn.disabled = false;
+            this.analyzeBtn.textContent = 'Get Analysis';
         }
     }
 
@@ -139,6 +153,10 @@ class OptionsCalculator {
             }
 
             const chainData = await response.json();
+            
+            // Display raw options chain data for debugging
+            document.getElementById('rawOptionsChain').textContent = JSON.stringify(chainData, null, 2);
+            
             const calls = chainData.calls || [];
             const puts = chainData.puts || [];
 
@@ -153,7 +171,8 @@ class OptionsCalculator {
             let totalPutOI = 0;
             let totalCallOI = 0;
 
-            console.log('Calculating P/C ratios with data:', chainData);
+            let volumeDetails = [`Volume calculations for ${symbol} ${expiration}:`];
+            let oiDetails = [`OI calculations for ${symbol} ${expiration}:`];
 
             // Sum up puts
             if (chainData.puts && Array.isArray(chainData.puts)) {
@@ -162,7 +181,10 @@ class OptionsCalculator {
                     const oi = parseInt(put.openInterest) || 0;
                     totalPutVolume += volume;
                     totalPutOI += oi;
-                    console.log(`Put strike ${put.strike}: volume=${volume}, OI=${oi}`);
+                    if (volume > 0 || oi > 0) {
+                        volumeDetails.push(`Put ${put.strike}: volume=${volume}`);
+                        oiDetails.push(`Put ${put.strike}: OI=${oi}`);
+                    }
                 });
             }
 
@@ -173,9 +195,27 @@ class OptionsCalculator {
                     const oi = parseInt(call.openInterest) || 0;
                     totalCallVolume += volume;
                     totalCallOI += oi;
-                    console.log(`Call strike ${call.strike}: volume=${volume}, OI=${oi}`);
+                    if (volume > 0 || oi > 0) {
+                        volumeDetails.push(`Call ${call.strike}: volume=${volume}`);
+                        oiDetails.push(`Call ${call.strike}: OI=${oi}`);
+                    }
                 });
             }
+
+            // Add totals and final calculations
+            volumeDetails.push(`\nTotals:`);
+            volumeDetails.push(`Total Put Volume: ${totalPutVolume}`);
+            volumeDetails.push(`Total Call Volume: ${totalCallVolume}`);
+            volumeDetails.push(`Put/Call Volume Ratio: ${totalCallVolume > 0 ? (totalPutVolume / totalCallVolume).toFixed(2) : 'N/A (no call volume)'}`);
+
+            oiDetails.push(`\nTotals:`);
+            oiDetails.push(`Total Put OI: ${totalPutOI}`);
+            oiDetails.push(`Total Call OI: ${totalCallOI}`);
+            oiDetails.push(`Put/Call OI Ratio: ${totalCallOI > 0 ? (totalPutOI / totalCallOI).toFixed(2) : 'N/A (no call OI)'}`);
+
+            // Display calculation steps
+            document.getElementById('volumeCalcs').innerHTML = volumeDetails.join('<br>');
+            document.getElementById('oiCalcs').innerHTML = oiDetails.join('<br>');
 
             console.log(`Totals - Put Volume: ${totalPutVolume}, Call Volume: ${totalCallVolume}, Put OI: ${totalPutOI}, Call OI: ${totalCallOI}`);
 
@@ -183,16 +223,13 @@ class OptionsCalculator {
             const volumePCRatio = totalCallVolume > 0 ? (totalPutVolume / totalCallVolume).toFixed(2) : 'N/A';
             const oiPCRatio = totalCallOI > 0 ? (totalPutOI / totalCallOI).toFixed(2) : 'N/A';
 
-            // Update display
-            document.getElementById('volumePCRatio').textContent = volumePCRatio;
-            document.getElementById('oiPCRatio').textContent = oiPCRatio;
-
             console.log(`Final P/C Ratios - Volume: ${volumePCRatio}, OI: ${oiPCRatio}`);
 
             return { volumeRatio: volumePCRatio, oiRatio: oiPCRatio };
 
         } catch (error) {
             console.error('Error calculating P/C ratios:', error);
+            document.getElementById('calculationSteps').innerHTML = `<div style="color: red;">Error calculating P/C ratios: ${error.message}</div>`;
             return { volumeRatio: 'Error', oiRatio: 'Error' };
         }
     }
