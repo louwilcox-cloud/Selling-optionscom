@@ -1,5 +1,9 @@
 .env
-.env.*
+.env.local
+.env.development
+.env.production
+# Allow .env.nas template to be tracked
+# .env.nas
 flask_session/
 __pycache__/
 *.pyc
