@@ -118,82 +118,39 @@ class OptionsCalculator {
         // Display current price
         document.getElementById('currentPrice').textContent = `$${currentPrice.toFixed(2)}`;
         
-        // Calculate sentiment values from the analysis data
-        const results = this.calculateSentiment(analysisData);
+        // Use the analysis data directly from the /api/results_both endpoint
+        if (analysisData.error) {
+            throw new Error(analysisData.error);
+        }
         
-        // Display prediction values
-        document.getElementById('bullsValue').textContent = `$${results.bullsWant.toFixed(2)}`;
-        document.getElementById('consensusValue').textContent = `$${results.avgConsensus.toFixed(2)}`;
-        document.getElementById('bearsValue').textContent = `$${results.bearsWant.toFixed(2)}`;
+        // Display prediction values using the API response structure
+        const volumePrediction = analysisData.volume?.prediction;
+        const oiPrediction = analysisData.openInterest?.prediction;
+        const avgPrediction = analysisData.average?.prediction;
         
-        // Display P/C ratios
-        document.getElementById('moneyRatio').textContent = results.ratios.money.toFixed(2);
-        document.getElementById('trueRatio').textContent = results.ratios.true.toFixed(2);
-        document.getElementById('premiumRatio').textContent = results.ratios.premium.toFixed(2);
-        document.getElementById('volumeRatio').textContent = results.ratios.volume.toFixed(2);
-        document.getElementById('volOiRatio').textContent = results.ratios.volOi.toFixed(2);
+        document.getElementById('bullsValue').textContent = volumePrediction ? `$${volumePrediction.toFixed(2)}` : 'N/A';
+        document.getElementById('consensusValue').textContent = avgPrediction ? `$${avgPrediction.toFixed(2)}` : 'N/A';
+        document.getElementById('bearsValue').textContent = oiPrediction ? `$${oiPrediction.toFixed(2)}` : 'N/A';
+        
+        // Display P/C ratios (calculate simple ratios from debug data if available)
+        const debug = analysisData.debug || {};
+        const callsCount = debug.callsProcessed || 0;
+        const putsCount = debug.putsProcessed || 0;
+        const totalOptions = debug.totalOptionsProcessed || 0;
+        
+        // Calculate basic ratios
+        const putCallRatio = callsCount > 0 ? (putsCount / callsCount).toFixed(2) : '0.00';
+        const volumeRatio = analysisData.volume?.contributingRows || 0;
+        const oiRatio = analysisData.openInterest?.contributingRows || 0;
+        
+        document.getElementById('moneyRatio').textContent = putCallRatio;
+        document.getElementById('volumeRatio').textContent = volumeRatio.toString();
+        document.getElementById('oiRatio').textContent = oiRatio.toString();
         
         this.showResults();
     }
     
-    calculateSentiment(analysisData) {
-        const calls = analysisData.rows.filter(row => row.Type === 'Call');
-        const puts = analysisData.rows.filter(row => row.Type === 'Put');
-        
-        // Calculate Bulls Want (calls): Strike × OI weighted average
-        let totalBullsWillPay = 0;
-        let bullsNumerator = 0;
-        
-        calls.forEach(call => {
-            const strike = call.Strike || 0;
-            const oi = call.OI || 0;
-            const willPay = strike * oi;
-            totalBullsWillPay += willPay;
-            bullsNumerator += strike * willPay;
-        });
-        
-        const bullsWant = totalBullsWillPay > 0 ? bullsNumerator / totalBullsWillPay : 0;
-        
-        // Calculate Bears Want (puts): Strike × OI weighted average
-        let totalBearsWillPay = 0;
-        let bearsNumerator = 0;
-        
-        puts.forEach(put => {
-            const strike = put.Strike || 0;
-            const oi = put.OI || 0;
-            const willPay = strike * oi;
-            totalBearsWillPay += willPay;
-            bearsNumerator += strike * willPay;
-        });
-        
-        const bearsWant = totalBearsWillPay > 0 ? bearsNumerator / totalBearsWillPay : 0;
-        
-        // Average consensus is the average of bulls and bears
-        const avgConsensus = (bullsWant + bearsWant) / 2;
-        
-        // Calculate P/C ratios
-        const callsPremium = calls.reduce((sum, row) => sum + (row.OI * row.AvgLast * 100), 0);
-        const putsPremium = puts.reduce((sum, row) => sum + (row.OI * row.AvgLast * 100), 0);
-        
-        const callsVolume = calls.reduce((sum, row) => sum + (row.Volume || 0), 0);
-        const putsVolume = puts.reduce((sum, row) => sum + (row.Volume || 0), 0);
-        
-        const callsOI = calls.reduce((sum, row) => sum + row.OI, 0);
-        const putsOI = puts.reduce((sum, row) => sum + row.OI, 0);
-        
-        return {
-            bullsWant,
-            bearsWant,
-            avgConsensus,
-            ratios: {
-                money: putsPremium / (callsPremium || 1),
-                true: putsOI / (callsOI || 1),
-                premium: putsPremium / (callsPremium || 1),
-                volume: putsVolume / (callsVolume || 1),
-                volOi: (putsVolume / (putsOI || 1)) / (callsVolume / (callsOI || 1) || 1)
-            }
-        };
-    }
+    
     
     showLoading() {
         this.hideAll();
