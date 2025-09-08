@@ -58,11 +58,21 @@
         box-shadow: 0 10px 40px rgba(0,0,0,0.1);
         border: 1px solid rgba(255,255,255,0.2);
         transition: all 0.3s ease;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        display: block;
       }
       
       .step:hover {
         transform: translateY(-5px);
         box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      }
+      
+      .step.active {
+        background: linear-gradient(135deg, rgba(30, 64, 175, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+        border: 2px solid rgba(30, 64, 175, 0.3);
+        box-shadow: 0 15px 50px rgba(30, 64, 175, 0.2);
       }
       
       .step-number {
@@ -90,11 +100,9 @@
         line-height: 1.6;
       }
       
-      .videos-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-        gap: 40px;
-        margin-bottom: 60px;
+      .featured-video {
+        max-width: 800px;
+        margin: 0 auto 60px;
       }
       
       .video-card {
@@ -152,8 +160,8 @@
           font-size: 2.5rem;
         }
         
-        .videos-grid {
-          grid-template-columns: 1fr;
+        .featured-video {
+          max-width: 100%;
         }
         
         .learning-steps {
@@ -178,22 +186,22 @@
       <div class="learning-path">
         <h2>Your Learning Path</h2>
         <div class="learning-steps">
-          <div class="step">
+          <div class="step active" data-video="LjQOcYTCybY" data-title="Options Trading Fundamentals" data-description="Learn the essential concepts of options trading including calls, puts, and basic strategies. Perfect for beginners looking to understand the foundation of options income strategies.">
             <div class="step-number">1</div>
             <h3>Foundation</h3>
             <p>Start with basic options concepts and terminology</p>
           </div>
-          <div class="step">
+          <div class="step" data-video="qKdadAp2ed0" data-title="The Wheel Strategy Explained" data-description="Discover the powerful Wheel Strategy - a systematic approach to generating consistent income from options. Learn how to implement this strategy step-by-step.">
             <div class="step-number">2</div>
             <h3>Strategy</h3>
             <p>Learn the Wheel Strategy for consistent income</p>
           </div>
-          <div class="step">
+          <div class="step" data-video="1HXDto7qXaU" data-title="Weekly Passive Income Strategy" data-description="Master the art of weekly options trading for consistent passive income. Learn timing, stock selection, and risk management for weekly strategies.">
             <div class="step-number">3</div>
             <h3>Weekly Income</h3>
             <p>Master weekly options for passive income</p>
           </div>
-          <div class="step">
+          <div class="step" data-video="xiiWMo2sfqc" data-title="Advanced Wheel Strategy Techniques" data-description="Take your Wheel Strategy to the next level with advanced techniques for maximizing returns and minimizing risk in various market conditions.">
             <div class="step-number">4</div>
             <h3>Advanced</h3>
             <p>Implement advanced techniques and risk management</p>
@@ -201,67 +209,57 @@
         </div>
       </div>
 
-      <div class="videos-grid">
+      <!-- Dynamic Video Player -->
+      <div class="featured-video">
         <div class="video-card">
           <div class="video-wrapper">
-            <iframe src="https://www.youtube.com/embed/LjQOcYTCybY" title="Options Trading Fundamentals" allowfullscreen></iframe>
+            <iframe id="mainVideo" src="https://www.youtube.com/embed/LjQOcYTCybY" title="Options Trading Fundamentals" allowfullscreen></iframe>
           </div>
           <div class="video-info">
-            <h3>Options Trading Fundamentals</h3>
-            <p>Learn the essential concepts of options trading including calls, puts, and basic strategies. Perfect for beginners looking to understand the foundation of options income strategies.</p>
-          </div>
-        </div>
-
-        <div class="video-card">
-          <div class="video-wrapper">
-            <iframe src="https://www.youtube.com/embed/qKdadAp2ed0" title="The Wheel Strategy Explained" allowfullscreen></iframe>
-          </div>
-          <div class="video-info">
-            <h3>The Wheel Strategy Explained</h3>
-            <p>Discover the powerful Wheel Strategy - a systematic approach to generating consistent income from options. Learn how to implement this strategy step-by-step.</p>
-          </div>
-        </div>
-
-        <div class="video-card">
-          <div class="video-wrapper">
-            <iframe src="https://www.youtube.com/embed/1HXDto7qXaU" title="Weekly Passive Income Strategy" allowfullscreen></iframe>
-          </div>
-          <div class="video-info">
-            <h3>Weekly Passive Income Strategy</h3>
-            <p>Master the art of weekly options trading for consistent passive income. Learn timing, stock selection, and risk management for weekly strategies.</p>
-          </div>
-        </div>
-
-        <div class="video-card">
-          <div class="video-wrapper">
-            <iframe src="https://www.youtube.com/embed/xiiWMo2sfqc" title="Advanced Wheel Strategy Techniques" allowfullscreen></iframe>
-          </div>
-          <div class="video-info">
-            <h3>Advanced Wheel Strategy Techniques</h3>
-            <p>Take your Wheel Strategy to the next level with advanced techniques for maximizing returns and minimizing risk in various market conditions.</p>
-          </div>
-        </div>
-
-        <div class="video-card">
-          <div class="video-wrapper">
-            <iframe src="https://www.youtube.com/embed/VsOu3lTAHkY" title="Managing Early Assignment" allowfullscreen></iframe>
-          </div>
-          <div class="video-info">
-            <h3>Managing Early Assignment</h3>
-            <p>Learn how to handle early assignments and turn them into profitable opportunities. Essential knowledge for any options income trader.</p>
-          </div>
-        </div>
-
-        <div class="video-card">
-          <div class="video-wrapper">
-            <iframe src="https://www.youtube.com/embed/3sT7IHaG8eY" title="Portfolio Risk Management" allowfullscreen></iframe>
-          </div>
-          <div class="video-info">
-            <h3>Portfolio Risk Management</h3>
-            <p>Discover advanced risk management techniques to protect your capital while maximizing income from your options strategies.</p>
+            <h3 id="videoTitle">Options Trading Fundamentals</h3>
+            <p id="videoDescription">Learn the essential concepts of options trading including calls, puts, and basic strategies. Perfect for beginners looking to understand the foundation of options income strategies.</p>
           </div>
         </div>
       </div>
 
     </div>
+
+    <script>
+    // Video Tutorial Interactive System
+    document.addEventListener('DOMContentLoaded', function() {
+        const steps = document.querySelectorAll('.step');
+        const mainVideo = document.getElementById('mainVideo');
+        const videoTitle = document.getElementById('videoTitle');
+        const videoDescription = document.getElementById('videoDescription');
+
+        steps.forEach(step => {
+            step.addEventListener('click', function() {
+                // Remove active class from all steps
+                steps.forEach(s => s.classList.remove('active'));
+                
+                // Add active class to clicked step
+                this.classList.add('active');
+                
+                // Get video data
+                const videoId = this.dataset.video;
+                const title = this.dataset.title;
+                const description = this.dataset.description;
+                
+                // Update video player
+                mainVideo.src = `https://www.youtube.com/embed/${videoId}`;
+                mainVideo.title = title;
+                
+                // Update video info
+                videoTitle.textContent = title;
+                videoDescription.textContent = description;
+                
+                // Smooth scroll to video
+                document.querySelector('.featured-video').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            });
+        });
+    });
+    </script>
 {% endblock %}
