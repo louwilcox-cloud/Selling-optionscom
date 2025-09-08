@@ -142,18 +142,29 @@ class OptionsCalculator {
             const calls = chainData.calls || [];
             const puts = chainData.puts || [];
             
-            // Calculate Money P/C Ratio (Put Premium / Call Premium)
+            console.log(`Calculating P/C ratios for ${symbol} ${expiration}:`, {
+                callsCount: calls.length,
+                putsCount: puts.length
+            });
+            
+            // Calculate Money P/C Ratio (Put Premium Value / Call Premium Value)
+            // Premium Value = lastPrice × openInterest × 100 (contract multiplier)
             let putsPremium = 0;
             let callsPremium = 0;
             
             puts.forEach(put => {
-                putsPremium += (put.lastPrice || 0) * (put.openInterest || 0) * 100; // Contract multiplier
+                const premium = (put.lastPrice || 0) * (put.openInterest || 0) * 100;
+                putsPremium += premium;
             });
             
             calls.forEach(call => {
-                callsPremium += (call.lastPrice || 0) * (call.openInterest || 0) * 100; // Contract multiplier
+                const premium = (call.lastPrice || 0) * (call.openInterest || 0) * 100;
+                callsPremium += premium;
             });
             
+            console.log('Premium calculations:', { putsPremium, callsPremium });
+            
+            // Money P/C Ratio = Put Premium Value / Call Premium Value
             const moneyRatio = callsPremium > 0 ? (putsPremium / callsPremium).toFixed(2) : 'N/A';
             
             // Calculate Volume P/C Ratio (Put Volume / Call Volume)
@@ -161,10 +172,15 @@ class OptionsCalculator {
             const callsVolume = calls.reduce((sum, call) => sum + (call.volume || 0), 0);
             const volumeRatio = callsVolume > 0 ? (putsVolume / callsVolume).toFixed(2) : 'N/A';
             
-            // Calculate OI P/C Ratio (Put OI / Call OI)
+            console.log('Volume calculations:', { putsVolume, callsVolume });
+            
+            // Calculate OI P/C Ratio (Put Open Interest / Call Open Interest)
             const putsOI = puts.reduce((sum, put) => sum + (put.openInterest || 0), 0);
             const callsOI = calls.reduce((sum, call) => sum + (call.openInterest || 0), 0);
             const oiRatio = callsOI > 0 ? (putsOI / callsOI).toFixed(2) : 'N/A';
+            
+            console.log('OI calculations:', { putsOI, callsOI });
+            console.log('Final ratios:', { moneyRatio, volumeRatio, oiRatio });
             
             return { moneyRatio, volumeRatio, oiRatio };
             

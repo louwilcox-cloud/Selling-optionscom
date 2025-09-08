@@ -123,6 +123,9 @@ def get_options_expirations(symbol: str) -> List[str]:
         params = {
             "underlying_ticker": symbol,
             "limit": 1000,
+            "expired": "false",
+            "order": "asc",
+            "sort": "expiration_date",
             "apikey": api_key
         }
         
@@ -141,7 +144,7 @@ def get_options_expirations(symbol: str) -> List[str]:
                 # Sort and filter future dates only
                 today = datetime.now().strftime('%Y-%m-%d')
                 future_exps = [exp for exp in sorted(expirations) if exp > today]
-                return future_exps[:10]  # Return up to 10 future expirations
+                return future_exps[:20]  # Return up to 20 future expirations
                 
     except Exception as e:
         print(f"Error fetching options expirations for {symbol}: {e}")
