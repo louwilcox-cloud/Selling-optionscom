@@ -1,88 +1,52 @@
 version: '3.8'
-
 services:
-  # Main Flask application
-  selling-options-app:
-    build: .
-    container_name: selling-options-app
+  # Main Flask application for LAB environment (uses prebuilt image)
+  selling-options-lab-app:
+    image: ghcr.io/louwilcox-cloud/selling-options-lab:latest
+    container_name: selling-options-lab-app
+    command: python main.py    # ← FIXED: Run main.py instead of app.py
     expose:
       - "5000"
+    ports:
+      - "5082:5000"  # same as your current LAB mapping
+    env_file:
+      - .env         # provides FLASK_ENV, SECRET_KEY, DATABASE_URL, POLYGON_API_KEY
+    # keep the existing PG_* too, in case the app reads them
     environment:
-      # Load from .env file
-      - POLYGON_API_KEY=${POLYGON_API_KEY}
-      - DATABASE_URL=${DATABASE_URL}
-      - FLASK_ENV=${FLASK_ENV}
-      - FLASK_APP=${FLASK_APP}
-      - SECRET_KEY=${SECRET_KEY}
-      - APP_HOST=${APP_HOST}
-      - APP_PORT=${APP_PORT}
-      - APP_DEBUG=${APP_DEBUG}
+      - PGHOST=lab-db
+      - PGDATABASE=selling_options_lab
+      - PGUSER=postgres
+      - PGPASSWORD=lab_password_2025
+      - PGPORT=5432
+      - FLASK_ENV=production
+      - LAB_ENVIRONMENT=true
     depends_on:
-      db:
-        condition: service_healthy
+      - lab-db
     volumes:
       - ./flask_session:/app/flask_session
     networks:
-      - selling-options-net
+      - lab-network
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
-  # PostgreSQL Database
-  db:
+  # PostgreSQL Database for LAB (unchanged)
+  lab-db:
     image: postgres:16
-    container_name: selling-options-db
+    container_name: selling-options-lab-db
     environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=selling_options_lab
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=lab_password_2025
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - lab_postgres_data:/var/lib/postgresql/data
     networks:
-      - selling-options-net
+      - lab-network
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     ports:
-      - "5432:5432"  # Expose for external access if needed
-
-  # Caddy reverse proxy
-  caddy:
-    image: caddy:2-alpine
-    container_name: selling-options-caddy
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"  # Alternative port if 80 is in use
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      selling-options-app:
-        condition: service_healthy
-    networks:
-      - selling-options-net
-    restart: unless-stopped
-    environment:
-      - DOMAIN=${DOMAIN:-localhost}
+      - "5433:5432"
 
 volumes:
-  postgres_data:
-    driver: local
-  caddy_data:
-    driver: local
-  caddy_config:
-    driver: local
+  lab_postgres_data:
 
 networks:
-  selling-options-net:
+  lab-network:
     driver: bridge
