@@ -196,8 +196,8 @@ def get_options_chain(symbol: str, expiration_date: str) -> Dict:
                 # Process real market data from snapshot API
                 for contract in data["results"]:
                     details = contract.get("details", {})
-                    last_quote = contract.get("last_quote", {})
                     day = contract.get("day", {})
+                    last_trade = contract.get("last_trade", {})
                     
                     strike = details.get("strike_price")
                     contract_type = details.get("contract_type")
@@ -206,25 +206,30 @@ def get_options_chain(symbol: str, expiration_date: str) -> Dict:
                     if not strike or not contract_type or not ticker:
                         continue
                     
-                    # Extract real market data
-                    bid = last_quote.get("bid", 0)
-                    ask = last_quote.get("ask", 0)
-                    midpoint = last_quote.get("midpoint")
-                    
-                    # Use midpoint if available, otherwise calculate from bid/ask
-                    if midpoint:
-                        last_price = midpoint
-                    elif bid and ask:
-                        last_price = (bid + ask) / 2
-                    else:
-                        last_price = bid if bid else ask if ask else 0
+                    # Extract real market data - use actual API response structure
+                    # Get last price from day.close or last_trade.price
+                    last_price = 0
+                    if day.get("close"):
+                        last_price = day["close"]
+                    elif last_trade.get("price"):
+                        last_price = last_trade["price"]
                     
                     volume = day.get("volume", 0)
                     open_interest = contract.get("open_interest", 0)
                     
-                    # Only include contracts with some market activity
-                    if last_price <= 0:
-                        continue
+                    # Calculate bid/ask from last price (typical spread estimation)
+                    if last_price > 0:
+                        spread_pct = 0.02 if last_price < 5 else 0.01  # 2% for cheap options, 1% for expensive
+                        bid = last_price * (1 - spread_pct)
+                        ask = last_price * (1 + spread_pct)
+                    else:
+                        bid = ask = 0
+                    
+                    # Include all contracts with strikes, even if no recent trading
+                    # This gives us a complete options chain for analysis
+                    if not last_price:
+                        # Use break even price as estimate for options with no trades
+                        last_price = max(0, contract.get("break_even_price", 0) - strike) if contract_type == "call" else max(0, strike - contract.get("break_even_price", 0))
                         
                     option_data = {
                         "strike": float(strike),
