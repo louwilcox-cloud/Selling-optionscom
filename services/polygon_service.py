@@ -169,26 +169,23 @@ def get_options_expirations(symbol: str) -> List[str]:
     return expirations
 
 def get_options_chain(symbol: str, expiration_date: str) -> Dict:
-    """Get options chain for symbol and expiration date using Polygon API"""
+    """Get options chain for symbol and expiration date using Polygon Options Chain Snapshot API"""
     import requests
     import os
-    import time
     
     try:
         api_key = os.getenv("POLYGON_API_KEY")
         if not api_key:
             raise Exception("Polygon API key not found")
             
-        # Get options contracts for the specific expiration
-        url = f"https://api.polygon.io/v3/reference/options/contracts"
+        # Use Polygon Options Chain Snapshot API - gets all market data in one call
+        url = f"https://api.polygon.io/v3/snapshot/options/{symbol.upper()}"
         params = {
-            "underlying_ticker": symbol,
             "expiration_date": expiration_date,
-            "limit": 1000,
             "apikey": api_key
         }
         
-        response = requests.get(url, params=params, timeout=15)
+        response = requests.get(url, params=params, timeout=20)
         
         if response.status_code == 200:
             data = response.json()
@@ -196,43 +193,46 @@ def get_options_chain(symbol: str, expiration_date: str) -> Dict:
                 calls = []
                 puts = []
                 
-                # Process contracts with mock data for now (WORKING VERSION)
-                for contract in data["results"][:100]:  # Process more contracts
-                    ticker = contract.get("ticker")
-                    strike = float(contract.get("strike_price", 0))
-                    contract_type = contract.get("contract_type")
+                # Process real market data from snapshot API
+                for contract in data["results"]:
+                    details = contract.get("details", {})
+                    last_quote = contract.get("last_quote", {})
+                    day = contract.get("day", {})
                     
-                    if not ticker or not strike:
+                    strike = details.get("strike_price")
+                    contract_type = details.get("contract_type")
+                    ticker = details.get("ticker")
+                    
+                    if not strike or not contract_type or not ticker:
                         continue
                     
-                    # Generate realistic mock data based on strike vs current price
-                    current_price = 167.0  # NVDA approximate price
+                    # Extract real market data
+                    bid = last_quote.get("bid", 0)
+                    ask = last_quote.get("ask", 0)
+                    midpoint = last_quote.get("midpoint")
                     
-                    # Mock premium based on moneyness
-                    if contract_type == "call":
-                        if strike < current_price:  # ITM
-                            mock_premium = max(0.5, (current_price - strike) + abs(hash(ticker) % 10))
-                        else:  # OTM
-                            mock_premium = max(0.1, 10.0 / (1 + (strike - current_price)))
-                    else:  # put
-                        if strike > current_price:  # ITM
-                            mock_premium = max(0.5, (strike - current_price) + abs(hash(ticker) % 10))
-                        else:  # OTM
-                            mock_premium = max(0.1, 10.0 / (1 + (current_price - strike)))
+                    # Use midpoint if available, otherwise calculate from bid/ask
+                    if midpoint:
+                        last_price = midpoint
+                    elif bid and ask:
+                        last_price = (bid + ask) / 2
+                    else:
+                        last_price = bid if bid else ask if ask else 0
                     
-                    # Mock volume and OI based on moneyness
-                    moneyness_factor = abs(strike - current_price) / current_price
-                    base_volume = max(1, int(1000 / (1 + moneyness_factor * 10)))
-                    mock_volume = base_volume + (abs(hash(ticker)) % 500)
-                    mock_oi = int(mock_volume * (1.5 + (abs(hash(ticker + "oi")) % 100) / 100))
+                    volume = day.get("volume", 0)
+                    open_interest = contract.get("open_interest", 0)
                     
+                    # Only include contracts with some market activity
+                    if last_price <= 0:
+                        continue
+                        
                     option_data = {
-                        "strike": strike,
-                        "lastPrice": round(mock_premium, 2),
-                        "volume": mock_volume,
-                        "openInterest": mock_oi,
-                        "bid": round(mock_premium * 0.95, 2),
-                        "ask": round(mock_premium * 1.05, 2),
+                        "strike": float(strike),
+                        "lastPrice": round(float(last_price), 2),
+                        "volume": int(volume) if volume else 0,
+                        "openInterest": int(open_interest) if open_interest else 0,
+                        "bid": round(float(bid), 2) if bid else 0,
+                        "ask": round(float(ask), 2) if ask else 0,
                         "contractSymbol": ticker
                     }
                     
