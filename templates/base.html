@@ -89,7 +89,7 @@
             resultDiv.innerHTML = `
               <div class="quote-result">
                 <strong>${data.symbol}</strong> $${data.price} 
-                <span class="change ${changeClass}">${data.change >= 0 ? '+' : ''}${data.change} (${data.change_percent}%)</span>
+                <span class="change ${changeClass}">${data.change >= 0 ? '+' : ''}${data.change} (${data.change_pct}%)</span>
               </div>
             `;
           }
