@@ -1,0 +1,25 @@
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ cat /volume1/docker/selling-options-lab/.env
+FLASK_ENV=production
+SECRET_KEY=63a485e8d3b9e802be5a61702cc0d1edfcb112e47002c1a0bae41e486730144b
+DATABASE_URL=postgresql://postgres:lab_password_2025@lab-db:5432/selling_options_lab
+POLYGON_API_KEY=SgahyvybcxIY8IG9vPM9QKYkF9mnbJGi
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ # Should contain:
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ # POLYGON_API_KEY=SgahyvybcxIY8IG9vPM9QKYkF9mnbJGi
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ # Use your existing docker-compose.yml
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ docker-compose down
+[+] Running 3/3
+ ✔ Container selling-options-lab-app        Removed                                                                0.7s
+ ✔ Container selling-options-lab-db         Removed                                                                2.1s
+ ✔ Network selling-options-lab_lab-network  Removed                                                                0.7s
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ docker-compose up -d --build
+[+] Running 3/3
+ ✔ Network selling-options-lab_lab-network  Created                                                                0.6s
+ ✔ Container selling-options-lab-db         Started                                                                2.4s
+ ✔ Container selling-options-lab-app        Started                                                                4.4s
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ # Pull latest changes (this should include docker-compose.nas.yml and updated .env.nas)
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ git pull origin main
+-sh: git: command not found
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ # Then you'll have the complete deployment package
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$
