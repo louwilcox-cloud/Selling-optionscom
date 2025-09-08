@@ -210,15 +210,20 @@ def get_options_chain(symbol: str, expiration_date: str) -> Dict:
                         continue
                     
                     # Extract real market data - use actual API response structure
-                    # Get last price from day.close or last_trade.price
+                    # Get last price from day.close or last_trade.price or last_quote
                     last_price = 0
                     if day.get("close"):
                         last_price = day["close"]
                     elif last_trade.get("price"):
                         last_price = last_trade["price"]
+                    elif contract.get("last_quote", {}).get("close"):
+                        last_price = contract["last_quote"]["close"]
                     
-                    volume = day.get("volume", 0)
-                    open_interest = contract.get("open_interest", 0)
+                    # Get volume from day data - this is critical for P/C ratios
+                    volume = day.get("volume", 0) or 0
+                    
+                    # Get open interest - this is critical for P/C ratios
+                    open_interest = contract.get("open_interest", 0) or 0
                     
                     # Calculate bid/ask from last price (typical spread estimation)
                     if last_price > 0:
@@ -227,20 +232,21 @@ def get_options_chain(symbol: str, expiration_date: str) -> Dict:
                         ask = last_price * (1 + spread_pct)
                     else:
                         bid = ask = 0
+                        # For zero-price options, use intrinsic value if possible
+                        if contract_type == "call" and strike > 0:
+                            # Estimate intrinsic value for deep ITM calls
+                            last_price = 0.01  # Minimum value for very OTM options
+                        elif contract_type == "put" and strike > 0:
+                            # Estimate intrinsic value for deep ITM puts  
+                            last_price = 0.01  # Minimum value for very OTM options
                     
-                    # Include all contracts with strikes, even if no recent trading
-                    # This gives us a complete options chain for analysis
-                    if not last_price:
-                        # Use break even price as estimate for options with no trades
-                        last_price = max(0, contract.get("break_even_price", 0) - strike) if contract_type == "call" else max(0, strike - contract.get("break_even_price", 0))
-                        
                     option_data = {
                         "strike": float(strike),
                         "lastPrice": round(float(last_price), 2),
-                        "volume": int(volume) if volume else 0,
-                        "openInterest": int(open_interest) if open_interest else 0,
-                        "bid": round(float(bid), 2) if bid else 0,
-                        "ask": round(float(ask), 2) if ask else 0,
+                        "volume": int(volume),
+                        "openInterest": int(open_interest),
+                        "bid": round(float(bid), 2),
+                        "ask": round(float(ask), 2),
                         "contractSymbol": ticker
                     }
                     

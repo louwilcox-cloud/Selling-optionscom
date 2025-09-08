@@ -9,12 +9,12 @@
         margin: 0 auto;
         padding: 30px 20px;
       }
-      
+
       .calculator-header {
         text-align: center;
         margin-bottom: 25px;
       }
-      
+
       .calculator-header h1 {
         font-size: 2.5rem;
         color: #1f2937;
@@ -25,7 +25,7 @@
         -webkit-text-fill-color: transparent;
         background-clip: text;
       }
-      
+
       .calculator-header p {
         font-size: 1.1rem;
         color: #6b7280;
@@ -33,7 +33,7 @@
         margin: 0 auto;
         line-height: 1.5;
       }
-      
+
       .input-form {
         background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(249,250,251,0.8) 100%);
         backdrop-filter: blur(10px);
@@ -44,30 +44,30 @@
         margin-bottom: 30px;
         transition: all 0.3s ease;
       }
-      
+
       .input-form:hover {
         transform: translateY(-2px);
         box-shadow: 0 15px 50px rgba(0,0,0,0.15);
       }
-      
+
       .form-grid {
         display: grid;
         grid-template-columns: 1fr 1fr auto;
         gap: 20px;
         align-items: end;
       }
-      
+
       .form-group {
         display: flex;
         flex-direction: column;
       }
-      
+
       .form-group label {
         font-weight: 600;
         color: #374151;
         margin-bottom: 8px;
       }
-      
+
       .form-input {
         padding: 12px 16px;
         border: 2px solid #e5e7eb;
@@ -76,14 +76,14 @@
         transition: all 0.2s ease;
         background: rgba(255,255,255,0.8);
       }
-      
+
       .form-input:focus {
         outline: none;
         border-color: #1e40af;
         box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
         background: rgba(255,255,255,1);
       }
-      
+
       .analyze-btn {
         padding: 12px 24px;
         background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
@@ -95,45 +95,45 @@
         transition: all 0.3s ease;
         white-space: nowrap;
       }
-      
+
       .analyze-btn:hover:not(:disabled) {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(30, 64, 175, 0.3);
       }
-      
+
       .analyze-btn:disabled {
         opacity: 0.6;
         cursor: not-allowed;
         transform: none;
       }
-      
+
       .loading, .error {
         text-align: center;
         padding: 30px;
         margin: 20px 0;
         border-radius: 12px;
       }
-      
+
       .loading {
         background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
         color: #6b7280;
         font-size: 1.1rem;
       }
-      
+
       .error {
         background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
         color: #dc2626;
         border: 1px solid #fecaca;
       }
-      
+
       .hidden {
         display: none;
       }
-      
+
       #resultsSection {
         margin-top: 40px;
       }
-      
+
       .current-price {
         text-align: center;
         margin-bottom: 30px;
@@ -142,26 +142,26 @@
         border-radius: 16px;
         border: 1px solid rgba(30, 64, 175, 0.1);
       }
-      
+
       .current-price h3 {
         color: #374151;
         margin-bottom: 10px;
         font-size: 1.3rem;
       }
-      
+
       .price-display {
         font-size: 2.5rem;
         font-weight: 800;
         color: #1e40af;
       }
-      
+
       .results-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 25px;
         margin-bottom: 40px;
       }
-      
+
       .sentiment-card {
         padding: 30px;
         border-radius: 16px;
@@ -170,50 +170,50 @@
         border: 1px solid rgba(255,255,255,0.2);
         transition: all 0.3s ease;
       }
-      
+
       .sentiment-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 15px 50px rgba(0,0,0,0.15);
       }
-      
+
       .sentiment-card.bulls {
         background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(21, 128, 61, 0.05) 100%);
         border-color: rgba(34, 197, 94, 0.2);
       }
-      
+
       .sentiment-card.consensus {
         background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(30, 64, 175, 0.05) 100%);
         border-color: rgba(59, 130, 246, 0.2);
       }
-      
+
       .sentiment-card.bears {
         background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(185, 28, 28, 0.05) 100%);
         border-color: rgba(239, 68, 68, 0.2);
       }
-      
+
       .sentiment-card h3 {
         font-size: 1.2rem;
         margin-bottom: 15px;
         color: #374151;
       }
-      
+
       .sentiment-value {
         font-size: 2rem;
         font-weight: 800;
       }
-      
+
       .sentiment-card.bulls .sentiment-value {
         color: #22c55e;
       }
-      
+
       .sentiment-card.consensus .sentiment-value {
         color: #3b82f6;
       }
-      
+
       .sentiment-card.bears .sentiment-value {
         color: #ef4444;
       }
-      
+
       .pc-ratios {
         background: rgba(255,255,255,0.9);
         padding: 30px;
@@ -221,20 +221,20 @@
         box-shadow: 0 8px 30px rgba(0,0,0,0.1);
         border: 1px solid rgba(255,255,255,0.2);
       }
-      
+
       .pc-ratios h3 {
         text-align: center;
         margin-bottom: 25px;
         color: #374151;
         font-size: 1.4rem;
       }
-      
+
       .ratio-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 20px;
       }
-      
+
       .ratio-item {
         text-align: center;
         padding: 20px;
@@ -242,30 +242,30 @@
         border-radius: 12px;
         border: 1px solid #e5e7eb;
       }
-      
+
       .ratio-label {
         font-size: 0.9rem;
         color: #6b7280;
         margin-bottom: 8px;
         font-weight: 500;
       }
-      
+
       .ratio-value {
         font-size: 1.4rem;
         font-weight: 700;
         color: #1e40af;
       }
-      
+
       @media (max-width: 768px) {
         .form-grid {
           grid-template-columns: 1fr;
           gap: 15px;
         }
-        
+
         .results-grid {
           grid-template-columns: 1fr;
         }
-        
+
         .ratio-grid {
           grid-template-columns: 1fr 1fr;
         }
@@ -323,12 +323,12 @@
             <h3>Bulls Want</h3>
             <div class="sentiment-value" id="bullsValue">--</div>
           </div>
-          
+
           <div class="sentiment-card consensus">
             <h3>Avg Consensus</h3>
             <div class="sentiment-value" id="consensusValue">--</div>
           </div>
-          
+
           <div class="sentiment-card bears">
             <h3>Bears Want</h3>
             <div class="sentiment-value" id="bearsValue">--</div>
@@ -338,10 +338,6 @@
         <div class="pc-ratios">
           <h3>Put/Call Ratios</h3>
           <div class="ratio-grid">
-            <div class="ratio-item">
-              <div class="ratio-label">Money P/C Ratio</div>
-              <div class="ratio-value" id="moneyRatio">--</div>
-            </div>
             <div class="ratio-item">
               <div class="ratio-label">Volume P/C Ratio</div>
               <div class="ratio-value" id="volumeRatio">--</div>

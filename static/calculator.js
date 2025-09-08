@@ -135,7 +135,7 @@ class OptionsCalculator {
             // Fetch the full options chain to calculate ratios
             const response = await fetch(`/api/get_options_data?symbol=${symbol}&date=${expiration}`);
             if (!response.ok) {
-                return { moneyRatio: 'N/A', volumeRatio: 'N/A', oiRatio: 'N/A' };
+                return { volumeRatio: 'N/A', oiRatio: 'N/A' };
             }
             
             const chainData = await response.json();
@@ -147,46 +147,26 @@ class OptionsCalculator {
                 putsCount: puts.length
             });
             
-            // Calculate Money P/C Ratio (Put Premium Value / Call Premium Value)
-            // Premium Value = lastPrice × openInterest × 100 (contract multiplier)
-            let putsPremium = 0;
-            let callsPremium = 0;
+            // Calculate Volume P/C Ratio (Total Put Volume / Total Call Volume)
+            const totalPutVolume = puts.reduce((sum, put) => sum + (put.volume || 0), 0);
+            const totalCallVolume = calls.reduce((sum, call) => sum + (call.volume || 0), 0);
+            const volumeRatio = totalCallVolume > 0 ? (totalPutVolume / totalCallVolume).toFixed(2) : 'N/A';
             
-            puts.forEach(put => {
-                const premium = (put.lastPrice || 0) * (put.openInterest || 0) * 100;
-                putsPremium += premium;
-            });
+            console.log('Volume calculations:', { totalPutVolume, totalCallVolume, volumeRatio });
             
-            calls.forEach(call => {
-                const premium = (call.lastPrice || 0) * (call.openInterest || 0) * 100;
-                callsPremium += premium;
-            });
+            // Calculate OI P/C Ratio (Total Put Open Interest / Total Call Open Interest)
+            const totalPutOI = puts.reduce((sum, put) => sum + (put.openInterest || 0), 0);
+            const totalCallOI = calls.reduce((sum, call) => sum + (call.openInterest || 0), 0);
+            const oiRatio = totalCallOI > 0 ? (totalPutOI / totalCallOI).toFixed(2) : 'N/A';
             
-            console.log('Premium calculations:', { putsPremium, callsPremium });
+            console.log('OI calculations:', { totalPutOI, totalCallOI, oiRatio });
+            console.log('Final ratios:', { volumeRatio, oiRatio });
             
-            // Money P/C Ratio = Put Premium Value / Call Premium Value
-            const moneyRatio = callsPremium > 0 ? (putsPremium / callsPremium).toFixed(2) : 'N/A';
-            
-            // Calculate Volume P/C Ratio (Put Volume / Call Volume)
-            const putsVolume = puts.reduce((sum, put) => sum + (put.volume || 0), 0);
-            const callsVolume = calls.reduce((sum, call) => sum + (call.volume || 0), 0);
-            const volumeRatio = callsVolume > 0 ? (putsVolume / callsVolume).toFixed(2) : 'N/A';
-            
-            console.log('Volume calculations:', { putsVolume, callsVolume });
-            
-            // Calculate OI P/C Ratio (Put Open Interest / Call Open Interest)
-            const putsOI = puts.reduce((sum, put) => sum + (put.openInterest || 0), 0);
-            const callsOI = calls.reduce((sum, call) => sum + (call.openInterest || 0), 0);
-            const oiRatio = callsOI > 0 ? (putsOI / callsOI).toFixed(2) : 'N/A';
-            
-            console.log('OI calculations:', { putsOI, callsOI });
-            console.log('Final ratios:', { moneyRatio, volumeRatio, oiRatio });
-            
-            return { moneyRatio, volumeRatio, oiRatio };
+            return { volumeRatio, oiRatio };
             
         } catch (error) {
             console.error('Error calculating P/C ratios:', error);
-            return { moneyRatio: 'Error', volumeRatio: 'Error', oiRatio: 'Error' };
+            return { volumeRatio: 'Error', oiRatio: 'Error' };
         }
     }
     
@@ -212,7 +192,6 @@ class OptionsCalculator {
         // We need to fetch the options chain to calculate these ratios properly
         const ratios = await this.calculatePCRatios(symbol, this.expirationSelect.value);
         
-        document.getElementById('moneyRatio').textContent = ratios.moneyRatio;
         document.getElementById('volumeRatio').textContent = ratios.volumeRatio;
         document.getElementById('oiRatio').textContent = ratios.oiRatio;
         
