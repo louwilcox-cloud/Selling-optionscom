@@ -9,7 +9,7 @@ from flask import Flask, session
 from flask_session import Session
 
 # Import blueprints
-from routes.main import main_bp
+from routes.home import main_bp
 from routes.api import api_bp
 from routes.auth import auth_bp
 from routes.calculator import calculator_bp
