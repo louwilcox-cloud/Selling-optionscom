@@ -108,12 +108,46 @@ def get_stock_quote(symbol: str) -> Dict:
     }
 
 def get_options_expirations(symbol: str) -> List[str]:
-    """Get available options expiration dates for a symbol"""
-    # Placeholder for now - in full implementation this would call Polygon API
-    # or use the existing _fetch_expirations function
-    from datetime import datetime, timedelta
+    """Get available options expiration dates for a symbol using Polygon API"""
+    import requests
+    import os
+    from datetime import datetime
     
-    # Generate next 4 monthly expirations as example
+    try:
+        api_key = os.getenv("POLYGON_API_KEY")
+        if not api_key:
+            raise Exception("Polygon API key not found")
+            
+        # Use Polygon options contracts endpoint to get expirations
+        url = f"https://api.polygon.io/v3/reference/options/contracts"
+        params = {
+            "underlying_ticker": symbol,
+            "limit": 1000,
+            "apikey": api_key
+        }
+        
+        response = requests.get(url, params=params, timeout=10)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("status") == "OK" and data.get("results"):
+                # Extract unique expiration dates
+                expirations = set()
+                for contract in data["results"]:
+                    exp_date = contract.get("expiration_date")
+                    if exp_date:
+                        expirations.add(exp_date)
+                
+                # Sort and filter future dates only
+                today = datetime.now().strftime('%Y-%m-%d')
+                future_exps = [exp for exp in sorted(expirations) if exp > today]
+                return future_exps[:10]  # Return up to 10 future expirations
+                
+    except Exception as e:
+        print(f"Error fetching options expirations for {symbol}: {e}")
+    
+    # Fallback to mock data
+    from datetime import datetime, timedelta
     base_date = datetime.now()
     expirations = []
     
@@ -135,9 +169,97 @@ def get_options_expirations(symbol: str) -> List[str]:
     return expirations
 
 def get_options_chain(symbol: str, expiration_date: str) -> Dict:
-    """Get options chain for symbol and expiration date"""
-    # Placeholder for now - in full implementation this would call Polygon API
-    # or use the existing _fetch_chain function
+    """Get options chain for symbol and expiration date using Polygon API"""
+    import requests
+    import os
+    import time
+    
+    try:
+        api_key = os.getenv("POLYGON_API_KEY")
+        if not api_key:
+            raise Exception("Polygon API key not found")
+            
+        # Get options contracts for the specific expiration
+        url = f"https://api.polygon.io/v3/reference/options/contracts"
+        params = {
+            "underlying_ticker": symbol,
+            "expiration_date": expiration_date,
+            "limit": 1000,
+            "apikey": api_key
+        }
+        
+        response = requests.get(url, params=params, timeout=15)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("status") == "OK" and data.get("results"):
+                calls = []
+                puts = []
+                
+                # Process contracts and get market data
+                for i, contract in enumerate(data["results"][:50]):  # Limit to 50 contracts
+                    ticker = contract.get("ticker")
+                    strike = float(contract.get("strike_price", 0))
+                    contract_type = contract.get("contract_type")
+                    
+                    if not ticker or not strike:
+                        continue
+                    
+                    # Add small delay to avoid rate limiting
+                    if i > 0 and i % 5 == 0:
+                        time.sleep(0.1)
+                        
+                    # Get market data for this options contract
+                    try:
+                        # Try snapshot first (more current)
+                        snapshot_url = f"https://api.polygon.io/v3/snapshot/options/{ticker}"
+                        snapshot_params = {"apikey": api_key}
+                        snapshot_response = requests.get(snapshot_url, params=snapshot_params, timeout=3)
+                        
+                        if snapshot_response.status_code == 200:
+                            snapshot_data = snapshot_response.json()
+                            if snapshot_data.get("status") == "OK" and snapshot_data.get("results"):
+                                result = snapshot_data["results"]
+                                
+                                # Extract market data
+                                last_quote = result.get("last_quote", {})
+                                last_trade = result.get("last_trade", {})
+                                
+                                option_data = {
+                                    "strike": strike,
+                                    "lastPrice": float(last_trade.get("price", 0) or last_quote.get("ask", 0) or 0),
+                                    "volume": int(result.get("session", {}).get("volume", 0)),
+                                    "openInterest": int(result.get("open_interest", 0)),
+                                    "bid": float(last_quote.get("bid", 0)),
+                                    "ask": float(last_quote.get("ask", 0)),
+                                    "contractSymbol": ticker
+                                }
+                                
+                                if contract_type == "call":
+                                    calls.append(option_data)
+                                elif contract_type == "put":
+                                    puts.append(option_data)
+                                    
+                    except Exception as e:
+                        # Skip this contract if we can't get market data
+                        print(f"Error getting market data for {ticker}: {e}")
+                        continue
+                
+                # Sort by strike price
+                calls.sort(key=lambda x: x["strike"])
+                puts.sort(key=lambda x: x["strike"])
+                
+                return {
+                    "symbol": symbol,
+                    "date": expiration_date,
+                    "calls": calls,
+                    "puts": puts
+                }
+                
+    except Exception as e:
+        print(f"Error fetching options chain for {symbol} {expiration_date}: {e}")
+    
+    # Return empty chain if API fails
     return {
         "symbol": symbol,
         "date": expiration_date,
