@@ -85,11 +85,9 @@
           if (data.error) {
             resultDiv.innerHTML = `<span class="quote-error">${data.error}</span>`;
           } else {
-            const changeClass = data.change >= 0 ? 'positive' : 'negative';
             resultDiv.innerHTML = `
               <div class="quote-result">
-                <strong>${data.symbol}</strong> $${data.price} 
-                <span class="change ${changeClass}">${data.change >= 0 ? '+' : ''}${data.change} (${data.change_pct}%)</span>
+                <strong>${data.symbol}</strong> $${data.price}
               </div>
             `;
           }
