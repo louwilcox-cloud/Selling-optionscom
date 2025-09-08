@@ -174,107 +174,218 @@ def get_options_expirations(symbol: str) -> List[str]:
     return expirations
 
 def get_options_chain(symbol: str, expiration_date: str) -> Dict:
-    """Get options chain for symbol and expiration date using Polygon Options Chain Snapshot API"""
+    """Get options chain for symbol and expiration date with market-aware data fetching"""
     import requests
     import os
+    from datetime import datetime, timedelta
     
     try:
         api_key = os.getenv("POLYGON_API_KEY")
         if not api_key:
             raise Exception("Polygon API key not found")
+        
+        # Determine if markets are open to choose data source
+        market_phase = get_market_phase()
+        use_historical = market_phase in ["closed", "pre"]  # Use historical data when markets closed
+        
+        # For debugging - always show what data source we're using
+        data_source = "historical" if use_historical else "real-time"
+        print(f"📊 Options chain for {symbol} {expiration_date}: Using {data_source} data (market: {market_phase})")
+        
+        calls = []
+        puts = []
+        
+        if use_historical:
+            # Use historical aggregates for the most recent trading day
+            yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
             
-        # Use Polygon Options Chain Snapshot API - gets all market data in one call
-        url = f"https://api.polygon.io/v3/snapshot/options/{symbol.upper()}"
-        params = {
-            "expiration_date": expiration_date,
-            "apikey": api_key
+            # Get all option contracts for this expiration first
+            contracts_url = f"https://api.polygon.io/v3/reference/options/contracts"
+            contracts_params = {
+                "underlying_ticker": symbol,
+                "expiration_date": expiration_date,
+                "limit": 1000,
+                "apikey": api_key
+            }
+            
+            contracts_response = requests.get(contracts_url, params=contracts_params, timeout=15)
+            
+            if contracts_response.status_code == 200:
+                contracts_data = contracts_response.json()
+                
+                if contracts_data.get("status") == "OK" and contracts_data.get("results"):
+                    print(f"📋 Found {len(contracts_data['results'])} contracts for {symbol} {expiration_date}")
+                    
+                    # Process each contract to get historical data
+                    for contract in contracts_data["results"]:
+                        ticker = contract.get("ticker")
+                        strike_price = contract.get("strike_price")
+                        contract_type = contract.get("contract_type")
+                        
+                        if not ticker or not strike_price or not contract_type:
+                            continue
+                        
+                        # Get historical data for this specific option contract
+                        hist_url = f"https://api.polygon.io/v2/aggs/ticker/{ticker}/prev"
+                        hist_params = {
+                            "adjusted": "true",
+                            "apikey": api_key
+                        }
+                        
+                        try:
+                            hist_response = requests.get(hist_url, params=hist_params, timeout=5)
+                            
+                            if hist_response.status_code == 200:
+                                hist_data = hist_response.json()
+                                
+                                if hist_data.get("status") == "OK" and hist_data.get("results"):
+                                    result = hist_data["results"][0]
+                                    
+                                    last_price = float(result.get("c", 0))  # Close price
+                                    volume = int(result.get("v", 0))        # Volume
+                                    
+                                    # Get open interest from contract details (this is static data)
+                                    open_interest = int(contract.get("open_interest", 0))
+                                    
+                                    # Calculate bid/ask spread
+                                    if last_price > 0:
+                                        spread_pct = 0.02 if last_price < 5 else 0.01
+                                        bid = last_price * (1 - spread_pct)
+                                        ask = last_price * (1 + spread_pct)
+                                    else:
+                                        bid = ask = last_price = 0.01  # Minimum for very OTM
+                                    
+                                    option_data = {
+                                        "strike": float(strike_price),
+                                        "lastPrice": round(float(last_price), 2),
+                                        "volume": volume,
+                                        "openInterest": open_interest,
+                                        "bid": round(float(bid), 2),
+                                        "ask": round(float(ask), 2),
+                                        "contractSymbol": ticker
+                                    }
+                                    
+                                    if contract_type == "call":
+                                        calls.append(option_data)
+                                    elif contract_type == "put":
+                                        puts.append(option_data)
+                                        
+                        except Exception as e:
+                            print(f"⚠️  Error fetching historical data for {ticker}: {e}")
+                            continue
+        
+        else:
+            # Use real-time snapshot API when markets are open
+            url = f"https://api.polygon.io/v3/snapshot/options/{symbol.upper()}"
+            params = {
+                "expiration_date": expiration_date,
+                "apikey": api_key
+            }
+            
+            response = requests.get(url, params=params, timeout=20)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("status") == "OK" and data.get("results"):
+                    print(f"📊 Real-time snapshot: Found {len(data['results'])} contracts")
+                    
+                    for contract in data["results"]:
+                        details = contract.get("details", {})
+                        day = contract.get("day", {})
+                        last_trade = contract.get("last_trade", {})
+                        
+                        strike = details.get("strike_price")
+                        contract_type = details.get("contract_type")
+                        ticker = details.get("ticker")
+                        
+                        if not strike or not contract_type or not ticker:
+                            continue
+                        
+                        # Extract real-time market data
+                        last_price = 0
+                        if day.get("close"):
+                            last_price = day["close"]
+                        elif last_trade.get("price"):
+                            last_price = last_trade["price"]
+                        elif contract.get("last_quote", {}).get("close"):
+                            last_price = contract["last_quote"]["close"]
+                        
+                        volume = day.get("volume", 0) or 0
+                        open_interest = contract.get("open_interest", 0) or 0
+                        
+                        # Calculate bid/ask
+                        if last_price > 0:
+                            spread_pct = 0.02 if last_price < 5 else 0.01
+                            bid = last_price * (1 - spread_pct)
+                            ask = last_price * (1 + spread_pct)
+                        else:
+                            bid = ask = last_price = 0.01
+                        
+                        option_data = {
+                            "strike": float(strike),
+                            "lastPrice": round(float(last_price), 2),
+                            "volume": int(volume),
+                            "openInterest": int(open_interest),
+                            "bid": round(float(bid), 2),
+                            "ask": round(float(ask), 2),
+                            "contractSymbol": ticker
+                        }
+                        
+                        if contract_type == "call":
+                            calls.append(option_data)
+                        elif contract_type == "put":
+                            puts.append(option_data)
+        
+        # Sort by strike price
+        calls.sort(key=lambda x: x["strike"])
+        puts.sort(key=lambda x: x["strike"])
+        
+        # Calculate summary statistics for debugging
+        total_call_volume = sum(c["volume"] for c in calls)
+        total_put_volume = sum(p["volume"] for p in puts)
+        total_call_oi = sum(c["openInterest"] for c in calls)
+        total_put_oi = sum(p["openInterest"] for p in puts)
+        
+        print(f"📈 Summary: {len(calls)} calls, {len(puts)} puts")
+        print(f"📊 Volume - Calls: {total_call_volume:,}, Puts: {total_put_volume:,}")
+        print(f"📊 Open Interest - Calls: {total_call_oi:,}, Puts: {total_put_oi:,}")
+        
+        # Calculate P/C ratios if we have data
+        volume_pc_ratio = round(total_put_volume / total_call_volume, 3) if total_call_volume > 0 else None
+        oi_pc_ratio = round(total_put_oi / total_call_oi, 3) if total_call_oi > 0 else None
+        
+        print(f"📊 P/C Ratios - Volume: {volume_pc_ratio}, OI: {oi_pc_ratio}")
+        
+        return {
+            "symbol": symbol,
+            "date": expiration_date,
+            "calls": calls,
+            "puts": puts,
+            "metadata": {
+                "dataSource": data_source,
+                "marketPhase": market_phase,
+                "totalCallVolume": total_call_volume,
+                "totalPutVolume": total_put_volume,
+                "totalCallOI": total_call_oi,
+                "totalPutOI": total_put_oi,
+                "volumePCRatio": volume_pc_ratio,
+                "oiPCRatio": oi_pc_ratio
+            }
         }
-        
-        response = requests.get(url, params=params, timeout=20)
-        
-        if response.status_code == 200:
-            data = response.json()
-            if data.get("status") == "OK" and data.get("results"):
-                calls = []
-                puts = []
-                
-                # Process real market data from snapshot API
-                for contract in data["results"]:
-                    details = contract.get("details", {})
-                    day = contract.get("day", {})
-                    last_trade = contract.get("last_trade", {})
-                    
-                    strike = details.get("strike_price")
-                    contract_type = details.get("contract_type")
-                    ticker = details.get("ticker")
-                    
-                    if not strike or not contract_type or not ticker:
-                        continue
-                    
-                    # Extract real market data - use actual API response structure
-                    # Get last price from day.close or last_trade.price or last_quote
-                    last_price = 0
-                    if day.get("close"):
-                        last_price = day["close"]
-                    elif last_trade.get("price"):
-                        last_price = last_trade["price"]
-                    elif contract.get("last_quote", {}).get("close"):
-                        last_price = contract["last_quote"]["close"]
-                    
-                    # Get volume from day data - this is critical for P/C ratios
-                    volume = day.get("volume", 0) or 0
-                    
-                    # Get open interest - this is critical for P/C ratios
-                    open_interest = contract.get("open_interest", 0) or 0
-                    
-                    # Calculate bid/ask from last price (typical spread estimation)
-                    if last_price > 0:
-                        spread_pct = 0.02 if last_price < 5 else 0.01  # 2% for cheap options, 1% for expensive
-                        bid = last_price * (1 - spread_pct)
-                        ask = last_price * (1 + spread_pct)
-                    else:
-                        bid = ask = 0
-                        # For zero-price options, use intrinsic value if possible
-                        if contract_type == "call" and strike > 0:
-                            # Estimate intrinsic value for deep ITM calls
-                            last_price = 0.01  # Minimum value for very OTM options
-                        elif contract_type == "put" and strike > 0:
-                            # Estimate intrinsic value for deep ITM puts  
-                            last_price = 0.01  # Minimum value for very OTM options
-                    
-                    option_data = {
-                        "strike": float(strike),
-                        "lastPrice": round(float(last_price), 2),
-                        "volume": int(volume),
-                        "openInterest": int(open_interest),
-                        "bid": round(float(bid), 2),
-                        "ask": round(float(ask), 2),
-                        "contractSymbol": ticker
-                    }
-                    
-                    if contract_type == "call":
-                        calls.append(option_data)
-                    elif contract_type == "put":
-                        puts.append(option_data)
-                
-                # Sort by strike price
-                calls.sort(key=lambda x: x["strike"])
-                puts.sort(key=lambda x: x["strike"])
-                
-                return {
-                    "symbol": symbol,
-                    "date": expiration_date,
-                    "calls": calls,
-                    "puts": puts
-                }
                 
     except Exception as e:
-        print(f"Error fetching options chain for {symbol} {expiration_date}: {e}")
+        print(f"❌ Error fetching options chain for {symbol} {expiration_date}: {e}")
+        import traceback
+        print(traceback.format_exc())
     
     # Return empty chain if API fails
     return {
         "symbol": symbol,
         "date": expiration_date,
         "calls": [],
-        "puts": []
+        "puts": [],
+        "metadata": {
+            "dataSource": "failed",
+            "marketPhase": "unknown"
+        }
     }

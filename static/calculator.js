@@ -153,10 +153,10 @@ class OptionsCalculator {
             }
 
             const chainData = await response.json();
-            
+
             // Display raw options chain data for debugging
             document.getElementById('rawOptionsChain').textContent = JSON.stringify(chainData, null, 2);
-            
+
             const calls = chainData.calls || [];
             const puts = chainData.puts || [];
 
@@ -292,6 +292,161 @@ class OptionsCalculator {
         this.resultsSection.classList.add('hidden');
     }
 }
+
+// Helper function to fetch options chain data
+function fetchOptionsChain(symbol, date) {
+      return fetch(`/api/get_options_data?symbol=${symbol}&date=${date}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            throw new Error(data.error);
+          }
+
+          // Display the data source information
+          displayDataDebugInfo(data);
+
+          // Display the options chain data
+          displayOptionsChainData(data);
+
+          // Display P/C ratios
+          displayPCRatios(data);
+
+          return data;
+        });
+    }
+
+    function displayDataDebugInfo(data) {
+      const container = document.getElementById('dataDebugContainer');
+      const content = document.getElementById('dataDebugContent');
+
+      if (data.metadata) {
+        const metadata = data.metadata;
+        content.innerHTML = `
+          <div class="debug-info">
+            <p><strong>Data Source:</strong> ${metadata.dataSource}</p>
+            <p><strong>Market Phase:</strong> ${metadata.marketPhase}</p>
+            <p><strong>Symbol:</strong> ${data.symbol}</p>
+            <p><strong>Expiration:</strong> ${data.date}</p>
+            <p><strong>Last Updated:</strong> ${new Date().toLocaleString()}</p>
+          </div>
+        `;
+        container.style.display = 'block';
+      }
+    }
+
+    function displayOptionsChainData(data) {
+      const container = document.getElementById('optionsChainContainer');
+      const content = document.getElementById('optionsChainContent');
+
+      const calls = data.calls || [];
+      const puts = data.puts || [];
+
+      let html = `
+        <div class="chain-summary">
+          <p><strong>Total Contracts:</strong> ${calls.length} calls, ${puts.length} puts</p>
+        </div>
+        <div class="chain-tables">
+          <div class="calls-table">
+            <h4>Calls (${calls.length})</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>Strike</th>
+                  <th>Last</th>
+                  <th>Volume</th>
+                  <th>OI</th>
+                </tr>
+              </thead>
+              <tbody>
+      `;
+
+      // Show first 10 calls
+      calls.slice(0, 10).forEach(call => {
+        html += `
+          <tr>
+            <td>$${call.strike}</td>
+            <td>$${call.lastPrice}</td>
+            <td>${call.volume.toLocaleString()}</td>
+            <td>${call.openInterest.toLocaleString()}</td>
+          </tr>
+        `;
+      });
+
+      if (calls.length > 10) {
+        html += `<tr><td colspan="4">... and ${calls.length - 10} more</td></tr>`;
+      }
+
+      html += `
+              </tbody>
+            </table>
+          </div>
+          <div class="puts-table">
+            <h4>Puts (${puts.length})</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>Strike</th>
+                  <th>Last</th>
+                  <th>Volume</th>
+                  <th>OI</th>
+                </tr>
+              </thead>
+              <tbody>
+      `;
+
+      // Show first 10 puts
+      puts.slice(0, 10).forEach(put => {
+        html += `
+          <tr>
+            <td>$${put.strike}</td>
+            <td>$${put.lastPrice}</td>
+            <td>${put.volume.toLocaleString()}</td>
+            <td>${put.openInterest.toLocaleString()}</td>
+          </tr>
+        `;
+      });
+
+      if (puts.length > 10) {
+        html += `<tr><td colspan="4">... and ${puts.length - 10} more</td></tr>`;
+      }
+
+      html += `
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      content.innerHTML = html;
+      container.style.display = 'block';
+    }
+
+    function displayPCRatios(data) {
+      const container = document.getElementById('pcRatiosContainer');
+      const content = document.getElementById('pcRatiosContent');
+
+      if (data.metadata) {
+        const meta = data.metadata;
+        content.innerHTML = `
+          <div class="pc-ratios">
+            <div class="ratio-item">
+              <h4>Volume P/C Ratio</h4>
+              <p class="ratio-value">${meta.volumePCRatio || 'N/A'}</p>
+              <p class="ratio-detail">Put Volume: ${meta.totalPutVolume?.toLocaleString() || 0}</p>
+              <p class="ratio-detail">Call Volume: ${meta.totalCallVolume?.toLocaleString() || 0}</p>
+            </div>
+            <div class="ratio-item">
+              <h4>Open Interest P/C Ratio</h4>
+              <p class="ratio-value">${meta.oiPCRatio || 'N/A'}</p>
+              <p class="ratio-detail">Put OI: ${meta.totalPutOI?.toLocaleString() || 0}</p>
+              <p class="ratio-detail">Call OI: ${meta.totalCallOI?.toLocaleString() || 0}</p>
+            </div>
+          </div>
+        `;
+        container.style.display = 'block';
+      }
+    }
+
 
 // Initialize the calculator when the page loads
 document.addEventListener('DOMContentLoaded', () => {
