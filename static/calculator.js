@@ -51,11 +51,27 @@ class OptionsCalculator {
         if (!response.ok) {
             throw new Error('Failed to fetch expirations');
         }
-        return await response.json();
+        const data = await response.json();
+        
+        // Handle both array of dates (when no date param) and options chain object (when date param provided)
+        if (Array.isArray(data)) {
+            return data;
+        } else if (data.error) {
+            throw new Error(data.error);
+        } else {
+            // If we got an options chain instead of expiration list, return empty array
+            return [];
+        }
     }
     
     populateExpirations(expirations) {
         this.expirationSelect.innerHTML = '<option value="">Select expiration date</option>';
+        
+        if (!expirations || expirations.length === 0) {
+            this.expirationSelect.innerHTML = '<option value="">No expirations available</option>';
+            return;
+        }
+        
         expirations.forEach(date => {
             const option = document.createElement('option');
             option.value = date;
@@ -91,7 +107,7 @@ class OptionsCalculator {
                 this.fetchAnalysis(symbol, expiration)
             ]);
             
-            this.displayResults(symbol, currentPrice, analysisData);
+            await this.displayResults(symbol, currentPrice, analysisData);
         } catch (error) {
             this.showError(`Analysis failed: ${error.message}`);
         }
@@ -114,7 +130,51 @@ class OptionsCalculator {
         return await response.json();
     }
     
-    displayResults(symbol, currentPrice, analysisData) {
+    async calculatePCRatios(symbol, expiration) {
+        try {
+            // Fetch the full options chain to calculate ratios
+            const response = await fetch(`/api/get_options_data?symbol=${symbol}&date=${expiration}`);
+            if (!response.ok) {
+                return { moneyRatio: 'N/A', volumeRatio: 'N/A', oiRatio: 'N/A' };
+            }
+            
+            const chainData = await response.json();
+            const calls = chainData.calls || [];
+            const puts = chainData.puts || [];
+            
+            // Calculate Money P/C Ratio (Put Premium / Call Premium)
+            let putsPremium = 0;
+            let callsPremium = 0;
+            
+            puts.forEach(put => {
+                putsPremium += (put.lastPrice || 0) * (put.openInterest || 0) * 100; // Contract multiplier
+            });
+            
+            calls.forEach(call => {
+                callsPremium += (call.lastPrice || 0) * (call.openInterest || 0) * 100; // Contract multiplier
+            });
+            
+            const moneyRatio = callsPremium > 0 ? (putsPremium / callsPremium).toFixed(2) : 'N/A';
+            
+            // Calculate Volume P/C Ratio (Put Volume / Call Volume)
+            const putsVolume = puts.reduce((sum, put) => sum + (put.volume || 0), 0);
+            const callsVolume = calls.reduce((sum, call) => sum + (call.volume || 0), 0);
+            const volumeRatio = callsVolume > 0 ? (putsVolume / callsVolume).toFixed(2) : 'N/A';
+            
+            // Calculate OI P/C Ratio (Put OI / Call OI)
+            const putsOI = puts.reduce((sum, put) => sum + (put.openInterest || 0), 0);
+            const callsOI = calls.reduce((sum, call) => sum + (call.openInterest || 0), 0);
+            const oiRatio = callsOI > 0 ? (putsOI / callsOI).toFixed(2) : 'N/A';
+            
+            return { moneyRatio, volumeRatio, oiRatio };
+            
+        } catch (error) {
+            console.error('Error calculating P/C ratios:', error);
+            return { moneyRatio: 'Error', volumeRatio: 'Error', oiRatio: 'Error' };
+        }
+    }
+    
+    async displayResults(symbol, currentPrice, analysisData) {
         // Display current price
         document.getElementById('currentPrice').textContent = `$${currentPrice.toFixed(2)}`;
         
@@ -132,20 +192,13 @@ class OptionsCalculator {
         document.getElementById('consensusValue').textContent = avgPrediction ? `$${avgPrediction.toFixed(2)}` : 'N/A';
         document.getElementById('bearsValue').textContent = oiPrediction ? `$${oiPrediction.toFixed(2)}` : 'N/A';
         
-        // Display P/C ratios (calculate simple ratios from debug data if available)
-        const debug = analysisData.debug || {};
-        const callsCount = debug.callsProcessed || 0;
-        const putsCount = debug.putsProcessed || 0;
-        const totalOptions = debug.totalOptionsProcessed || 0;
+        // Calculate proper P/C ratios from the options chain data
+        // We need to fetch the options chain to calculate these ratios properly
+        const ratios = await this.calculatePCRatios(symbol, this.expirationSelect.value);
         
-        // Calculate basic ratios
-        const putCallRatio = callsCount > 0 ? (putsCount / callsCount).toFixed(2) : '0.00';
-        const volumeRatio = analysisData.volume?.contributingRows || 0;
-        const oiRatio = analysisData.openInterest?.contributingRows || 0;
-        
-        document.getElementById('moneyRatio').textContent = putCallRatio;
-        document.getElementById('volumeRatio').textContent = volumeRatio.toString();
-        document.getElementById('oiRatio').textContent = oiRatio.toString();
+        document.getElementById('moneyRatio').textContent = ratios.moneyRatio;
+        document.getElementById('volumeRatio').textContent = ratios.volumeRatio;
+        document.getElementById('oiRatio').textContent = ratios.oiRatio;
         
         this.showResults();
     }
