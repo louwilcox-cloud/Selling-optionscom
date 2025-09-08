@@ -45,9 +45,12 @@ def get_market_phase(ttl=15) -> str:
         # Default to closed if we can't determine status
         return "closed"
 
-def quote_delayed(symbol: str, timeout=5) -> Tuple[Optional[float], Optional[str]]:
-    """Reliable delayed quote with multiple fallbacks - never hangs"""
-    # 1) Polygon prev close
+def quote_delayed(symbol: str, timeout=10) -> Tuple[Optional[float], Optional[str]]:
+    """Get delayed quote using Polygon.io API only"""
+    if not POLY_KEY:
+        return None, "no-api-key"
+    
+    # 1) Polygon prev close - most reliable for delayed data
     try:
         r = _http.get(f"https://api.polygon.io/v2/aggs/ticker/{symbol}/prev",
                       params={"adjusted":"true","apiKey":POLY_KEY}, timeout=timeout)
@@ -55,10 +58,10 @@ def quote_delayed(symbol: str, timeout=5) -> Tuple[Optional[float], Optional[str
             j = r.json()
             if j.get("status") == "OK" and j.get("results"):
                 return float(j["results"][0]["c"]), "polygon-prev"
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Polygon prev close failed for {symbol}: {e}")
 
-    # 2) Polygon snapshot
+    # 2) Polygon snapshot - real-time/delayed snapshot
     try:
         r = _http.get(f"https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/tickers/{symbol}",
                       params={"apiKey":POLY_KEY}, timeout=timeout)
@@ -69,26 +72,25 @@ def quote_delayed(symbol: str, timeout=5) -> Tuple[Optional[float], Optional[str
                 price = (t.get("prevDay",{}) or {}).get("c") \
                         or (t.get("lastTrade",{}) or {}).get("p") \
                         or (t.get("day",{}) or {}).get("c")
-                if price: return float(price), "polygon-snapshot"
-    except Exception:
-        pass
+                if price: 
+                    return float(price), "polygon-snapshot"
+    except Exception as e:
+        print(f"Polygon snapshot failed for {symbol}: {e}")
 
-    # 3) Yahoo Finance fallback
+    # 3) Polygon daily open/close endpoint as final fallback
     try:
-        url = f"https://query1.finance.yahoo.com/v7/finance/download/{symbol}?period1=1640995200&period2=9999999999&interval=1d&events=history"
-        r = _http.get(url, timeout=timeout)
-        if r.ok and "Date,Open,High,Low,Close" in r.text:
-            lines = [ln for ln in r.text.splitlines() if ln and not ln.startswith("Date,") and "," in ln]
-            if lines:
-                try:
-                    close = float(lines[-1].split(",")[4])  # Close price
-                    return close, "yahoo-eod"
-                except (ValueError, IndexError):
-                    pass
-    except Exception:
-        pass
+        from datetime import datetime, timedelta
+        yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        r = _http.get(f"https://api.polygon.io/v1/open-close/{symbol}/{yesterday}",
+                      params={"adjusted":"true","apiKey":POLY_KEY}, timeout=timeout)
+        if r.status_code == 200:
+            j = r.json()
+            if j.get("status") == "OK" and j.get("close"):
+                return float(j["close"]), "polygon-open-close"
+    except Exception as e:
+        print(f"Polygon open-close failed for {symbol}: {e}")
 
-    return None, None
+    return None, "polygon-unavailable"
 
 def get_stock_quote(symbol: str) -> Dict:
     """Get stock quote with market context"""

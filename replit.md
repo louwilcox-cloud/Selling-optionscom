@@ -39,7 +39,7 @@ Preferred communication style: Simple, everyday language.
 - `/api/prediction` - Options sentiment predictions
 
 ### Data Layer
-- **Primary Data Source**: Yahoo Finance API via yfinance library
+- **Primary Data Source**: Polygon.io API for real-time and delayed market data
 - **Data Format**: JSON responses with standardized field structure
 - **Real-time Processing**: Live options chain fetching and calculation
 - **Data Validation**: Safe type conversion with mathematical validation for financial data
@@ -52,8 +52,8 @@ Preferred communication style: Simple, everyday language.
 ## External Dependencies
 
 ### Third-Party Services
-- **Yahoo Finance**: Primary data provider for stock quotes and options chains
-- **yfinance Library**: Python wrapper for Yahoo Finance API
+- **Polygon.io**: Primary data provider for stock quotes and options chains
+- **Polygon REST API**: Direct API integration for financial market data
 
 ### JavaScript Libraries
 - **Native Browser APIs**: Fetch API for HTTP requests, DOM manipulation
@@ -66,7 +66,7 @@ Preferred communication style: Simple, everyday language.
 ### Python Dependencies
 - **Flask**: Web framework and API routing
 - **pandas**: Data analysis and manipulation
-- **yfinance**: Financial data retrieval
+- **requests**: HTTP client for Polygon.io API integration
 - **math**: Mathematical operations and validation
 
 The application is designed to be lightweight and performant, with minimal external dependencies while providing comprehensive options trading analysis capabilities.

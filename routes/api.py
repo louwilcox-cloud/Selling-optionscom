@@ -55,35 +55,10 @@ def quote():
                 "source": source
             })
         
-        # If polygon service fails, try Yahoo Finance directly as final fallback
-        try:
-            yahoo_url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
-            response = requests.get(yahoo_url, timeout=5)
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get("chart") and data["chart"].get("result"):
-                    result = data["chart"]["result"][0]
-                    meta = result.get("meta", {})
-                    price = meta.get("regularMarketPrice") or meta.get("previousClose")
-                    
-                    if price:
-                        # Calculate mock change
-                        mock_change = round((price * 0.002) * (hash(symbol) % 200 - 100), 2)
-                        mock_change_pct = round((mock_change / price) * 100, 2) if price > 0 else 0.0
-                        
-                        return jsonify({
-                            "symbol": symbol,
-                            "price": round(float(price), 2),
-                            "change": mock_change,
-                            "change_pct": mock_change_pct,
-                            "source": "yahoo-direct"
-                        })
-        except Exception:
-            pass
         
-        # All methods failed
-        return jsonify({"error": f"No quote available for {symbol}"}), 404
+        
+        # Polygon API unavailable
+        return jsonify({"error": f"Unable to fetch quote for {symbol} from Polygon.io"}), 503
         
     except Exception as e:
         print(f"Error fetching quote for {symbol}: {e}")
