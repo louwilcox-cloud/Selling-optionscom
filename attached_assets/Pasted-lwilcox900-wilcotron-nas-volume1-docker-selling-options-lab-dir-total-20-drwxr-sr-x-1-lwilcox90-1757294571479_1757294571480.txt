@@ -1,0 +1,50 @@
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ dir
+total 20
+drwxr-sr-x  1 lwilcox900 users  136 Sep  7 08:14 .
+drwxrwxrwx+ 1 root       root   122 Sep  6 12:29 ..
+-rw-------  1 lwilcox900 users 1316 Sep  6 09:25 compose.ghcr.yml
+-rw-------  1 lwilcox900 users  291 Sep  6 09:58 compose.run.yml
+-rw-------  1 lwilcox900 users  182 Sep  6 09:19 .env
+-rw-------  1 lwilcox900 users  617 Sep  7 08:14 env.list
+-rw-------  1 lwilcox900 users  568 Sep  7 08:12 env.list.bak
+drwxrwsrwx  1 lwilcox900 users 1484 Sep  7 08:57 flask_session
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ cat .env
+FLASK_ENV=production
+SECRET_KEY=63a485e8d3b9e802be5a61702cc0d1edfcb112e47002c1a0bae41e486730144b
+DATABASE_URL=postgresql://postgres:lab_password_2025@lab-db:5432/selling_options_lab
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ cat env.list
+SECRET_KEY=63a485e8d3b9e802be5a61702cc0d1edfcb112e47002c1a0bae41e486730144b
+FLASK_ENV=production
+PGHOST=lab-db
+PGPORT=5432
+DATABASE_URL=postgresql://postgres:lab_password_2025@lab-db:5432/selling_options_lab
+PGUSER=postgres
+LAB_ENVIRONMENT=true
+PGDATABASE=selling_options_lab
+PGPASSWORD=lab_password_2025
+PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+LANG=C.UTF-8
+GPG_KEY=A035C8C19219BA821ECEA86B64E628F8D684696D
+PYTHON_VERSION=3.11.13
+PYTHON_SHA256=8fb5f9fbc7609fa822cb31549884575db7fd9657cbffb89510b5d7975963a83a
+FLASK_APP=app.py
+
+POLYGON_API_KEY=SgahyvybcxIY8IG9vPM9QKYkF9mnbJGi
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$ cat env.list.bak
+SECRET_KEY=63a485e8d3b9e802be5a61702cc0d1edfcb112e47002c1a0bae41e486730144b
+FLASK_ENV=production
+PGHOST=lab-db
+PGPORT=5432
+DATABASE_URL=postgresql://postgres:lab_password_2025@lab-db:5432/selling_options_lab
+PGUSER=postgres
+LAB_ENVIRONMENT=true
+PGDATABASE=selling_options_lab
+PGPASSWORD=lab_password_2025
+PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+LANG=C.UTF-8
+GPG_KEY=A035C8C19219BA821ECEA86B64E628F8D684696D
+PYTHON_VERSION=3.11.13
+PYTHON_SHA256=8fb5f9fbc7609fa822cb31549884575db7fd9657cbffb89510b5d7975963a83a
+FLASK_APP=app.py
+
+lwilcox900@wilcotron-nas:/volume1/docker/selling-options-lab$
