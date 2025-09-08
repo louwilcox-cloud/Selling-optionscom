@@ -146,49 +146,6 @@
         font-size: 1rem;
       }
       
-      .cta-section {
-        text-align: center;
-        padding: 80px 40px;
-        background: linear-gradient(135deg, rgba(30, 64, 175, 0.05) 0%, rgba(124, 58, 237, 0.05) 100%);
-        border-radius: 25px;
-        margin-top: 60px;
-        border: 1px solid rgba(30, 64, 175, 0.1);
-      }
-      
-      .cta-section h2 {
-        font-size: 2.5rem;
-        color: #1f2937;
-        margin-bottom: 20px;
-        font-weight: 800;
-      }
-      
-      .cta-section p {
-        font-size: 1.2rem;
-        color: #6b7280;
-        margin-bottom: 40px;
-        max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
-        line-height: 1.6;
-      }
-      
-      .cta-button {
-        display: inline-block;
-        padding: 18px 40px;
-        background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
-        color: white;
-        text-decoration: none;
-        border-radius: 12px;
-        font-weight: 700;
-        font-size: 1.1rem;
-        transition: all 0.3s ease;
-        box-shadow: 0 8px 25px rgba(30, 64, 175, 0.3);
-      }
-      
-      .cta-button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 15px 35px rgba(30, 64, 175, 0.4);
-      }
       
       @media (max-width: 768px) {
         .tutorials-header h1 {
@@ -207,13 +164,6 @@
           padding: 20px;
         }
         
-        .cta-section {
-          padding: 60px 30px;
-        }
-        
-        .cta-section h2 {
-          font-size: 2rem;
-        }
       }
     </style>
 {% endblock %}
@@ -313,10 +263,5 @@
         </div>
       </div>
 
-      <div class="cta-section">
-        <h2>Ready to Start Your Options Journey?</h2>
-        <p>Apply what you've learned with our powerful options calculators and analysis tools. Start generating consistent income today.</p>
-        <a href="{{ url_for('calculator.calculator') }}" class="cta-button">Try Our Calculator</a>
-      </div>
     </div>
 {% endblock %}
