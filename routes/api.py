@@ -67,7 +67,8 @@ def get_options_data():
 @retry_with_backoff(max_retries=2, base_delay=1)
 def market_data():
     """Get real market data for dashboard using Polygon API"""
-    from services.polygon_service import get_stock_quote
+    import requests
+    import os
     
     # Market symbols to display (using liquid ETFs for accurate data)
     market_symbols = [
@@ -85,30 +86,46 @@ def market_data():
     
     market_data = []
     fallback_used = False
+    api_key = os.getenv("POLYGON_API_KEY")
     
     for symbol, display_name in market_symbols:
         try:
-            # Get real quote from Polygon
-            quote_result = get_stock_quote(symbol)
+            # Get real OHLC data from Polygon API for daily change calculation
+            url = f"https://api.polygon.io/v2/aggs/ticker/{symbol}/prev"
+            params = {"adjusted": "true", "apiKey": api_key}
             
-            if "error" not in quote_result and "price" in quote_result:
-                # Calculate mock change data (since we don't have prev close easily)
-                price = quote_result["price"]
-                # Mock change calculation - in production you'd calculate from prev close
-                mock_change = round((price * 0.001) * (hash(symbol) % 200 - 100), 2)
-                mock_change_pct = round((mock_change / price) * 100, 2) if price > 0 else 0.0
+            response = requests.get(url, params=params, timeout=5)
+            
+            if response.status_code == 200:
+                data = response.json()
                 
-                market_data.append({
-                    "name": display_name,
-                    "price": price,
-                    "change": mock_change,
-                    "change_pct": mock_change_pct
-                })
-            else:
-                # Fallback data for failed symbol
-                fallback_data = get_fallback_data(display_name)
-                market_data.append(fallback_data)
-                fallback_used = True
+                if data.get("status") == "OK" and data.get("results"):
+                    result = data["results"][0]
+                    
+                    # Extract real OHLC data
+                    open_price = float(result.get("o", 0))
+                    close_price = float(result.get("c", 0))
+                    
+                    # Calculate real daily change
+                    if open_price > 0:
+                        daily_change = close_price - open_price
+                        daily_change_pct = (daily_change / open_price) * 100
+                    else:
+                        daily_change = 0.0
+                        daily_change_pct = 0.0
+                    
+                    market_data.append({
+                        "name": display_name,
+                        "price": close_price,
+                        "change": round(daily_change, 2),
+                        "change_pct": round(daily_change_pct, 2)
+                    })
+                    continue
+                    
+            # If API call failed or no data, use fallback
+            fallback_data = get_fallback_data(display_name)
+            market_data.append(fallback_data)
+            fallback_used = True
                 
         except Exception as e:
             print(f"Error fetching {symbol}: {e}")
