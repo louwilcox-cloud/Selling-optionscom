@@ -100,8 +100,22 @@
     try {
       const j = await apiGet(`/api/get_options_data?symbol=${encodeURIComponent(symbol)}`);
       const dates = extractDates(j);
-      els.expiration.innerHTML = `<option value="">Select expiration</option>` +
-        dates.map(d => `<option value="${d}">${d}</option>`).join('');
+      // Clear existing options
+      els.expiration.innerHTML = '';
+      
+      // Add default option
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = 'Select expiration';
+      els.expiration.appendChild(defaultOption);
+      
+      // Add date options using safe DOM methods
+      dates.forEach(d => {
+        const option = document.createElement('option');
+        option.value = d;
+        option.textContent = d;
+        els.expiration.appendChild(option);
+      });
       if (DEBUG && els.rawExpirations) els.rawExpirations.textContent = JSON.stringify(j, null, 2);
     } catch (e) {
       showError(`Could not load expirations for ${symbol}: ${e.message}`);
