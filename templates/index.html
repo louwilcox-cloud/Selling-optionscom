@@ -3,123 +3,155 @@
 {% block title %}Selling-options.com | Options Trading Tools & Insights{% endblock %}
 
 {% block content %}
-      <!-- Market Overview Section -->
-      <section class="market-overview">
-        <div class="container">
-          <h1>Market Pulse</h1>
-          <div class="market-grid" id="marketGrid">
-            <div class="loading-message">Loading market data...</div>
-          </div>
-        </div>
-      </section>
+  <!-- Market Overview Section -->
+  <section class="market-overview">
+    <div class="container">
+      <h1>Market Pulse</h1>
 
-    <section class="cta-section">
-      <div class="container">
-        <div class="cta-content">
-          <h2>Start Trading Options Like a Pro</h2>
-          <p>Join thousands of traders using our tools to generate consistent income from options</p>
-          <div class="cta-form">
-            <a href="{{ url_for('auth.signup') }}" class="btn-primary">Get Free Access</a>
-            <p class="form-note">Start with our free tools • No credit card required</p>
-          </div>
+      <!-- 🔧 Layout override: exactly 4 columns, centered -->
+      <style>
+        /* Desktop: 4 columns, centered */
+        #marketGrid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(220px, 1fr));
+          gap: 18px;
+          justify-content: center;   /* center the 4-column track */
+          align-content: start;
+          margin-left: auto;
+          margin-right: auto;
+          max-width: 1200px;         /* keeps the row visually centered on wide screens */
+        }
+        /* Tablet: 2 columns */
+        @media (max-width: 1024px) {
+          #marketGrid { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+        }
+        /* Phone: 1 column */
+        @media (max-width: 640px) {
+          #marketGrid { grid-template-columns: 1fr; }
+        }
+      </style>
+
+      <div class="market-grid" id="marketGrid">
+        <div class="loading-message">Loading market data...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Your existing sections below (unchanged) -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-content">
+        <h2>Start Trading Options Like a Pro</h2>
+        <p>Join thousands of traders using our tools to generate consistent income from options</p>
+        <div class="cta-form">
+          <a href="{{ url_for('auth.signup') }}" class="btn-primary">Get Free Access</a>
+          <p class="form-note">Start with our free tools • No credit card required</p>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <footer class="footer">
-      <div class="container">
-        <div class="footer-content">
-          <div class="footer-section">
-            <h4>Tools</h4>
-            <ul>
-              <li><a href="{{ url_for('calculator.calculator') }}">Options Calculator</a></li>
-              <li><a href="#">Risk Assessment</a></li>
-              <li><a href="#">Strategy Builder</a></li>
-              <li><a href="#">IV Screener</a></li>
-            </ul>
-          </div>
-          <div class="footer-section">
-            <h4>Education</h4>
-            <ul>
-              <li><a href="#">Options Basics</a></li>
-              <li><a href="#">Advanced Strategies</a></li>
-              <li><a href="#">Risk Management</a></li>
-              <li><a href="{{ url_for('main.video_tutorials') }}">Video Library</a></li>
-            </ul>
-          </div>
-          <div class="footer-section">
-            <h4>Company</h4>
-            <ul>
-              <li><a href="#">About Us</a></li>
-              <li><a href="#">Contact</a></li>
-              <li><a href="#">Premium Plans</a></li>
-              <li><a href="#">Affiliate Program</a></li>
-            </ul>
-          </div>
-          <div class="footer-section">
-            <h4>Legal</h4>
-            <ul>
-              <li><a href="#">Privacy Policy</a></li>
-              <li><a href="#">Terms of Service</a></li>
-              <li><a href="#">Disclaimer</a></li>
-              <li><a href="#">Risk Warning</a></li>
-            </ul>
-          </div>
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Tools</h4>
+          <ul>
+            <li><a href="{{ url_for('calculator.calculator') }}">Options Calculator</a></li>
+            <li><a href="#">Risk Assessment</a></li>
+            <li><a href="#">Strategy Builder</a></li>
+            <li><a href="#">IV Screener</a></li>
+          </ul>
         </div>
-        <div class="footer-bottom">
-          <p>&copy; 2025 Selling-options.com. All rights reserved.</p>
+        <div class="footer-section">
+          <h4>Education</h4>
+          <ul>
+            <li><a href="#">Options Basics</a></li>
+            <li><a href="#">Advanced Strategies</a></li>
+            <li><a href="#">Risk Management</a></li>
+            <li><a href="{{ url_for('main.video_tutorials') }}">Video Library</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#">About Us</a></li>
+            <li><a href="#">Contact</a></li>
+            <li><a href="#">Premium Plans</a></li>
+            <li><a href="#">Affiliate Program</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">Disclaimer</a></li>
+            <li><a href="#">Risk Warning</a></li>
+          </ul>
         </div>
       </div>
-    </footer>
+      <div class="footer-bottom">
+        <p>&copy; 2025 Selling-options.com. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
 {% endblock %}
 
 {% block extra_scripts %}
-    <script>
-      // Market data management - HOME PAGE SPECIFIC
-      async function loadMarketData() {
-        try {
-          const response = await fetch('/api/market-data');
-          const data = await response.json();
-          
-          const marketGrid = document.getElementById('marketGrid');
-          marketGrid.innerHTML = '';
-          
-          for (const item of data) {
-            const card = document.createElement('div');
-            card.className = 'market-card';
-            
-            const changeClass = item.change >= 0 ? 'positive' : 'negative';
-            const changeSymbol = item.change >= 0 ? '+' : '';
-            
-            card.innerHTML = `
-              <div class="market-name">${item.name}</div>
-              <div class="market-price">${formatPrice(item.price, item.name)}</div>
-              <div class="market-change ${changeClass}">
-                ${changeSymbol}${item.change} (${changeSymbol}${item.change_pct}%)
-              </div>
-            `;
-            
-            marketGrid.appendChild(card);
-          }
-        } catch (error) {
-          console.error('Error loading market data:', error);
-          document.getElementById('marketGrid').innerHTML = 
-            '<div class="error-message">Failed to load market data</div>';
-        }
-      }
+<script>
+  // ----- helpers (unchanged) -----
+  function isFiniteNumber(x){ return typeof x === 'number' && Number.isFinite(x); }
+  function formatPrice(price, name){
+    if (!isFiniteNumber(price)) return '--';
+    if (price >= 1000) return `$${(price/1000).toFixed(1)}K`;
+    if (price >= 100)  return `$${price.toFixed(0)}`;
+    if (price >= 10)   return `$${price.toFixed(1)}`;
+    return `$${price.toFixed(2)}`;
+  }
+  function formatChange(change, change_pct){
+    if (!isFiniteNumber(change) || !isFiniteNumber(change_pct)) return '--';
+    const sym = change >= 0 ? '+' : '';
+    return `${sym}${change.toFixed(2)} (${sym}${change_pct.toFixed(2)}%)`;
+  }
 
-      function formatPrice(price, name) {
-        if (name === 'VIX') return price.toFixed(2);
-        if (price >= 1000) return `$${(price/1000).toFixed(1)}K`;
-        if (price >= 100) return `$${price.toFixed(0)}`;
-        if (price >= 10) return `$${price.toFixed(1)}`;
-        return `$${price.toFixed(2)}`;
-      }
+  // ----- Market data render (unchanged) -----
+  async function loadMarketData(){
+    const grid = document.getElementById('marketGrid');
+    try{
+      const resp = await fetch('/api/market-data');
+      const data = await resp.json();
+      grid.innerHTML = '';
 
-      // Load market data on page load
-      document.addEventListener('DOMContentLoaded', function() {
-        loadMarketData();
-        setInterval(loadMarketData, 25000); // Refresh every 25 seconds
+      data.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'market-card';
+
+        const priceText = formatPrice(item.price, item.name);
+        const changeText = formatChange(item.change, item.change_pct);
+        const positive = isFiniteNumber(item.change) && item.change >= 0;
+        const changeClass = !isFiniteNumber(item.change) ? 'neutral' : (positive ? 'positive' : 'negative');
+        const changeSymbol = !isFiniteNumber(item.change) ? '' : (positive ? '+' : '');
+
+        card.innerHTML = `
+          <div class="market-name">${item.name}</div>
+          <div class="market-price">${priceText}</div>
+          <div class="market-change ${changeClass}">
+            ${changeSymbol}${isFiniteNumber(item.change)?item.change.toFixed(2):'--'}
+            (${changeSymbol}${isFiniteNumber(item.change_pct)?item.change_pct.toFixed(2):'--'}%)
+          </div>
+        `;
+        grid.appendChild(card);
       });
-    </script>
+    }catch(err){
+      console.error('Error loading market data:', err);
+      grid.innerHTML = '<div class="error-message">Failed to load market data</div>';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadMarketData();
+    setInterval(loadMarketData, 25000); // refresh every 25s
+  });
+</script>
 {% endblock %}

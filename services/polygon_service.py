@@ -1,303 +1,375 @@
 # services/polygon_service.py
-"""Polygon.io EOD service — drop-in replacement for services/polygon_service.py
+import os, requests
+from datetime import datetime
+from zoneinfo import ZoneInfo
+from typing import Optional, Dict, Any, Tuple, List
 
-Fixes:
-- Zero volume/OI by using true end-of-day (EOD) sources
-- Avoids snapshot mixing
-- Paginates contracts with `as_of` date for stable OI
-- Throttles per-contract EOD bar calls
-"""
-from __future__ import annotations
+from services.market_clock import market_mode, is_regular_session_open
 
-import os
-import time
-import math
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Dict, List, Optional, Tuple
+POLYGON_API_KEY = os.getenv("POLYGON_API_KEY")
+if not POLYGON_API_KEY:
+    raise RuntimeError("Missing POLYGON_API_KEY in environment.")
 
-import requests
-from datetime import datetime, timedelta, timezone
+_session = requests.Session()
+_session.headers["Accept-Encoding"] = "gzip"
 
-# --- Config ---
-POLY_KEY = os.getenv("POLYGON_API_KEY") or os.getenv("POLY_API_KEY")
-HTTP = requests.Session()
-HTTP.headers.update({"Accept-Encoding": "gzip"})
-BASE_V2 = "https://api.polygon.io/v2"
-BASE_V3 = "https://api.polygon.io/v3"
+# -------------------------- HTTP helpers --------------------------
 
-# Simple rate throttle (best-effort; also keep worker count small)
-MAX_RPS = float(os.getenv("POLY_MAX_RPS", "4.5"))
-SLEEP_BETWEEN_CALLS = 1.0 / MAX_RPS if MAX_RPS > 0 else 0.25
-MAX_WORKERS = int(os.getenv("POLY_MAX_WORKERS", "5"))
-MAX_CONTRACTS = int(os.getenv("POLY_MAX_CONTRACTS", "400"))  # cap per chain to avoid rate limits
-
-# --- Helpers ---
-
-def _get(url: str, params: dict | None = None, timeout: int = 20) -> dict:
-    if not POLY_KEY:
-        raise RuntimeError("Missing POLYGON_API_KEY")
+def _get(url: str, params: Dict[str, Any] | None = None, timeout: float = 6.0) -> Dict[str, Any]:
     p = dict(params or {})
-    p["apiKey"] = POLY_KEY
-    if SLEEP_BETWEEN_CALLS:
-        time.sleep(SLEEP_BETWEEN_CALLS)  # soft throttle
-    r = HTTP.get(url, params=p, timeout=timeout)
+    p["apiKey"] = POLYGON_API_KEY
+    r = _session.get(url, params=p, timeout=timeout)
     r.raise_for_status()
-    return r.json()
+    return r.json() or {}
+
+def _get_follow(next_url: str, timeout: float = 10.0) -> Dict[str, Any]:
+    # follow polygon's next_url
+    if ("apiKey=" not in next_url) and ("?" in next_url):
+        next_url = f"{next_url}&apiKey={POLYGON_API_KEY}"
+    elif ("apiKey=" not in next_url):
+        next_url = f"{next_url}?apiKey={POLYGON_API_KEY}"
+    r = _session.get(next_url, timeout=timeout)
+    r.raise_for_status()
+    return r.json() or {}
+
+def _is_valid(px: Optional[float]) -> bool:
+    try:
+        return px is not None and float(px) > 0.0
+    except Exception:
+        return False
+
+# -------------------------- Quotes (stocks) --------------------------
+
+def _prev_close(symbol: str) -> Optional[float]:
+    j = _get(f"https://api.polygon.io/v2/aggs/ticker/{symbol}/prev", {"adjusted": "true"})
+    results = j.get("results") or []
+    px = float(results[0]["c"]) if results else None
+    return px if _is_valid(px) else None
+
+def _snapshot_live_with_fallbacks(symbol: str) -> Tuple[Optional[float], str]:
+    # Stocks snapshot (delayed/real based on plan)
+    j = _get(f"https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/tickers/{symbol}")
+    t = (j.get("ticker") or {})
+
+    # 1) last trade
+    lt = (t.get("lastTrade") or {}).get("p")
+    if _is_valid(lt):
+        return float(lt), "polygon-snapshot:lastTrade"
+
+    # 2) last quote mid
+    lq = t.get("lastQuote") or {}
+    bp, ap = lq.get("bp"), lq.get("ap")
+    if _is_valid(bp) and _is_valid(ap):
+        try:
+            return (float(bp) + float(ap)) / 2.0, "polygon-snapshot:midQuote"
+        except Exception:
+            pass
+
+    # 3) today's running close
+    day = t.get("day") or {}
+    day_c = day.get("c")
+    if _is_valid(day_c):
+        return float(day_c), "polygon-snapshot:day.c"
+
+    # 4) today's open
+    day_o = day.get("o")
+    if _is_valid(day_o):
+        return float(day_o), "polygon-snapshot:day.o"
+
+    # 5) yesterday close from snapshot payload
+    prev = t.get("prevDay") or {}
+    prev_c = prev.get("c")
+    if _is_valid(prev_c):
+        return float(prev_c), "polygon-snapshot:prevDay.c"
+
+    return None, "polygon-snapshot:none"
+
+def get_stock_quote(symbol: str) -> Dict[str, Any]:
+    """
+    Guaranteed numeric price (>0) with a clear source:
+    - If regular session is OPEN: snapshot fallbacks -> prev close
+    - Otherwise: prev close -> snapshot fallbacks
+    """
+    sym = symbol.upper().strip()
+    mode = market_mode()
+    et = ZoneInfo("America/New_York")
+    now_iso = datetime.now(et).isoformat(timespec="seconds")
+
+    last_err = None
+    if mode == "live":
+        try:
+            px, src = _snapshot_live_with_fallbacks(sym)
+            if _is_valid(px):
+                return {"symbol": sym, "mode": mode, "price": float(px), "source": src, "at": now_iso}
+        except Exception as e:
+            last_err = e
+        px = _prev_close(sym)
+        if _is_valid(px):
+            return {"symbol": sym, "mode": mode, "price": float(px), "source": "polygon-prev", "at": now_iso}
+        raise RuntimeError(f"Quote lookup failed (live) for {sym}: {last_err or 'no valid snapshot and no prev close'}")
+    else:
+        px = _prev_close(sym)
+        if _is_valid(px):
+            return {"symbol": sym, "mode": mode, "price": float(px), "source": "polygon-prev", "at": now_iso}
+        try:
+            px, src = _snapshot_live_with_fallbacks(sym)
+            if _is_valid(px):
+                return {"symbol": sym, "mode": mode, "price": float(px), "source": src, "at": now_iso}
+        except Exception as e:
+            last_err = e
+        raise RuntimeError(f"Quote lookup failed (eod) for {sym}: {last_err or 'no prev close and no valid snapshot'}")
+
+# --------- Compatibility shims so route imports never crash ---------
 
 def get_market_phase(ttl: int = 15) -> str:
-    """Cheap, dependency-free phase label for UI only."""
-    try:
-        now = datetime.utcnow()
-        ny = now - timedelta(hours=4)  # approximate ET
-        if ny.weekday() >= 5:
-            return "closed"
-        minutes = ny.hour * 60 + ny.minute
-        if 9*60 + 30 <= minutes <= 16*60:
-            return "open"
-        elif minutes > 16*60:
-            return "afterhours"
-        else:
-            return "pre"
-    except Exception:
-        return "unknown"
+    return "open" if is_regular_session_open() else "closed"
 
-def _ms_to_date(ms: int) -> str:
-    return datetime.utcfromtimestamp(ms / 1000).strftime("%Y-%m-%d")
+def quote_delayed(symbol: str) -> Tuple[float, str]:
+    """Strict EOD (prev close) — kept only for backward compatibility with older code paths."""
+    sym = symbol.upper().strip()
+    px = _prev_close(sym)
+    if not _is_valid(px):
+        raise RuntimeError(f"quote_delayed failed for {sym}: no prev close")
+    return float(px), "polygon-prev"
 
-def _last_session_date_from_prev_stock(symbol: str) -> str:
-    """Use stocks prev bar to get authoritative last trading date."""
-    j = _get(f"{BASE_V2}/aggs/ticker/{symbol}/prev", {"adjusted": "true"})
-    res = (j or {}).get("results") or []
-    if not res:
-        d = datetime.utcnow().date()
-        while d.weekday() >= 5:
-            d -= timedelta(days=1)
-        return d.strftime("%Y-%m-%d")
-    return _ms_to_date(res[0].get("t") or res[0].get("T"))
+# -------------------------- Options: expirations (FIXED: pagination) --------------------------
 
-# --- Quotes ---
-
-def quote_delayed(symbol: str, timeout: int = 15) -> Tuple[Optional[float], str]:
+def get_options_expirations(symbol: str) -> Dict[str, Any]:
     """
-    Return a delayed/EOD price for the underlying.
-    Primary: previous day close via /v2/aggs/{symbol}/prev (stable on weekends/holidays).
+    Return unique expiration dates (YYYY-MM-DD) for the underlying, sorted ASC.
+    Uses Polygon Options Contracts API. (v3/reference/options/contracts)
+    Now paginates through next_url to avoid truncation.
     """
-    try:
-        j = _get(f"{BASE_V2}/aggs/ticker/{symbol}/prev", {"adjusted": "true"}, timeout=timeout)
-        res = (j or {}).get("results") or []
-        if res:
-            return float(res[0]["c"]), "stocks-prev"
-    except Exception as e:
-        print(f"[quote_delayed] prev fail for {symbol}: {e}")
-
-    # As a last resort, try snapshot last trade (not EOD-guaranteed)
-    try:
-        j = _get(f"https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/tickers/{symbol}", {}, timeout=timeout)
-        last = ((j or {}).get("ticker") or {}).get("lastTrade") or {}
-        if "p" in last:
-            return float(last["p"]), "stocks-snapshot"
-    except Exception as e:
-        print(f"[quote_delayed] snapshot fail for {symbol}: {e}")
-    return None, "unavailable"
-
-def get_stock_quote(symbol: str) -> Dict:
-    price, source = quote_delayed(symbol)
-    if price is None:
-        return {"symbol": symbol, "error": "No price", "source": source}
-    return {
-        "symbol": symbol,
-        "price": round(float(price), 4),
-        "source": source,
-        "note": "Delayed/EOD price; uses previous session close when market is closed.",
-    }
-
-# --- Expirations ---
-
-def get_options_expirations(symbol: str) -> List[str]:
-    """
-    Build a unique, sorted list of upcoming expiration dates from contracts.
-    Pages through /v3/reference/options/contracts.
-    """
-    as_of = _last_session_date_from_prev_stock(symbol)
-    url = f"{BASE_V3}/reference/options/contracts"
+    sym = symbol.upper().strip()
+    url = "https://api.polygon.io/v3/reference/options/contracts"
     params = {
-        "underlying_ticker": symbol,
-        "as_of": as_of,
-        "limit": 1000,
+        "underlying_ticker": sym,
         "sort": "expiration_date",
         "order": "asc",
-    }
-    expirations: List[str] = []
-    seen = set()
-    next_url: Optional[str] = None
-    try:
-        while True:
-            j = _get(next_url or url, params if not next_url else {})
-            results = (j or {}).get("results") or []
-            for row in results:
-                exp = (row.get("expiration_date") or "")[:10]
-                if exp and exp >= as_of and exp not in seen:
-                    seen.add(exp)
-                    expirations.append(exp)
-            next_url = (j or {}).get("next_url")
-            if not next_url:
-                break
-    except Exception as e:
-        print(f"[expirations] error for {symbol}: {e}")
-
-    expirations.sort()
-    return expirations[:40]  # keep the dropdown tidy
-
-# --- Chain (EOD) ---
-
-def _fetch_contracts_for_date(symbol: str, expiration_date: str, as_of: str) -> List[dict]:
-    url = f"{BASE_V3}/reference/options/contracts"
-    params = {
-        "underlying_ticker": symbol,
-        "expiration_date": expiration_date,
-        "as_of": as_of,
+        "expired": "false",
         "limit": 1000,
-        "order": "asc",
-        "sort": "strike_price",
     }
-    results: List[dict] = []
-    next_url: Optional[str] = None
+
+    expirations: set[str] = set()
+    pages = 0
+
+    j = _get(url, params)
     while True:
-        j = _get(next_url or url, params if not next_url else {})
-        batch = (j or {}).get("results") or []
-        results.extend(batch)
-        next_url = (j or {}).get("next_url")
+        pages += 1
+        results = j.get("results") or []
+        for r in results:
+            ed = r.get("expiration_date")
+            if ed:
+                expirations.add(ed)
+        next_url = j.get("next_url")
         if not next_url:
             break
-    return results
+        j = _get_follow(next_url)
 
-def _prev_bar_for_option(ticker: str) -> Tuple[Optional[float], int]:
-    """
-    Return (lastPriceEOD, volumeEOD) for a given option contract via /v2/aggs/{O:...}/prev.
-    If no bar exists for the session, returns (None, 0).
-    """
+    exps = sorted(expirations)
+    return {"symbol": sym, "expirations": exps, "count": len(exps), "source": "polygon-v3-contracts"}
+
+# -------------------------- Options: chain builders --------------------------
+
+def _prev_contract_bar(contract_ticker: str) -> Tuple[Optional[float], Optional[int]]:
+    """Per-contract prev-day aggregate: returns (close, volume) or (None, None)."""
     try:
-        j = _get(f"{BASE_V2}/aggs/ticker/{ticker}/prev", {"adjusted": "true"})
-        res = (j or {}).get("results") or []
-        if not res:
-            return None, 0
-        row = res[0]
-        last_price = float(row.get("c")) if row.get("c") is not None else None
-        vol = int(row.get("v") or 0)
-        return last_price, vol
-    except Exception as e:
-        print(f"[prev] error for {ticker}: {e}")
-        return None, 0
+        q = _get(f"https://api.polygon.io/v2/aggs/ticker/{contract_ticker}/prev", {"adjusted": "true"})
+        rs = q.get("results") or []
+        if rs:
+            c = rs[0].get("c")
+            v = rs[0].get("v")
+            return (float(c) if _is_valid(c) else None, int(v) if v is not None else None)
+    except Exception:
+        pass
+    return (None, None)
 
-def _filter_contracts(rows: List[dict], spot: Optional[float]) -> List[dict]:
+def _chain_via_snapshot(sym: str, expiration: str, fill_zeros: bool) -> Dict[str, Any]:
     """
-    Keep a manageable subset for live API mode to avoid rate limits.
-    Strategy:
-      1) If we know spot, keep strikes within ±15 steps around spot
-      2) Always keep top contracts by open_interest up to MAX_CONTRACTS
+    Option Chain Snapshot (paged).
+    LIVE mapping uses trades only:
+      lastPrice <- last_trade.price
+      volume    <- day.volume
+      OI        <- open_interest
+    When fill_zeros=True, backfill lastPrice from prev-day bars for rows where lastPrice == 0.
     """
-    if not rows:
-        return rows
-    # Normalize and collect
-    out = []
-    for r in rows:
-        try:
-            ticker = r.get("ticker") or r.get("contract_ticker")
-            strike = float(r.get("strike_price"))
-            typ = (r.get("contract_type") or "").lower()
-            oi = int(r.get("open_interest") or 0)
-            out.append({"ticker": ticker, "strike": strike, "type": typ, "oi": oi, "raw": r})
-        except Exception:
-            continue
+    base = f"https://api.polygon.io/v3/snapshot/options/{sym}"
+    params = {"expiration_date": expiration, "limit": 250, "order": "asc", "sort": "strike_price"}
+    out_calls: List[Dict[str, Any]] = []
+    out_puts: List[Dict[str, Any]] = []
 
-    # If we have spot, keep a window of strikes around it
-    subset = out
-    if spot is not None and not math.isnan(spot):
-        strikes = sorted({row["strike"] for row in out})
-        if len(strikes) >= 2:
-            steps = sorted([round(strikes[i+1] - strikes[i], 2) for i in range(len(strikes)-1)])
-            step = steps[len(steps)//2] if steps else 5.0
-        else:
-            step = 5.0
-        low = spot - step * 15
-        high = spot + step * 15
-        subset = [row for row in out if low <= row["strike"] <= high]
+    page = 0
+    j = _get(base, params)
+    while True:
+        page += 1
+        results = j.get("results") or []
+        for r in results:
+            details = r.get("details") or {}
+            ctype = (details.get("contract_type") or "").lower()
+            strike = details.get("strike_price")
+            ticker = details.get("ticker")
 
-    # Ensure we keep top by OI up to MAX_CONTRACTS
-    subset.sort(key=lambda r: r["oi"], reverse=True)
-    return subset[:MAX_CONTRACTS]
+            # ✅ Correct fields for OPTIONS snapshot
+            lt = r.get("last_trade") or {}
+            last_trade_price = lt.get("price")
+            last_price = float(last_trade_price) if _is_valid(last_trade_price) else 0.0
 
-def get_options_chain(symbol: str, expiration_date: str) -> Dict:
-    """
-    Return EOD options chain for given symbol and expiration date.
+            day = r.get("day") or {}
+            vol = day.get("volume")  # intraday running volume
+            oi = r.get("open_interest")
 
-    - OI: from /v3/reference/options/contracts with as_of = last stock session
-    - price/volume: from /v2/aggs/{O:…}/prev
-    """
-    market_phase = get_market_phase()
-    as_of = _last_session_date_from_prev_stock(symbol)
+            row = {
+                "ticker": ticker,
+                "strike": float(strike) if strike is not None else None,
+                "lastPrice": last_price,
+                "volume": int(vol) if isinstance(vol, (int, float)) else 0,
+                "openInterest": int(oi) if isinstance(oi, (int, float)) else 0,
+            }
+            if ctype == "call":
+                out_calls.append(row)
+            elif ctype == "put":
+                out_puts.append(row)
 
-    # spot for filtering window & pct calculations client-side
-    spot, _ = quote_delayed(symbol)
-    try:
-        raw_contracts = _fetch_contracts_for_date(symbol, expiration_date, as_of)
-    except Exception as e:
-        print(f"[chain] contracts fetch failed: {e}")
-        raw_contracts = []
+        next_url = j.get("next_url")
+        if not next_url:
+            break
+        j = _get_follow(next_url)
 
-    # Filter to avoid per-contract fan-out explosion when calling /prev
-    contracts = _filter_contracts(raw_contracts, spot)
+    # Optional EOD-style fill: replace zeros with prev-day close (+ prev volume if available)
+    backfilled_calls = backfilled_puts = 0
+    if fill_zeros:
+        def _backfill(rows: List[Dict[str, Any]], cap: int = 60) -> int:
+            fixed = 0
+            for row in rows:
+                if row["lastPrice"] <= 0.0 and row.get("ticker"):
+                    px, vol_prev = _prev_contract_bar(row["ticker"])
+                    if _is_valid(px):
+                        row["lastPrice"] = float(px)
+                        if isinstance(vol_prev, int):
+                            row["volume"] = vol_prev
+                        fixed += 1
+                        if fixed >= cap:
+                            break
+            return fixed
+        backfilled_calls = _backfill(out_calls, cap=60)
+        backfilled_puts  = _backfill(out_puts,  cap=60)
 
-    # Fetch prev bars with small parallelism
-    calls: List[dict] = []
-    puts: List[dict] = []
+    out_calls.sort(key=lambda x: (x["strike"] is None, x["strike"]))
+    out_puts.sort(key=lambda x: (x["strike"] is None, x["strike"]))
 
-    def work(row):
-        tkr = row["ticker"]
-        px, vol = _prev_bar_for_option(tkr)
-        oi = int(row["raw"].get("open_interest") or 0)
-        strike = float(row["strike"])
-        side = row["type"]  # "call" or "put"
-        return {
-            "type": side,
-            "strike": strike,
-            "lastPrice": round(float(px), 6) if px is not None else 0.0,
-            "volume": int(vol),
-            "openInterest": int(oi),
-            "ticker": tkr,
-        }
-
-    if contracts:
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as exe:
-            futs = [exe.submit(work, row) for row in contracts]
-            for fut in as_completed(futs):
-                try:
-                    item = fut.result()
-                    if item["type"] == "call":
-                        calls.append({k: v for k, v in item.items() if k != "type"})
-                    else:
-                        puts.append({k: v for k, v in item.items() if k != "type"})
-                except Exception as e:
-                    print(f"[chain] worker error: {e}")
-
-    data = {
-        "symbol": symbol,
-        "date": expiration_date,
-        "calls": calls,
-        "puts": puts,
+    return {
+        "symbol": sym,
+        "expiration": expiration,
+        "calls": out_calls,
+        "puts": out_puts,
         "metadata": {
-            "dataSource": "polygon-eod",
-            "marketPhase": market_phase,
-            "asOf": as_of,
-            "contractsReturned": len(contracts),
-            "contractsTotal": len(raw_contracts),
-            "spot": round(float(spot), 4) if spot else None,
+            "source": "polygon-v3-snapshot-chain" + ("+prev-fill" if fill_zeros else ""),
+            "pages": page,
+            "prev_fill_applied": {"calls": backfilled_calls, "puts": backfilled_puts} if fill_zeros else {"calls": 0, "puts": 0},
+            "mode": market_mode(),
         },
     }
+
+def _chain_via_contracts_prev(sym: str, expiration: str) -> Dict[str, Any]:
+    """
+    Fallback when snapshot endpoint isn't available:
+    - List contracts (v3)
+    - Per-contract prev-day bar (v2) for lastPrice & volume; OI unavailable -> 0
+    This is inherently EOD-style data.
+    """
+    url = "https://api.polygon.io/v3/reference/options/contracts"
+    params = {
+        "underlying_ticker": sym,
+        "expiration_date": expiration,
+        "limit": 1000,
+        "sort": "strike_price",
+        "order": "asc",
+        "expired": "false",
+    }
+    j = _get(url, params)
+    results = j.get("results") or []
+
+    calls: List[Dict[str, Any]] = []
+    puts: List[Dict[str, Any]] = []
+
+    for r in results:
+        ticker = r.get("ticker")
+        strike = r.get("strike_price")
+        ctype = (r.get("contract_type") or "").lower()
+
+        last_px, vol = _prev_contract_bar(ticker) if ticker else (None, None)
+
+        row = {
+            "ticker": ticker,
+            "strike": float(strike) if strike is not None else None,
+            "lastPrice": float(last_px) if _is_valid(last_px) else 0.0,
+            "volume": int(vol) if isinstance(vol, int) else 0,
+            "openInterest": 0,
+        }
+        if ctype == "call":
+            calls.append(row)
+        elif ctype == "put":
+            puts.append(row)
+
+    calls.sort(key=lambda x: (x["strike"] is None, x["strike"]))
+    puts.sort(key=lambda x: (x["strike"] is None, x["strike"]))
+
+    return {
+        "symbol": sym,
+        "expiration": expiration,
+        "calls": calls,
+        "puts": puts,
+        "metadata": {"source": "polygon-v3-contracts+v2-prev", "mode": market_mode()},
+    }
+
+# -------------------------- Public chain APIs --------------------------
+
+def get_options_chain(symbol: str, expiration: str) -> Dict[str, Any]:
+    """
+    LIVE behavior:
+      - Market OPEN  : snapshot only, DO NOT backfill zeros. lastPrice from last_trade.price
+      - Market CLOSED: snapshot + backfill zeros from prev-day.
+      - If snapshot unavailable: fall back to contracts+prev (EOD-style), labeled in metadata.
+    """
+    sym = symbol.upper().strip()
+    mode = market_mode()
+    if mode == "live":
+        try:
+            return _chain_via_snapshot(sym, expiration, fill_zeros=False)
+        except Exception:
+            data = _chain_via_contracts_prev(sym, expiration)
+            data["metadata"]["note"] = "snapshot unavailable; using EOD fallback during live session"
+            data["metadata"]["eod_fallback"] = True
+            return data
+    else:
+        try:
+            return _chain_via_snapshot(sym, expiration, fill_zeros=True)
+        except Exception:
+            return _chain_via_contracts_prev(sym, expiration)
+
+def get_options_chain_eod(symbol: str, expiration: str) -> Dict[str, Any]:
+    """
+    Explicit EOD chain: always returns EOD-style data.
+    - snapshot with prev-fill (fill zeros) when available
+    - otherwise contracts+prev
+    """
+    sym = symbol.upper().strip()
+    try:
+        data = _chain_via_snapshot(sym, expiration, fill_zeros=True)
+    except Exception:
+        data = _chain_via_contracts_prev(sym, expiration)
+
+    md = data.get("metadata", {})
+    md["mode"] = "eod-forced"
+    md["note"] = "explicit EOD chain"
+    data["metadata"] = md
     return data
 
-# --- Back-compat shim (if your app uses this somewhere else) ---
+# -------------------------- Multiplexer some routes expect --------------------------
 
-def get_contract_data(symbol: str, expiration_date: str) -> Dict:
-    """Alias to get_options_chain for backward compatibility."""
-    return get_options_chain(symbol, expiration_date)
+def get_options_data(symbol: Optional[str] = None, expiration: Optional[str] = None) -> Dict[str, Any]:
+    if symbol and expiration:
+        return get_options_chain(symbol, expiration)
+    elif symbol:
+        return get_options_expirations(symbol)
+    return {"error": "symbol is required"}
