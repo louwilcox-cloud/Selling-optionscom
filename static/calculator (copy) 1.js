@@ -1,6 +1,6 @@
 /* static/calculator.js
    Computes Bulls/Consensus/Bears and fills Volume/OI Put/Call ratios.
-   Now with robust OI extraction that matches any reasonable key name.
+   Hardened to handle varied OI keys and numeric strings with commas.
 */
 (function () {
   const DEBUG = new URL(window.location.href).searchParams.get('debug') === '1';
@@ -52,7 +52,7 @@
   function toArray(x){ return Array.isArray(x) ? x : (x ? [x] : []); }
   function isFiniteNum(x){ return typeof x === 'number' && Number.isFinite(x); }
 
-  // Parse numbers safely, handling strings like "12,345", "1_234", " 123 "
+  // Parse numbers safely, handling strings like "12,345", "1_234", "  123 "
   function toNum(x){
     if (x == null) return 0;
     if (typeof x === 'number') return Number.isFinite(x) ? x : 0;
@@ -61,30 +61,9 @@
       const n = Number(cleaned);
       return Number.isFinite(n) ? n : 0;
     }
+    // booleans/others → 0
     const n = Number(x);
     return Number.isFinite(n) ? n : 0;
-  }
-
-  // Try a set of common names; if none found, scan keys with regex
-  function extractOpenInterest(row){
-    const direct =
-      row.openInterest ?? row.open_interest ?? row.openInterestEOD ??
-      row.open_interest_eod ?? row.openinterest ?? row.openInt ??
-      row.oi ?? row.OI ?? row.OpenInterest ?? row.OpenInterestEOD;
-    if (direct != null && direct !== '') return toNum(direct);
-
-    // Fallback: regex match any "oi" or "open...interest" looking key
-    const keys = Object.keys(row || {});
-    for (const k of keys) {
-      if (/oi|open.?interest/i.test(k)) {
-        const v = row[k];
-        const n = toNum(v);
-        if (n > 0 || (typeof v !== 'undefined' && v !== null)) {
-          return n; // accept zero too if explicitly present
-        }
-      }
-    }
-    return 0;
   }
 
   async function apiGet(url) {
@@ -157,11 +136,16 @@
       if (els.volumePCRatio) setText(els.volumePCRatio, pcrVol == null ? '--' : fmt(pcrVol, 2));
       if (els.oiPCRatio)     setText(els.oiPCRatio,     pcrOI  == null ? '--' : fmt(pcrOI, 2));
 
-      if (DEBUG && oiCalls === 0) console.warn('[calculator] All call OI parsed as 0 — backend may not be providing OI for this chain/expiration.');
+      if (DEBUG && els.pcRatios) {
+        els.pcRatios.textContent = JSON.stringify({
+          totals: { vCalls, vPuts, oiCalls, oiPuts },
+          ratios: { pcrVol, pcrOI }
+        }, null, 2);
+      }
 
       // Breakevens
-      const beCall = r => r.strike + r.lastPrice;
-      const bePut  = r => r.strike - r.lastPrice;
+      const beCall = r => r.strike + r.lastPrice;  // strike + premium
+      const bePut  = r => r.strike - r.lastPrice;  // strike - premium
 
       // Weighting for Bulls/Bears: prefer dollar volume; fallback to OI dollars
       const weightVol = r => r.lastPrice * r.volume;
@@ -188,6 +172,8 @@
           <div><strong>Weights:</strong> w_vol = lastPrice × volume; w_oi = lastPrice × openInterest</div>
         `;
       }
+      if (DEBUG && els.volCalcs) els.volCalcs.textContent = JSON.stringify({calls: bullsVol.steps, puts: bearsVol.steps}, null, 2);
+      if (DEBUG && els.oiCalcs)  els.oiCalcs.textContent  = JSON.stringify({calls: bullsOI.steps,  puts: bearsOI.steps }, null, 2);
 
       show(els.results);
     } catch (e) {
@@ -198,23 +184,32 @@
   }
 
   function normalizeSide(sideArr) {
-    return toArray(sideArr).map(r => ({
-      strike:      toNum(r.strike ?? r.Strike),
-      lastPrice:   toNum(r.lastPrice ?? r.Last ?? r.last ?? r.price),
-      volume:      toNum(r.volume ?? r.Volume),
-      openInterest: extractOpenInterest(r),
-    })).filter(r => isFiniteNum(r.strike));
+    return toArray(sideArr).map(r => {
+      // Accept many possible OI keys and normalize to a number
+      const oiRaw =
+        r.openInterest ?? r.open_interest ?? r.openInterestEOD ??
+        r.open_interest_eod ?? r.oi ?? r.OI ?? r.openInt ?? r.OpenInterest;
+
+      return {
+        strike:      toNum(r.strike ?? r.Strike),
+        lastPrice:   toNum(r.lastPrice ?? r.Last ?? r.last ?? r.price),
+        volume:      toNum(r.volume ?? r.Volume),
+        openInterest: toNum(oiRaw),
+      };
+    }).filter(r => isFiniteNum(r.strike));
   }
 
   function weightedMean(rows, valueFn, weightFn) {
     let totalW = 0, acc = 0;
+    const steps = [];
     for (const r of rows) {
       const v = valueFn(r);
       const w = weightFn(r);
       if (!isFiniteNum(v) || !isFiniteNum(w) || w <= 0) continue;
+      steps.push({ value: Number(v.toFixed(6)), weight: Number(w.toFixed(6)), part: Number((v*w).toFixed(6)) });
       acc += v * w; totalW += w;
     }
-    return { value: totalW > 0 ? acc / totalW : NaN, totalWeight: totalW };
+    return { value: totalW > 0 ? acc / totalW : NaN, steps, totalWeight: totalW };
   }
 
   function sum(a){ return a.reduce((s,x)=>s+(isFiniteNum(x)?x:0),0); }

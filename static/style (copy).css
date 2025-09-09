@@ -1305,16 +1305,3 @@ body {
   background: #f3f4f6;
   color: #6b7280;
 }
-
-/* Hide calculator debug blocks by default */
-#pcRatiosContainer,
-#optionsChainContainer,
-#dataDebugContainer,
-#calcsContainer {
-  display: none !important;
-  visibility: hidden !important;
-  max-height: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: 0 !important;
-}
