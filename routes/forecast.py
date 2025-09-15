@@ -81,7 +81,7 @@ def run_forecast():
                         'current_price': 0,
                         'bulls_want': 0,
                         'bears_want': 0,
-                        'bias': 'NO_DATA'
+                        'avg_consensus': 0
                     })
                     continue
                 
@@ -94,7 +94,7 @@ def run_forecast():
                         'current_price': current_price,
                         'bulls_want': current_price,
                         'bears_want': current_price,
-                        'bias': 'NO_OPTIONS'
+                        'avg_consensus': current_price
                     })
                     continue
                 
@@ -145,20 +145,15 @@ def run_forecast():
                 bears_oi = calculate_weighted_mean(puts, put_breakeven, oi_weight)
                 bears_want = bears_vol if bears_vol is not None else (bears_oi if bears_oi is not None else current_price)
                 
-                # Determine bias
-                if bulls_want > current_price and bears_want < current_price:
-                    bias = 'NEUTRAL'
-                elif bulls_want > bears_want:
-                    bias = 'BULLISH'  
-                else:
-                    bias = 'BEARISH'
+                # Calculate average consensus (Bulls Want + Bears Want) / 2
+                avg_consensus = (bulls_want + bears_want) / 2
                 
                 forecast_results.append({
                     'symbol': symbol,
                     'current_price': current_price,
                     'bulls_want': round(bulls_want, 2),
                     'bears_want': round(bears_want, 2),
-                    'bias': bias
+                    'avg_consensus': round(avg_consensus, 2)
                 })
                 
             except Exception as e:
@@ -168,7 +163,7 @@ def run_forecast():
                     'current_price': current_price if 'current_price' in locals() else 0,
                     'bulls_want': 0,
                     'bears_want': 0,
-                    'bias': f'ERROR: {str(e)}'
+                    'avg_consensus': 0
                 })
         
         # Return results directly (frontend expects array, not wrapped in success/results)

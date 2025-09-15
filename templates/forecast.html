@@ -323,21 +323,20 @@
                             <th>Current Price</th>
                             <th>Bulls Want</th>
                             <th>Bears Want</th>
-                            <th>Bias</th>
+                            <th>Avg Consensus</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
             
             data.forEach(item => {
-                const biasClass = item.bias === 'BULLISH' ? 'positive' : (item.bias === 'BEARISH' ? 'negative' : '');
                 html += `
                     <tr>
                         <td class="symbol-cell">${item.symbol}</td>
                         <td class="price-cell">$${parseFloat(item.current_price).toFixed(2)}</td>
                         <td class="positive">$${parseFloat(item.bulls_want).toFixed(2)}</td>
                         <td class="negative">$${parseFloat(item.bears_want).toFixed(2)}</td>
-                        <td class="${biasClass}">${item.bias}</td>
+                        <td style="color: #1e40af; font-weight: 600;">$${parseFloat(item.avg_consensus).toFixed(2)}</td>
                     </tr>
                 `;
             });
