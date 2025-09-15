@@ -20,13 +20,25 @@
                 </thead>
                 <tbody>
                     {% for watchlist in watchlists %}
-                    <tr>
+                    <tr id="row-{{ watchlist[0] }}">
                         <td>{{ watchlist[0] }}</td>
-                        <td>{{ watchlist[1] }}</td>
-                        <td>{{ watchlist[2][:50] }}{% if watchlist[2]|length > 50 %}...{% endif %}</td>
+                        <td class="editable-cell">
+                            <span class="display-text">{{ watchlist[1] }}</span>
+                            <input type="text" class="edit-input" value="{{ watchlist[1] }}" style="display: none;">
+                        </td>
+                        <td class="editable-cell">
+                            <span class="display-text">{{ watchlist[2][:50] }}{% if watchlist[2]|length > 50 %}...{% endif %}</span>
+                            <input type="text" class="edit-input" value="{{ watchlist[2] }}" style="display: none;">
+                        </td>
                         <td>{{ watchlist[4] or 'Unknown' }}</td>
                         <td>{{ watchlist[3].strftime('%Y-%m-%d') if watchlist[3] else 'N/A' }}</td>
                         <td>
+                            <button onclick="editWatchlist({{ watchlist[0] }})" 
+                                    class="btn btn-sm btn-primary edit-btn">Edit</button>
+                            <button onclick="saveWatchlist({{ watchlist[0] }})" 
+                                    class="btn btn-sm btn-success save-btn" style="display: none;">Save</button>
+                            <button onclick="cancelEdit({{ watchlist[0] }})" 
+                                    class="btn btn-sm btn-secondary cancel-btn" style="display: none;">Cancel</button>
                             <a href="{{ url_for('admin.delete_watchlist', watchlist_id=watchlist[0]) }}" 
                                class="btn btn-sm btn-danger"
                                onclick="return confirm('Delete this watchlist?')">Delete</a>
@@ -41,4 +53,96 @@
             <a href="{{ url_for('main.index') }}" class="btn">Back</a>
         </div>
     </div>
+
+    <script>
+    function editWatchlist(id) {
+        const row = document.getElementById(`row-${id}`);
+        const displayTexts = row.querySelectorAll('.display-text');
+        const editInputs = row.querySelectorAll('.edit-input');
+        const editBtn = row.querySelector('.edit-btn');
+        const saveBtn = row.querySelector('.save-btn');
+        const cancelBtn = row.querySelector('.cancel-btn');
+        
+        // Hide display texts and show inputs
+        displayTexts.forEach(text => text.style.display = 'none');
+        editInputs.forEach(input => input.style.display = 'inline-block');
+        
+        // Toggle buttons
+        editBtn.style.display = 'none';
+        saveBtn.style.display = 'inline-block';
+        cancelBtn.style.display = 'inline-block';
+    }
+    
+    function cancelEdit(id) {
+        const row = document.getElementById(`row-${id}`);
+        const displayTexts = row.querySelectorAll('.display-text');
+        const editInputs = row.querySelectorAll('.edit-input');
+        const editBtn = row.querySelector('.edit-btn');
+        const saveBtn = row.querySelector('.save-btn');
+        const cancelBtn = row.querySelector('.cancel-btn');
+        
+        // Show display texts and hide inputs
+        displayTexts.forEach(text => text.style.display = 'inline');
+        editInputs.forEach(input => input.style.display = 'none');
+        
+        // Toggle buttons
+        editBtn.style.display = 'inline-block';
+        saveBtn.style.display = 'none';
+        cancelBtn.style.display = 'none';
+    }
+    
+    function saveWatchlist(id) {
+        const row = document.getElementById(`row-${id}`);
+        const nameInput = row.querySelectorAll('.edit-input')[0];
+        const symbolsInput = row.querySelectorAll('.edit-input')[1];
+        
+        const name = nameInput.value.trim();
+        const symbols = symbolsInput.value.trim();
+        
+        if (!name) {
+            alert('Watchlist name cannot be empty');
+            return;
+        }
+        
+        // Create a form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/watchlist/${id}/edit`;
+        
+        const nameField = document.createElement('input');
+        nameField.type = 'hidden';
+        nameField.name = 'name';
+        nameField.value = name;
+        
+        const symbolsField = document.createElement('input');
+        symbolsField.type = 'hidden';
+        symbolsField.name = 'symbols';
+        symbolsField.value = symbols;
+        
+        form.appendChild(nameField);
+        form.appendChild(symbolsField);
+        document.body.appendChild(form);
+        form.submit();
+    }
+    </script>
+
+    <style>
+    .edit-input {
+        width: 100%;
+        padding: 4px 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: inherit;
+        background: #fff;
+    }
+    
+    .editable-cell {
+        min-width: 150px;
+    }
+    
+    .btn-sm {
+        margin-right: 5px;
+        margin-bottom: 2px;
+    }
+    </style>
 {% endblock %}

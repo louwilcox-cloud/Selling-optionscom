@@ -102,6 +102,38 @@ def manage_watchlists():
             conn.close()
         return f"Error loading watchlists: {str(e)}", 500
 
+@admin_bp.route('/watchlist/<int:watchlist_id>/edit', methods=['POST'])
+@admin_required
+def edit_watchlist(watchlist_id):
+    """Update a watchlist"""
+    conn = get_db_connection()
+    if not conn:
+        return "Database connection error", 500
+    
+    try:
+        name = request.form.get('name', '').strip()
+        symbols = request.form.get('symbols', '').strip()
+        
+        if not name:
+            return "Watchlist name is required", 400
+        
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE watchlists 
+            SET name = %s, symbols = %s, updated_at = CURRENT_TIMESTAMP 
+            WHERE id = %s
+        """, (name, symbols, watchlist_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return redirect(url_for('admin.manage_watchlists'))
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return f"Error updating watchlist: {str(e)}", 500
+
 @admin_bp.route('/watchlist/<int:watchlist_id>/delete')
 @admin_required
 def delete_watchlist(watchlist_id):
