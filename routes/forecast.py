@@ -81,23 +81,20 @@ def run_forecast():
                         'current_price': 0,
                         'bulls_want': 0,
                         'bears_want': 0,
-                        'bias': 'NO_DATA',
-                        'expected_move': 0,
-                        'next_expiry': 'N/A'
+                        'bias': 'NO_DATA'
                     })
                     continue
                 
                 # Get available expirations
-                expirations = get_options_expirations(symbol)
+                expirations_data = get_options_expirations(symbol)
+                expirations = expirations_data.get('expirations', [])
                 if not expirations:
                     forecast_results.append({
                         'symbol': symbol,
                         'current_price': current_price,
                         'bulls_want': current_price,
                         'bears_want': current_price,
-                        'bias': 'NO_OPTIONS',
-                        'expected_move': 0,
-                        'next_expiry': 'N/A'
+                        'bias': 'NO_OPTIONS'
                     })
                     continue
                 
@@ -148,25 +145,20 @@ def run_forecast():
                 bears_oi = calculate_weighted_mean(puts, put_breakeven, oi_weight)
                 bears_want = bears_vol if bears_vol is not None else (bears_oi if bears_oi is not None else current_price)
                 
-                # Determine bias and expected move
+                # Determine bias
                 if bulls_want > current_price and bears_want < current_price:
                     bias = 'NEUTRAL'
-                    expected_move = (bulls_want - bears_want) / 2
                 elif bulls_want > bears_want:
                     bias = 'BULLISH'  
-                    expected_move = abs(bulls_want - current_price)
                 else:
                     bias = 'BEARISH'
-                    expected_move = abs(current_price - bears_want)
                 
                 forecast_results.append({
                     'symbol': symbol,
                     'current_price': current_price,
                     'bulls_want': round(bulls_want, 2),
                     'bears_want': round(bears_want, 2),
-                    'bias': bias,
-                    'expected_move': round(expected_move, 2),
-                    'next_expiry': next_expiry
+                    'bias': bias
                 })
                 
             except Exception as e:
@@ -176,9 +168,7 @@ def run_forecast():
                     'current_price': current_price if 'current_price' in locals() else 0,
                     'bulls_want': 0,
                     'bears_want': 0,
-                    'bias': 'ERROR',
-                    'expected_move': 0,
-                    'next_expiry': f'Error: {str(e)}'
+                    'bias': f'ERROR: {str(e)}'
                 })
         
         # Return results directly (frontend expects array, not wrapped in success/results)

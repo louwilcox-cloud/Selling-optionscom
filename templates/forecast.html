@@ -324,15 +324,13 @@
                             <th>Bulls Want</th>
                             <th>Bears Want</th>
                             <th>Bias</th>
-                            <th>Expected Move</th>
-                            <th>Next Expiry</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
             
             data.forEach(item => {
-                const biasClass = item.bias === 'BULLISH' ? 'positive' : 'negative';
+                const biasClass = item.bias === 'BULLISH' ? 'positive' : (item.bias === 'BEARISH' ? 'negative' : '');
                 html += `
                     <tr>
                         <td class="symbol-cell">${item.symbol}</td>
@@ -340,8 +338,6 @@
                         <td class="positive">$${parseFloat(item.bulls_want).toFixed(2)}</td>
                         <td class="negative">$${parseFloat(item.bears_want).toFixed(2)}</td>
                         <td class="${biasClass}">${item.bias}</td>
-                        <td>±$${parseFloat(item.expected_move).toFixed(2)}</td>
-                        <td>${item.next_expiry}</td>
                     </tr>
                 `;
             });
