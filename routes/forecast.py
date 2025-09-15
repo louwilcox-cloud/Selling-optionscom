@@ -31,7 +31,7 @@ def forecast():
 
 @forecast_bp.route('/api/forecast', methods=['POST'])
 def run_forecast():
-    """Run forecast for selected watchlist"""
+    """Run forecast for selected watchlist using Bulls/Bears analysis"""
     try:
         data = request.get_json()
         watchlist_id = data.get('watchlist_id')
@@ -63,9 +63,11 @@ def run_forecast():
         # Parse symbols from comma/space separated string
         symbols = [s.strip().upper() for s in re.split(r'[,\\s]+', symbols_str) if s.strip()]
         
-        # Generate forecast results
+        # Import options service functions
+        from services.polygon_service import get_options_expirations, get_options_chain
+        
+        # Generate forecast results with Bulls/Bears analysis
         forecast_results = []
-        start_date = datetime.now().strftime('%Y-%m-%d')
         
         for symbol in symbols:
             try:
@@ -73,51 +75,114 @@ def run_forecast():
                 quote_result = get_stock_quote(symbol)
                 current_price = quote_result.get('price', 0) if 'error' not in quote_result else 0
                 
-                # Generate mock predictions for next 4 expirations
-                predictions = []
-                base_date = datetime.now()
-                
-                for i in range(4):
-                    # Generate expiration date (simplified - 3rd Friday of each month)
-                    exp_date = base_date + timedelta(days=21 * (i + 1))
-                    exp_str = exp_date.strftime('%Y-%m-%d')
-                    
-                    # Mock prediction (in real implementation, use your prediction algorithm)
-                    if current_price > 0:
-                        # Simple random walk simulation for demo
-                        import random
-                        change_percent = random.uniform(-10, 10)  # -10% to +10%
-                        predicted_price = current_price * (1 + change_percent / 100)
-                    else:
-                        predicted_price = 0
-                        change_percent = 0
-                    
-                    predictions.append({
-                        'expiration': exp_str,
-                        'predicted_price': round(predicted_price, 2),
-                        'percent_change': round(change_percent, 2)
+                if current_price <= 0:
+                    forecast_results.append({
+                        'symbol': symbol,
+                        'current_price': 0,
+                        'bulls_want': 0,
+                        'bears_want': 0,
+                        'bias': 'NO_DATA',
+                        'expected_move': 0,
+                        'next_expiry': 'N/A'
                     })
+                    continue
+                
+                # Get available expirations
+                expirations = get_options_expirations(symbol)
+                if not expirations:
+                    forecast_results.append({
+                        'symbol': symbol,
+                        'current_price': current_price,
+                        'bulls_want': current_price,
+                        'bears_want': current_price,
+                        'bias': 'NO_OPTIONS',
+                        'expected_move': 0,
+                        'next_expiry': 'N/A'
+                    })
+                    continue
+                
+                # Use the first available expiration for analysis
+                next_expiry = expirations[0]
+                
+                # Get options chain for Bulls/Bears analysis
+                chain_data = get_options_chain(symbol, next_expiry)
+                calls = chain_data.get('calls', [])
+                puts = chain_data.get('puts', [])
+                
+                # Calculate Bulls/Bears values using same logic as calculator
+                def calculate_weighted_mean(options, value_fn, weight_fn):
+                    total_weight = 0
+                    weighted_sum = 0
+                    
+                    for option in options:
+                        value = value_fn(option)
+                        weight = weight_fn(option)
+                        
+                        if value is not None and weight is not None and weight > 0:
+                            weighted_sum += value * weight
+                            total_weight += weight
+                    
+                    return weighted_sum / total_weight if total_weight > 0 else None
+                
+                # Calculate breakevens
+                def call_breakeven(option):
+                    return option.get('strike', 0) + option.get('lastPrice', 0)
+                
+                def put_breakeven(option):
+                    return option.get('strike', 0) - option.get('lastPrice', 0)
+                
+                # Weight by dollar volume (prefer) or dollar OI (fallback)
+                def volume_weight(option):
+                    return option.get('lastPrice', 0) * option.get('volume', 0)
+                
+                def oi_weight(option):
+                    return option.get('lastPrice', 0) * option.get('openInterest', 0)
+                
+                # Calculate Bulls target (calls weighted breakeven)
+                bulls_vol = calculate_weighted_mean(calls, call_breakeven, volume_weight)
+                bulls_oi = calculate_weighted_mean(calls, call_breakeven, oi_weight)
+                bulls_want = bulls_vol if bulls_vol is not None else (bulls_oi if bulls_oi is not None else current_price)
+                
+                # Calculate Bears target (puts weighted breakeven)  
+                bears_vol = calculate_weighted_mean(puts, put_breakeven, volume_weight)
+                bears_oi = calculate_weighted_mean(puts, put_breakeven, oi_weight)
+                bears_want = bears_vol if bears_vol is not None else (bears_oi if bears_oi is not None else current_price)
+                
+                # Determine bias and expected move
+                if bulls_want > current_price and bears_want < current_price:
+                    bias = 'NEUTRAL'
+                    expected_move = (bulls_want - bears_want) / 2
+                elif bulls_want > bears_want:
+                    bias = 'BULLISH'  
+                    expected_move = abs(bulls_want - current_price)
+                else:
+                    bias = 'BEARISH'
+                    expected_move = abs(current_price - bears_want)
                 
                 forecast_results.append({
                     'symbol': symbol,
                     'current_price': current_price,
-                    'predictions': predictions
+                    'bulls_want': round(bulls_want, 2),
+                    'bears_want': round(bears_want, 2),
+                    'bias': bias,
+                    'expected_move': round(expected_move, 2),
+                    'next_expiry': next_expiry
                 })
                 
             except Exception as e:
                 # Add symbol with error message
                 forecast_results.append({
                     'symbol': symbol,
-                    'current_price': 0,
-                    'predictions': [{'expiration': 'Error', 'predicted_price': 0, 'percent_change': 0}] * 4,
-                    'error': str(e)
+                    'current_price': current_price if 'current_price' in locals() else 0,
+                    'bulls_want': 0,
+                    'bears_want': 0,
+                    'bias': 'ERROR',
+                    'expected_move': 0,
+                    'next_expiry': f'Error: {str(e)}'
                 })
         
-        return jsonify({
-            'success': True,
-            'results': forecast_results,
-            'start_date': start_date
-        })
+        # Return results directly (frontend expects array, not wrapped in success/results)
+        return jsonify(forecast_results)
         
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'error': str(e)}), 500
