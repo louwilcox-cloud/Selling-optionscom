@@ -101,52 +101,63 @@ def run_forecast():
                 # Use the first available expiration for analysis
                 next_expiry = expirations[0]
                 
-                # Get options chain for Bulls/Bears analysis
+                # Get options chain using EXACT same method as calculator
                 chain_data = get_options_chain(symbol, next_expiry)
                 calls = chain_data.get('calls', [])
                 puts = chain_data.get('puts', [])
                 
-                # Calculate Bulls/Bears values using same logic as calculator
-                def calculate_weighted_mean(options, value_fn, weight_fn):
-                    total_weight = 0
-                    weighted_sum = 0
-                    
-                    for option in options:
-                        value = value_fn(option)
-                        weight = weight_fn(option)
-                        
-                        if value is not None and weight is not None and weight > 0:
-                            weighted_sum += value * weight
-                            total_weight += weight
-                    
-                    return weighted_sum / total_weight if total_weight > 0 else None
+                # EXACT same logic as calculator.js lines 177-191
+                def is_finite_num(x):
+                    return isinstance(x, (int, float)) and not (x != x or x == float('inf') or x == float('-inf'))
                 
-                # Calculate breakevens
-                def call_breakeven(option):
-                    return option.get('strike', 0) + option.get('lastPrice', 0)
+                def weighted_mean(rows, value_fn, weight_fn):
+                    """EXACT copy of calculator.js weightedMean function"""
+                    total_w = 0
+                    acc = 0
+                    for r in rows:
+                        v = value_fn(r)
+                        w = weight_fn(r)
+                        if not is_finite_num(v) or not is_finite_num(w) or w <= 0:
+                            continue
+                        acc += v * w
+                        total_w += w
+                    return acc / total_w if total_w > 0 else None
                 
-                def put_breakeven(option):
-                    return option.get('strike', 0) - option.get('lastPrice', 0)
+                # EXACT same breakeven functions as calculator.js  
+                def be_call(r):
+                    return r.get('strike', 0) + r.get('lastPrice', 0)
                 
-                # Weight by dollar volume (prefer) or dollar OI (fallback)
-                def volume_weight(option):
-                    return option.get('lastPrice', 0) * option.get('volume', 0)
+                def be_put(r):
+                    return r.get('strike', 0) - r.get('lastPrice', 0)
                 
-                def oi_weight(option):
-                    return option.get('lastPrice', 0) * option.get('openInterest', 0)
+                # EXACT same weight functions as calculator.js
+                def weight_vol(r):
+                    return r.get('lastPrice', 0) * r.get('volume', 0)
                 
-                # Calculate Bulls target (calls weighted breakeven)
-                bulls_vol = calculate_weighted_mean(calls, call_breakeven, volume_weight)
-                bulls_oi = calculate_weighted_mean(calls, call_breakeven, oi_weight)
-                bulls_want = bulls_vol if bulls_vol is not None else (bulls_oi if bulls_oi is not None else current_price)
+                def weight_oi(r):
+                    return r.get('lastPrice', 0) * r.get('openInterest', 0)
                 
-                # Calculate Bears target (puts weighted breakeven)  
-                bears_vol = calculate_weighted_mean(puts, put_breakeven, volume_weight)
-                bears_oi = calculate_weighted_mean(puts, put_breakeven, oi_weight)
-                bears_want = bears_vol if bears_vol is not None else (bears_oi if bears_oi is not None else current_price)
+                # EXACT same calculation as calculator.js
+                bulls_vol = weighted_mean(calls, be_call, weight_vol)
+                bears_vol = weighted_mean(puts, be_put, weight_vol)
+                bulls_oi = weighted_mean(calls, be_call, weight_oi)
+                bears_oi = weighted_mean(puts, be_put, weight_oi)
                 
-                # Calculate average consensus (Bulls Want + Bears Want) / 2
-                avg_consensus = (bulls_want + bears_want) / 2
+                # EXACT same fallback logic as calculator.js
+                bulls_want = bulls_vol if is_finite_num(bulls_vol) else bulls_oi
+                bears_want = bears_vol if is_finite_num(bears_vol) else bears_oi
+                
+                # Handle case where both are None (fallback to current price)
+                if bulls_want is None:
+                    bulls_want = current_price
+                if bears_want is None:
+                    bears_want = current_price
+                
+                # EXACT same consensus calculation as calculator.js
+                if is_finite_num(bulls_want) and is_finite_num(bears_want):
+                    avg_consensus = (bulls_want + bears_want) / 2
+                else:
+                    avg_consensus = current_price
                 
                 forecast_results.append({
                     'symbol': symbol,
