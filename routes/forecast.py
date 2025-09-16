@@ -157,10 +157,10 @@ def run_forecast():
                 bulls_want = bulls_vol.value if is_finite_num(bulls_vol.value) else bulls_oi.value
                 bears_want = bears_vol.value if is_finite_num(bears_vol.value) else bears_oi.value
                 
-                # Handle case where both are None (fallback to current price)
-                if bulls_want is None:
+                # Handle case where values are None or non-finite (fallback to current price)
+                if not is_finite_num(bulls_want):
                     bulls_want = current_price
-                if bears_want is None:
+                if not is_finite_num(bears_want):
                     bears_want = current_price
                 
                 # EXACT same consensus calculation as calculator.js
