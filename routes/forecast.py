@@ -103,8 +103,12 @@ def run_forecast():
                 
                 # Get options chain using EXACT same method as calculator
                 chain_data = get_options_chain(symbol, next_expiry)
-                calls = chain_data.get('calls', [])
-                puts = chain_data.get('puts', [])
+                all_calls = chain_data.get('calls', [])
+                all_puts = chain_data.get('puts', [])
+                
+                # Filter to only valid options with non-zero prices (like calculator.js)
+                calls = [c for c in all_calls if c.get('lastPrice', 0) > 0]
+                puts = [p for p in all_puts if p.get('lastPrice', 0) > 0]
                 
                 # EXACT same logic as calculator.js lines 177-191
                 def is_finite_num(x):
