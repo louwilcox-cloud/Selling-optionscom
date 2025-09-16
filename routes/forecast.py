@@ -110,6 +110,11 @@ def run_forecast():
                 def is_finite_num(x):
                     return isinstance(x, (int, float)) and not (x != x or x == float('inf') or x == float('-inf'))
                 
+                class WeightedMeanResult:
+                    def __init__(self, value, total_weight):
+                        self.value = value
+                        self.total_weight = total_weight
+                
                 def weighted_mean(rows, value_fn, weight_fn):
                     """EXACT copy of calculator.js weightedMean function"""
                     total_w = 0
@@ -121,7 +126,8 @@ def run_forecast():
                             continue
                         acc += v * w
                         total_w += w
-                    return acc / total_w if total_w > 0 else None
+                    value = acc / total_w if total_w > 0 else float('nan')
+                    return WeightedMeanResult(value, total_w)
                 
                 # EXACT same breakeven functions as calculator.js  
                 def be_call(r):
@@ -143,9 +149,9 @@ def run_forecast():
                 bulls_oi = weighted_mean(calls, be_call, weight_oi)
                 bears_oi = weighted_mean(puts, be_put, weight_oi)
                 
-                # EXACT same fallback logic as calculator.js
-                bulls_want = bulls_vol if is_finite_num(bulls_vol) else bulls_oi
-                bears_want = bears_vol if is_finite_num(bears_vol) else bears_oi
+                # EXACT same fallback logic as calculator.js (access .value property)
+                bulls_want = bulls_vol.value if is_finite_num(bulls_vol.value) else bulls_oi.value
+                bears_want = bears_vol.value if is_finite_num(bears_vol.value) else bears_oi.value
                 
                 # Handle case where both are None (fallback to current price)
                 if bulls_want is None:
