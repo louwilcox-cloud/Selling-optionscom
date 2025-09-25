@@ -1,4 +1,5 @@
 """Admin routes for Selling-Options.com"""
+import bcrypt
 from flask import Blueprint, request, redirect, url_for, render_template
 from services.database import get_db_connection
 from utils.decorators import admin_required
@@ -228,3 +229,29 @@ def delete_user(user_id):
         if conn:
             conn.close()
         return f"Error deleting user: {str(e)}", 500
+
+@admin_bp.route('/reset-password/<int:user_id>')
+@admin_required
+def reset_password(user_id):
+    """Reset user password to 'Welcome'"""
+    conn = get_db_connection()
+    if not conn:
+        return "Database connection error", 500
+    
+    try:
+        # Hash the default password "Welcome"
+        default_password = "Welcome"
+        password_hash = bcrypt.hashpw(default_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        
+        cur = conn.cursor()
+        cur.execute("UPDATE users SET password_hash = %s WHERE id = %s", (password_hash, user_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return redirect(url_for('admin.admin_panel'))
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return f"Error resetting password: {str(e)}", 500
