@@ -230,26 +230,56 @@ def delete_user(user_id):
             conn.close()
         return f"Error deleting user: {str(e)}", 500
 
-@admin_bp.route('/reset-password/<int:user_id>')
+@admin_bp.route('/reset-password/<int:user_id>', methods=['POST'])
 @admin_required
 def reset_password(user_id):
-    """Reset user password to 'Welcome'"""
+    """Reset user password to a secure random password"""
+    import secrets
+    import string
+    from flask import session
+    
     conn = get_db_connection()
     if not conn:
         return "Database connection error", 500
     
     try:
-        # Hash the default password "Welcome"
-        default_password = "Welcome"
-        password_hash = bcrypt.hashpw(default_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        # Generate a secure random password (12 characters)
+        alphabet = string.ascii_letters + string.digits + "!@#$%"
+        temp_password = ''.join(secrets.choice(alphabet) for _ in range(12))
+        password_hash = bcrypt.hashpw(temp_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         
         cur = conn.cursor()
-        cur.execute("UPDATE users SET password_hash = %s WHERE id = %s", (password_hash, user_id))
+        
+        # Get user info for logging
+        cur.execute("SELECT email FROM users WHERE id = %s", (user_id,))
+        user_data = cur.fetchone()
+        if not user_data:
+            cur.close()
+            conn.close()
+            return "User not found", 404
+            
+        user_email = user_data[0]
+        
+        # Update password and force password change on next login
+        cur.execute("""
+            UPDATE users 
+            SET password_hash = %s, must_change_password = true, password_reset_at = NOW() 
+            WHERE id = %s
+        """, (password_hash, user_id))
+        
+        # Log the admin action
+        admin_id = session.get('user_id')
+        admin_email = session.get('email')
+        print(f"ADMIN ACTION: {admin_email} (ID: {admin_id}) reset password for {user_email} (ID: {user_id})")
+        
         conn.commit()
         cur.close()
         conn.close()
         
-        return redirect(url_for('admin.admin_panel'))
+        # Return the temporary password to admin (display once)
+        return render_template('password_reset_success.html', 
+                             user_email=user_email, 
+                             temp_password=temp_password)
         
     except Exception as e:
         if conn:
