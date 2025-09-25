@@ -72,6 +72,15 @@ endblock %} {% block content %}
                         </a>
                         {% endif %}
 
+                        <!-- Reset Password Button -->
+                        <a
+                            href="{{ url_for('admin.reset_password', user_id=user[0]) }}"
+                            class="btn btn-sm btn-info"
+                            onclick="return confirm('Are you sure you want to reset this user\\'s password to \\'Welcome\\'?')"
+                        >
+                            Reset Password
+                        </a>
+
                         <!-- Delete Button -->
                         <a
                             href="{{ url_for('admin.delete_user', user_id=user[0]) }}"
