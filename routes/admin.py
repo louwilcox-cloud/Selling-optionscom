@@ -260,12 +260,8 @@ def reset_password(user_id):
             
         user_email = user_data[0]
         
-        # Update password and force password change on next login
-        cur.execute("""
-            UPDATE users 
-            SET password_hash = %s, must_change_password = true, password_reset_at = NOW() 
-            WHERE id = %s
-        """, (password_hash, user_id))
+        # Update password
+        cur.execute("UPDATE users SET password_hash = %s WHERE id = %s", (password_hash, user_id))
         
         # Log the admin action
         admin_id = session.get('user_id')
