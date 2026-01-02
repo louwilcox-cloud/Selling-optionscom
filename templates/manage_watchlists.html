@@ -33,15 +33,15 @@
                         <td>{{ watchlist[4] or 'Unknown' }}</td>
                         <td>{{ watchlist[3].strftime('%Y-%m-%d') if watchlist[3] else 'N/A' }}</td>
                         <td>
-                            <button onclick="editWatchlist({{ watchlist[0] }})" 
-                                    class="btn btn-sm btn-primary edit-btn">Edit</button>
-                            <button onclick="saveWatchlist({{ watchlist[0] }})" 
-                                    class="btn btn-sm btn-success save-btn" style="display: none;">Save</button>
-                            <button onclick="cancelEdit({{ watchlist[0] }})" 
-                                    class="btn btn-sm btn-secondary cancel-btn" style="display: none;">Cancel</button>
-                            <a href="{{ url_for('admin.delete_watchlist', watchlist_id=watchlist[0]) }}" 
-                               class="btn btn-sm btn-danger"
-                               onclick="return confirm('Delete this watchlist?')">Delete</a>
+                            <select class="action-dropdown" id="dropdown-{{ watchlist[0] }}" onchange="handleWatchlistAction(this, {{ watchlist[0] }})">
+                                <option value="">Select Action...</option>
+                                <option value="edit">Edit</option>
+                                <option value="delete">Delete</option>
+                            </select>
+                            <div class="edit-buttons" id="edit-buttons-{{ watchlist[0] }}" style="display: none;">
+                                <button onclick="saveWatchlist({{ watchlist[0] }})" class="btn btn-sm btn-success">Save</button>
+                                <button onclick="cancelEdit({{ watchlist[0] }})" class="btn btn-sm btn-secondary">Cancel</button>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -55,40 +55,49 @@
     </div>
 
     <script>
+    function handleWatchlistAction(selectElement, id) {
+        var action = selectElement.value;
+        if (!action) return;
+        
+        switch(action) {
+            case 'edit':
+                editWatchlist(id);
+                break;
+            case 'delete':
+                if (confirm('Delete this watchlist?')) {
+                    window.location.href = '/admin/delete_watchlist/' + id;
+                }
+                break;
+        }
+        selectElement.value = '';
+    }
+    
     function editWatchlist(id) {
-        const row = document.getElementById(`row-${id}`);
+        const row = document.getElementById('row-' + id);
         const displayTexts = row.querySelectorAll('.display-text');
         const editInputs = row.querySelectorAll('.edit-input');
-        const editBtn = row.querySelector('.edit-btn');
-        const saveBtn = row.querySelector('.save-btn');
-        const cancelBtn = row.querySelector('.cancel-btn');
+        const dropdown = document.getElementById('dropdown-' + id);
+        const editButtons = document.getElementById('edit-buttons-' + id);
         
-        // Hide display texts and show inputs
-        displayTexts.forEach(text => text.style.display = 'none');
-        editInputs.forEach(input => input.style.display = 'inline-block');
+        displayTexts.forEach(function(text) { text.style.display = 'none'; });
+        editInputs.forEach(function(input) { input.style.display = 'inline-block'; });
         
-        // Toggle buttons
-        editBtn.style.display = 'none';
-        saveBtn.style.display = 'inline-block';
-        cancelBtn.style.display = 'inline-block';
+        dropdown.style.display = 'none';
+        editButtons.style.display = 'inline-block';
     }
     
     function cancelEdit(id) {
-        const row = document.getElementById(`row-${id}`);
+        const row = document.getElementById('row-' + id);
         const displayTexts = row.querySelectorAll('.display-text');
         const editInputs = row.querySelectorAll('.edit-input');
-        const editBtn = row.querySelector('.edit-btn');
-        const saveBtn = row.querySelector('.save-btn');
-        const cancelBtn = row.querySelector('.cancel-btn');
+        const dropdown = document.getElementById('dropdown-' + id);
+        const editButtons = document.getElementById('edit-buttons-' + id);
         
-        // Show display texts and hide inputs
-        displayTexts.forEach(text => text.style.display = 'inline');
-        editInputs.forEach(input => input.style.display = 'none');
+        displayTexts.forEach(function(text) { text.style.display = 'inline'; });
+        editInputs.forEach(function(input) { input.style.display = 'none'; });
         
-        // Toggle buttons
-        editBtn.style.display = 'inline-block';
-        saveBtn.style.display = 'none';
-        cancelBtn.style.display = 'none';
+        dropdown.style.display = 'inline-block';
+        editButtons.style.display = 'none';
     }
     
     function saveWatchlist(id) {
@@ -143,6 +152,27 @@
     .btn-sm {
         margin-right: 5px;
         margin-bottom: 2px;
+    }
+    
+    .action-dropdown {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: white;
+        cursor: pointer;
+        font-size: 14px;
+        min-width: 150px;
+    }
+    .action-dropdown:hover {
+        border-color: #4CAF50;
+    }
+    .action-dropdown:focus {
+        outline: none;
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+    }
+    .edit-buttons {
+        display: inline-block;
     }
     </style>
 {% endblock %}
