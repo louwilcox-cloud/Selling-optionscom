@@ -47,50 +47,18 @@ endblock %} {% block content %}
                         </span>
                     </td>
                     <td class="action-buttons">
-                        <!-- Deactivate/Activate Button -->
-                        <a
-                            href="{{ url_for('admin.toggle_user', user_id=user[0]) }}"
-                            class="btn btn-sm btn-warning"
-                        >
-                            {{ 'Deactivate' if user[3] else 'Activate' }}
-                        </a>
-
-                        <!-- Make Admin / Remove Admin Button -->
-                        {% if user[7] %}
-                        <a
-                            href="{{ url_for('admin.remove_admin', user_id=user[0]) }}"
-                            class="btn btn-sm btn-secondary"
-                        >
-                            Remove Admin
-                        </a>
-                        {% else %}
-                        <a
-                            href="{{ url_for('admin.make_admin', user_id=user[0]) }}"
-                            class="btn btn-sm btn-primary"
-                        >
-                            Make Admin
-                        </a>
-                        {% endif %}
-
-                        <!-- Reset Password Button -->
-                        <form method="POST" action="{{ url_for('admin.reset_password', user_id=user[0]) }}" style="display: inline;">
-                            <button 
-                                type="submit" 
-                                class="btn btn-sm btn-info"
-                                onclick="return confirm('Are you sure you want to reset this user password? A new secure temporary password will be generated.')"
-                            >
-                                Reset Password
-                            </button>
-                        </form>
-
-                        <!-- Delete Button -->
-                        <a
-                            href="{{ url_for('admin.delete_user', user_id=user[0]) }}"
-                            class="btn btn-sm btn-danger"
-                            onclick="return confirm('Are you sure you want to permanently delete this user?')"
-                        >
-                            Delete
-                        </a>
+                        <select class="action-dropdown" onchange="handleAction(this, {{ user[0] }}, '{{ user[3] }}', '{{ user[7] }}')">
+                            <option value="">Select Action...</option>
+                            <option value="toggle">{{ 'Deactivate' if user[3] else 'Activate' }}</option>
+                            {% if user[7] %}
+                            <option value="remove_admin">Remove Admin</option>
+                            {% else %}
+                            <option value="make_admin">Make Admin</option>
+                            {% endif %}
+                            <option value="reset_password">Reset Password</option>
+                            <option value="delete">Delete User</option>
+                        </select>
+                        <form id="reset-form-{{ user[0] }}" method="POST" action="{{ url_for('admin.reset_password', user_id=user[0]) }}" style="display: none;"></form>
                     </td>
                 </tr>
                 {% endfor %}
@@ -102,4 +70,62 @@ endblock %} {% block content %}
         <a href="{{ url_for('main.index') }}" class="btn">Back</a>
     </div>
 </div>
+<style>
+.action-dropdown {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+    min-width: 150px;
+}
+.action-dropdown:hover {
+    border-color: #4CAF50;
+}
+.action-dropdown:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+</style>
+
+<script>
+function handleAction(selectElement, userId, isActive, isAdmin) {
+    var action = selectElement.value;
+    if (!action) return;
+    
+    var confirmMsg = '';
+    var url = '';
+    
+    switch(action) {
+        case 'toggle':
+            url = '/admin/toggle_user/' + userId;
+            break;
+        case 'make_admin':
+            url = '/admin/make_admin/' + userId;
+            break;
+        case 'remove_admin':
+            url = '/admin/remove_admin/' + userId;
+            break;
+        case 'reset_password':
+            if (confirm('Are you sure you want to reset this user password? A new secure temporary password will be generated.')) {
+                document.getElementById('reset-form-' + userId).submit();
+            }
+            selectElement.value = '';
+            return;
+        case 'delete':
+            if (confirm('Are you sure you want to permanently delete this user?')) {
+                window.location.href = '/admin/delete_user/' + userId;
+            }
+            selectElement.value = '';
+            return;
+    }
+    
+    if (url) {
+        window.location.href = url;
+    }
+    selectElement.value = '';
+}
+</script>
 {% endblock %}
