@@ -15,6 +15,10 @@ docker-compose up -d
 echo "⏳ Waiting for services to start..."
 sleep 10
 
+# Initialize database with tables and default admin
+echo "🗄️  Initializing database..."
+docker compose exec -T db psql -U postgres -d options_db < init-db.sql 2>/dev/null || echo "⚠️  DB init skipped (may already exist)"
+
 # Health checks
 echo "🔍 Running health checks..."
 
@@ -46,6 +50,10 @@ echo "🎯 Deployment Summary:"
 echo "   Web Interface: http://localhost/"
 echo "   API Endpoint:  http://localhost/api/"
 echo "   Database:      PostgreSQL (internal)"
+echo ""
+echo "👤 Default Admin Login:"
+echo "   Email:    admin@lab.com"
+echo "   Password: admin123"
 echo ""
 echo "🔧 Management commands:"
 echo "   View logs:     docker-compose logs -f"
