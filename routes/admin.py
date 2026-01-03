@@ -26,15 +26,14 @@ def admin_panel():
         watchlists_result = cur.fetchone()
         total_watchlists = watchlists_result[0] if watchlists_result else 0
         
-        # Get recent users with admin status and login info
+        # Get all users with admin status and login info
         cur.execute("""
             SELECT u.id, u.email, u.created_at, u.is_active, u.last_login, u.login_count,
                    CASE WHEN a.user_id IS NOT NULL THEN 'Admin' ELSE 'User' END as role,
                    CASE WHEN a.user_id IS NOT NULL THEN true ELSE false END as is_admin
             FROM users u
             LEFT JOIN admin_users a ON u.id = a.user_id 
-            ORDER BY u.created_at DESC 
-            LIMIT 10
+            ORDER BY u.created_at DESC
         """)
         recent_users = cur.fetchall()
         
