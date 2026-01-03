@@ -7,8 +7,10 @@ services:
     container_name: selling-options-app
     expose:
       - "5000"
+    env_file:
+      - .env.nas
     environment:
-      - DATABASE_URL=postgresql://postgres:password@db:5432/options_db
+      - DATABASE_URL=postgresql://postgres:SecurePassword123@db:5432/options_db
       - FLASK_ENV=production
     depends_on:
       - db
@@ -25,7 +27,7 @@ services:
     environment:
       - POSTGRES_DB=options_db
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_PASSWORD=SecurePassword123
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
