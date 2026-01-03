@@ -1,0 +1,87 @@
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ ./lab-deploy.sh
+🚀 Deploying Market Pulse to Lab Environment...
+WARN[0000] /home/ec2-user/Selling-optionscom/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+WARN[0000] /home/ec2-user/Selling-optionscom/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+[+] Building 42.3s (14/14) FINISHED                                                                                                                                    
+ => [internal] load local bake definitions                                                                                                                        0.0s
+ => => reading from stdin 616B                                                                                                                                    0.0s
+ => [internal] load build definition from Dockerfile                                                                                                              0.0s
+ => => transferring dockerfile: 677B                                                                                                                              0.0s
+ => [internal] load metadata for docker.io/library/python:3.11-slim                                                                                               0.3s
+ => [internal] load .dockerignore                                                                                                                                 0.0s
+ => => transferring context: 280B                                                                                                                                 0.0s
+ => [1/7] FROM docker.io/library/python:3.11-slim@sha256:1dd3dca85e22886e44fcad1bb7ccab6691dfa83db52214cf9e20696e095f3e36                                         3.4s
+ => => resolve docker.io/library/python:3.11-slim@sha256:1dd3dca85e22886e44fcad1bb7ccab6691dfa83db52214cf9e20696e095f3e36                                         0.0s
+ => => sha256:955f4ccb562435365ab83ac6405b197bcfe93e778301cd0187bfb27d76f1ffa0 5.48kB / 5.48kB                                                                    0.0s
+ => => sha256:02d7611c4eae219af91448a4720bdba036575d3bc0356cfe12774af85daa6aff 29.78MB / 29.78MB                                                                  0.6s
+ => => sha256:1473863bb010703cc5da49db594d480fa6a17a3a7df033dfacf0c91bf1162390 1.29MB / 1.29MB                                                                    0.2s
+ => => sha256:7cc13cb22d92060ccb92030698fd1bb23d1e7890328d424a3aa61c498ec1cb57 14.36MB / 14.36MB                                                                  0.4s
+ => => sha256:1dd3dca85e22886e44fcad1bb7ccab6691dfa83db52214cf9e20696e095f3e36 10.37kB / 10.37kB                                                                  0.0s
+ => => sha256:6930196ac2d4c3a295bac0e7039dcc93b3038bd50f548b3a6a6af39a79cab132 1.75kB / 1.75kB                                                                    0.0s
+ => => sha256:654a090213c05af530d397771fd09de5fe6e66c2355cd1a752c763b27ff451cf 249B / 249B                                                                        0.3s
+ => => extracting sha256:02d7611c4eae219af91448a4720bdba036575d3bc0356cfe12774af85daa6aff                                                                         1.5s
+ => => extracting sha256:1473863bb010703cc5da49db594d480fa6a17a3a7df033dfacf0c91bf1162390                                                                         0.1s
+ => => extracting sha256:7cc13cb22d92060ccb92030698fd1bb23d1e7890328d424a3aa61c498ec1cb57                                                                         1.0s
+ => => extracting sha256:654a090213c05af530d397771fd09de5fe6e66c2355cd1a752c763b27ff451cf                                                                         0.0s
+ => [internal] load build context                                                                                                                                 0.5s
+ => => transferring context: 9.16MB                                                                                                                               0.5s
+ => [2/7] WORKDIR /app                                                                                                                                            0.1s
+ => [3/7] RUN apt-get update && apt-get install -y     gcc     postgresql-client     && rm -rf /var/lib/apt/lists/*                                              15.8s
+ => [4/7] COPY requirements.txt .                                                                                                                                 0.1s 
+ => [5/7] RUN pip install --no-cache-dir -r requirements.txt                                                                                                     14.0s 
+ => [6/7] COPY . .                                                                                                                                                0.2s 
+ => [7/7] RUN mkdir -p flask_session                                                                                                                              0.2s 
+ => exporting to image                                                                                                                                            8.0s 
+ => => exporting layers                                                                                                                                           8.0s 
+ => => writing image sha256:cd4114914d0a3cb573eb2674d659ee8dec5aca9048b7318006009ab5bfbf67d4                                                                      0.0s 
+ => => naming to docker.io/library/selling-optionscom-selling-options-app                                                                                         0.0s
+ => resolving provenance for metadata file                                                                                                                        0.0s
+[+] build 1/1
+ ✔ Image selling-optionscom-selling-options-app Built                                                                                                            42.4s 
+WARN[0000] /home/ec2-user/Selling-optionscom/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+[+] up 19/21
+[+] up 25/25dy:2-alpine Pulled                                                                                                                                    3.7s 
+ ✔ Image caddy:2-alpine                           Pulled                                                                                                          3.7s 
+   ✔ 2d35ebdb57d9                                 Pull complete                                                                                                   1.9s 
+   ✔ 094994dd0a88                                 Pull complete                                                                                                   2.0s 
+   ✔ 68bad5cd4577                                 Pull complete                                                                                                   2.0s 
+   ✔ 67e3c8bc26d8                                 Pull complete                                                                                                   3.4s 
+   ✔ 4f4fb700ef54                                 Pull complete                                                                                                   3.5s 
+ ✔ Image postgres:16                              Pulled                                                                                                          8.5s 
+   ✔ 02d7611c4eae                                 Already exists                                                                                                  0.0s 
+   ✔ be56d59d6531                                 Pull complete                                                                                                   0.1s 
+   ✔ 6b79f2b29884                                 Pull complete                                                                                                   1.4s 
+   ✔ 7f53036964f1                                 Pull complete                                                                                                   1.8s 
+   ✔ c3ce0464f73e                                 Pull complete                                                                                                   2.7s 
+   ✔ 08375b6eb817                                 Pull complete                                                                                                   2.9s 
+   ✔ 31172abd8f4a                                 Pull complete                                                                                                   2.9s 
+   ✔ 592e7afa2092                                 Pull complete                                                                                                   2.9s 
+   ✔ 74ee42a72ba8                                 Pull complete                                                                                                   8.2s 
+   ✔ 2809b03b8187                                 Pull complete                                                                                                   8.2s 
+   ✔ ff1a91754d0b                                 Pull complete                                                                                                   8.2s 
+   ✔ 5773fb4a9d72                                 Pull complete                                                                                                   8.3s 
+   ✔ 3efabc308a47                                 Pull complete                                                                                                   8.3s 
+   ✔ 19a4bd73b5b6                                 Pull complete                                                                                                   8.3s 
+ ✔ Network selling-optionscom_selling-options-net Created                                                                                                         0.1s 
+ ✔ Container selling-options-db                   Created                                                                                                         0.1s 
+ ✔ Container selling-options-app                  Created                                                                                                         0.0s 
+ ✔ Container selling-options-caddy                Created                                                                                                         0.0s 
+⏳ Waiting for services to start...
+🔍 Running health checks...
+WARN[0000] /home/ec2-user/Selling-optionscom/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+✅ Containers are running
+⚠️  API health check failed (may need a moment to initialize)
+⚠️  Web interface check failed
+
+🎯 Deployment Summary:
+   Web Interface: http://localhost/
+   API Endpoint:  http://localhost/api/
+   Database:      PostgreSQL (internal)
+
+🔧 Management commands:
+   View logs:     docker compose logs -f
+   Stop:          docker compose down
+   Restart:       docker compose restart
+
+✨ Market Pulse is ready in your lab environment!
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ 
