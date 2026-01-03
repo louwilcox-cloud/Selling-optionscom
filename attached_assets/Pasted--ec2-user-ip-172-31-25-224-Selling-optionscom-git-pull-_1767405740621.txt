@@ -1,0 +1,384 @@
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ git pull
+remote: Enumerating objects: 14, done.
+remote: Counting objects: 100% (14/14), done.
+remote: Compressing objects: 100% (3/3), done.
+remote: Total 11 (delta 8), reused 11 (delta 8), pack-reused 0 (from 0)
+Unpacking objects: 100% (11/11), 9.97 KiB | 2.49 MiB/s, done.
+From https://github.com/louwilcox-cloud/Selling-optionscom
+   8b3371a..35e6b58  main       -> origin/main
+Updating 8b3371a..35e6b58
+Fast-forward
+ attached_assets/Pasted--DOMAIN-selling-options-your-nas-domain-com-ec2-user-ip_1767405550467.txt | 366 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ attached_assets/Pasted--ec2-user-ip-172-31-25-224-Selling-optionscom-lab-deplo_1767405289854.txt | 172 +++++++++++++++++++++++++++++
+ docker-compose.yml                                                                               |   6 +-
+ 3 files changed, 542 insertions(+), 2 deletions(-)
+ create mode 100644 attached_assets/Pasted--DOMAIN-selling-options-your-nas-domain-com-ec2-user-ip_1767405550467.txt
+ create mode 100644 attached_assets/Pasted--ec2-user-ip-172-31-25-224-Selling-optionscom-lab-deplo_1767405289854.txt
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ ./lab-deploy.sh
+🚀 Deploying Market Pulse to Lab Environment...
+WARN[0000] /home/ec2-user/Selling-optionscom/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+WARN[0000] /home/ec2-user/Selling-optionscom/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+[+] Building 11.1s (8/12)                                                                                                                                              
+ => [internal] load local bake definitions                                                                                                                        0.0s
+ => => reading from stdin 616B                                                                                                                                    0.0s
+ => [internal] load build definition from Dockerfile                                                                                                              0.0s
+ => => transferring dockerfile: 679B                                                                                                                              0.0s
+ => [internal] load metadata for docker.io/library/python:3.11-slim                                                                                               0.1s
+ => [internal] load .dockerignore                                                                                                                                 0.0s
+ => => transferring context: 280B                                                                                                                                 0.0s
+ => [1/7] FROM docker.io/library/python:3.11-slim@sha256:1dd3dca85e22886e44fcad1bb7ccab6691dfa83db52214cf9e20696e095f3e36                                         0.0s
+ => [internal] load build context                                                                                                                                 0.0s
+ => => transferring context: 53.18kB                                                                                                                              0.0s
+ => CACHED [2/7] WORKDIR /app                                                                                                                                     0.0s
+ => ERROR [3/7] RUN apt-get update && apt-get install -y     gcc     postgresql-client     && rm -rf /var/lib/apt/lists/*                                        10.9s
+------                                                                                                                                                                 
+ > [3/7] RUN apt-get update && apt-get install -y     gcc     postgresql-client     && rm -rf /var/lib/apt/lists/*:                                                    
+0.252 Hit:1 http://deb.debian.org/debian trixie InRelease                                                                                                              
+0.253 Get:2 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]                                                                                            
+0.258 Get:3 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]                                                                                  
+0.280 Get:4 http://deb.debian.org/debian trixie/main amd64 Packages [9670 kB]                                                                                          
+0.402 Get:5 http://deb.debian.org/debian trixie-updates/main amd64 Packages [5412 B]
+0.403 Get:6 http://deb.debian.org/debian-security trixie-security/main amd64 Packages [94.0 kB]
+1.478 Fetched 9860 kB in 1s (7866 kB/s)
+1.478 Reading package lists...
+2.198 Reading package lists...
+2.912 Building dependency tree...
+3.099 Reading state information...
+3.306 The following additional packages will be installed:
+3.307   binutils binutils-common binutils-x86-64-linux-gnu cpp cpp-14
+3.307   cpp-14-x86-64-linux-gnu cpp-x86-64-linux-gnu gcc-14 gcc-14-x86-64-linux-gnu
+3.308   gcc-x86-64-linux-gnu krb5-locales libasan8 libatomic1 libbinutils
+3.308   libc-dev-bin libc6-dev libcc1-0 libcom-err2 libcrypt-dev libctf-nobfd0
+3.308   libctf0 libgcc-14-dev libgdbm-compat4t64 libgomp1 libgprofng0
+3.309   libgssapi-krb5-2 libhwasan0 libisl23 libitm1 libjansson4 libk5crypto3
+3.310   libkeyutils1 libkrb5-3 libkrb5support0 libldap-common libldap2 liblsan0
+3.311   libmpc3 libmpfr6 libperl5.40 libpq5 libquadmath0 libsasl2-2 libsasl2-modules
+3.311   libsasl2-modules-db libsframe1 libtsan2 libubsan1 linux-libc-dev manpages
+3.311   manpages-dev perl perl-modules-5.40 postgresql-client-17
+3.312   postgresql-client-common rpcsvc-proto sensible-utils
+3.314 Suggested packages:
+3.314   binutils-doc gprofng-gui binutils-gold cpp-doc gcc-14-locales cpp-14-doc
+3.315   gcc-multilib make autoconf automake libtool flex bison gdb gcc-doc
+3.315   gcc-14-multilib gcc-14-doc gdb-x86-64-linux-gnu libc-devtools glibc-doc
+3.315   krb5-doc krb5-user libsasl2-modules-gssapi-mit
+3.316   | libsasl2-modules-gssapi-heimdal libsasl2-modules-ldap libsasl2-modules-otp
+3.316   libsasl2-modules-sql man-browser perl-doc libterm-readline-gnu-perl
+3.316   | libterm-readline-perl-perl libtap-harness-archive-perl postgresql-17
+3.316   postgresql-doc-17
+3.602 The following NEW packages will be installed:
+3.603   binutils binutils-common binutils-x86-64-linux-gnu cpp cpp-14
+3.603   cpp-14-x86-64-linux-gnu cpp-x86-64-linux-gnu gcc gcc-14
+3.604   gcc-14-x86-64-linux-gnu gcc-x86-64-linux-gnu krb5-locales libasan8
+3.604   libatomic1 libbinutils libc-dev-bin libc6-dev libcc1-0 libcom-err2
+3.604   libcrypt-dev libctf-nobfd0 libctf0 libgcc-14-dev libgdbm-compat4t64 libgomp1
+3.605   libgprofng0 libgssapi-krb5-2 libhwasan0 libisl23 libitm1 libjansson4
+3.607   libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 libldap-common libldap2
+3.608   liblsan0 libmpc3 libmpfr6 libperl5.40 libpq5 libquadmath0 libsasl2-2
+3.608   libsasl2-modules libsasl2-modules-db libsframe1 libtsan2 libubsan1
+3.609   linux-libc-dev manpages manpages-dev perl perl-modules-5.40
+3.609   postgresql-client postgresql-client-17 postgresql-client-common rpcsvc-proto
+3.609   sensible-utils
+3.638 0 upgraded, 59 newly installed, 0 to remove and 0 not upgraded.
+3.638 Need to get 71.5 MB of archives.
+3.638 After this operation, 290 MB of additional disk space will be used.
+3.638 Get:1 http://deb.debian.org/debian trixie/main amd64 sensible-utils all 0.0.25 [25.0 kB]
+3.640 Get:2 http://deb.debian.org/debian trixie/main amd64 krb5-locales all 1.21.3-5 [101 kB]
+3.642 Get:3 http://deb.debian.org/debian trixie/main amd64 manpages all 6.9.1-1 [1393 kB]
+3.657 Get:4 http://deb.debian.org/debian trixie/main amd64 perl-modules-5.40 all 5.40.1-6 [3019 kB]
+3.692 Get:5 http://deb.debian.org/debian trixie/main amd64 libgdbm-compat4t64 amd64 1.24-2 [50.3 kB]
+3.693 Get:6 http://deb.debian.org/debian trixie/main amd64 libperl5.40 amd64 5.40.1-6 [4341 kB]
+3.742 Get:7 http://deb.debian.org/debian trixie/main amd64 perl amd64 5.40.1-6 [267 kB]
+3.745 Get:8 http://deb.debian.org/debian trixie/main amd64 libsframe1 amd64 2.44-3 [78.4 kB]
+3.748 Get:9 http://deb.debian.org/debian trixie/main amd64 binutils-common amd64 2.44-3 [2509 kB]
+3.782 Get:10 http://deb.debian.org/debian trixie/main amd64 libbinutils amd64 2.44-3 [534 kB]
+3.791 Get:11 http://deb.debian.org/debian trixie/main amd64 libgprofng0 amd64 2.44-3 [808 kB]
+3.796 Get:12 http://deb.debian.org/debian trixie/main amd64 libctf-nobfd0 amd64 2.44-3 [156 kB]
+3.798 Get:13 http://deb.debian.org/debian trixie/main amd64 libctf0 amd64 2.44-3 [88.6 kB]
+3.804 Get:14 http://deb.debian.org/debian trixie/main amd64 libjansson4 amd64 2.14-2+b3 [39.8 kB]
+3.805 Get:15 http://deb.debian.org/debian trixie/main amd64 binutils-x86-64-linux-gnu amd64 2.44-3 [1014 kB]
+3.811 Get:16 http://deb.debian.org/debian trixie/main amd64 binutils amd64 2.44-3 [265 kB]
+3.814 Get:17 http://deb.debian.org/debian trixie/main amd64 libisl23 amd64 0.27-1 [659 kB]
+3.822 Get:18 http://deb.debian.org/debian trixie/main amd64 libmpfr6 amd64 4.2.2-1 [729 kB]
+3.832 Get:19 http://deb.debian.org/debian trixie/main amd64 libmpc3 amd64 1.3.1-1+b3 [52.2 kB]
+3.833 Get:20 http://deb.debian.org/debian trixie/main amd64 cpp-14-x86-64-linux-gnu amd64 14.2.0-19 [11.0 MB]
+3.955 Get:21 http://deb.debian.org/debian trixie/main amd64 cpp-14 amd64 14.2.0-19 [1280 B]
+3.956 Get:22 http://deb.debian.org/debian trixie/main amd64 cpp-x86-64-linux-gnu amd64 4:14.2.0-1 [4840 B]
+3.958 Get:23 http://deb.debian.org/debian trixie/main amd64 cpp amd64 4:14.2.0-1 [1568 B]
+3.959 Get:24 http://deb.debian.org/debian trixie/main amd64 libcc1-0 amd64 14.2.0-19 [42.8 kB]
+3.962 Get:25 http://deb.debian.org/debian trixie/main amd64 libgomp1 amd64 14.2.0-19 [137 kB]
+3.967 Get:26 http://deb.debian.org/debian trixie/main amd64 libitm1 amd64 14.2.0-19 [26.0 kB]
+3.968 Get:27 http://deb.debian.org/debian trixie/main amd64 libatomic1 amd64 14.2.0-19 [9308 B]
+3.969 Get:28 http://deb.debian.org/debian trixie/main amd64 libasan8 amd64 14.2.0-19 [2725 kB]
+4.003 Get:29 http://deb.debian.org/debian trixie/main amd64 liblsan0 amd64 14.2.0-19 [1204 kB]
+4.019 Get:30 http://deb.debian.org/debian trixie/main amd64 libtsan2 amd64 14.2.0-19 [2460 kB]
+4.038 Get:31 http://deb.debian.org/debian trixie/main amd64 libubsan1 amd64 14.2.0-19 [1074 kB]
+4.052 Get:32 http://deb.debian.org/debian trixie/main amd64 libhwasan0 amd64 14.2.0-19 [1488 kB]
+4.072 Get:33 http://deb.debian.org/debian trixie/main amd64 libquadmath0 amd64 14.2.0-19 [145 kB]
+4.074 Get:34 http://deb.debian.org/debian trixie/main amd64 libgcc-14-dev amd64 14.2.0-19 [2672 kB]
+4.108 Get:35 http://deb.debian.org/debian trixie/main amd64 gcc-14-x86-64-linux-gnu amd64 14.2.0-19 [21.4 MB]
+4.320 Get:36 http://deb.debian.org/debian trixie/main amd64 gcc-14 amd64 14.2.0-19 [540 kB]
+4.331 Get:37 http://deb.debian.org/debian trixie/main amd64 gcc-x86-64-linux-gnu amd64 4:14.2.0-1 [1436 B]
+4.332 Get:38 http://deb.debian.org/debian trixie/main amd64 gcc amd64 4:14.2.0-1 [5136 B]
+4.333 Get:39 http://deb.debian.org/debian trixie/main amd64 libc-dev-bin amd64 2.41-12 [58.2 kB]
+4.335 Get:40 http://deb.debian.org/debian trixie/main amd64 linux-libc-dev all 6.12.57-1 [2692 kB]
+4.359 Get:41 http://deb.debian.org/debian trixie/main amd64 libcrypt-dev amd64 1:4.4.38-1 [119 kB]
+4.361 Get:42 http://deb.debian.org/debian trixie/main amd64 rpcsvc-proto amd64 1.4.3-1 [63.3 kB]
+4.363 Get:43 http://deb.debian.org/debian trixie/main amd64 libc6-dev amd64 2.41-12 [1991 kB]
+4.374 Get:44 http://deb.debian.org/debian trixie/main amd64 libcom-err2 amd64 1.47.2-3+b3 [25.0 kB]
+4.375 Get:45 http://deb.debian.org/debian trixie/main amd64 libkrb5support0 amd64 1.21.3-5 [33.0 kB]
+4.376 Get:46 http://deb.debian.org/debian trixie/main amd64 libk5crypto3 amd64 1.21.3-5 [81.5 kB]
+4.377 Get:47 http://deb.debian.org/debian trixie/main amd64 libkeyutils1 amd64 1.6.3-6 [9456 B]
+4.378 Get:48 http://deb.debian.org/debian trixie/main amd64 libkrb5-3 amd64 1.21.3-5 [326 kB]
+4.385 Get:49 http://deb.debian.org/debian trixie/main amd64 libgssapi-krb5-2 amd64 1.21.3-5 [138 kB]
+4.387 Get:50 http://deb.debian.org/debian trixie/main amd64 libldap-common all 2.6.10+dfsg-1 [35.1 kB]
+4.388 Get:51 http://deb.debian.org/debian trixie/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg1-9 [19.8 kB]
+4.388 Get:52 http://deb.debian.org/debian trixie/main amd64 libsasl2-2 amd64 2.1.28+dfsg1-9 [57.5 kB]
+4.390 Get:53 http://deb.debian.org/debian trixie/main amd64 libldap2 amd64 2.6.10+dfsg-1 [194 kB]
+4.391 Get:54 http://deb.debian.org/debian trixie/main amd64 libpq5 amd64 17.6-0+deb13u1 [228 kB]
+4.393 Get:55 http://deb.debian.org/debian trixie/main amd64 libsasl2-modules amd64 2.1.28+dfsg1-9 [66.7 kB]
+4.395 Get:56 http://deb.debian.org/debian trixie/main amd64 manpages-dev all 6.9.1-1 [2122 kB]
+4.420 Get:57 http://deb.debian.org/debian trixie/main amd64 postgresql-client-common all 278 [47.1 kB]
+4.421 Get:58 http://deb.debian.org/debian trixie/main amd64 postgresql-client-17 amd64 17.6-0+deb13u1 [2031 kB]
+4.433 Get:59 http://deb.debian.org/debian trixie/main amd64 postgresql-client all 17+278 [14.0 kB]
+4.574 debconf: unable to initialize frontend: Dialog
+4.575 debconf: (TERM is not set, so the dialog frontend is not usable.)
+4.575 debconf: falling back to frontend: Readline
+4.576 debconf: unable to initialize frontend: Readline
+4.576 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/x86_64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8, <STDIN> line 59.)
+4.576 debconf: falling back to frontend: Teletype
+4.580 debconf: unable to initialize frontend: Teletype
+4.580 debconf: (This frontend requires a controlling tty.)
+4.580 debconf: falling back to frontend: Noninteractive
+6.039 Fetched 71.5 MB in 1s (88.4 MB/s)
+6.054 Selecting previously unselected package sensible-utils.
+(Reading database ... 5644 files and directories currently installed.)
+6.073 Preparing to unpack .../00-sensible-utils_0.0.25_all.deb ...
+6.078 Unpacking sensible-utils (0.0.25) ...
+6.098 Selecting previously unselected package krb5-locales.
+6.100 Preparing to unpack .../01-krb5-locales_1.21.3-5_all.deb ...
+6.103 Unpacking krb5-locales (1.21.3-5) ...
+6.128 Selecting previously unselected package manpages.
+6.130 Preparing to unpack .../02-manpages_6.9.1-1_all.deb ...
+6.134 Unpacking manpages (6.9.1-1) ...
+6.218 Selecting previously unselected package perl-modules-5.40.
+6.220 Preparing to unpack .../03-perl-modules-5.40_5.40.1-6_all.deb ...
+6.222 Unpacking perl-modules-5.40 (5.40.1-6) ...
+6.628 Selecting previously unselected package libgdbm-compat4t64:amd64.
+6.630 Preparing to unpack .../04-libgdbm-compat4t64_1.24-2_amd64.deb ...
+6.640 Unpacking libgdbm-compat4t64:amd64 (1.24-2) ...
+6.680 Selecting previously unselected package libperl5.40:amd64.
+6.682 Preparing to unpack .../05-libperl5.40_5.40.1-6_amd64.deb ...
+6.687 Unpacking libperl5.40:amd64 (5.40.1-6) ...
+7.118 Selecting previously unselected package perl.
+7.120 Preparing to unpack .../06-perl_5.40.1-6_amd64.deb ...
+7.125 Unpacking perl (5.40.1-6) ...
+7.178 Selecting previously unselected package libsframe1:amd64.
+7.180 Preparing to unpack .../07-libsframe1_2.44-3_amd64.deb ...
+7.185 Unpacking libsframe1:amd64 (2.44-3) ...
+7.217 Selecting previously unselected package binutils-common:amd64.
+7.219 Preparing to unpack .../08-binutils-common_2.44-3_amd64.deb ...
+7.224 Unpacking binutils-common:amd64 (2.44-3) ...
+7.411 Selecting previously unselected package libbinutils:amd64.
+7.413 Preparing to unpack .../09-libbinutils_2.44-3_amd64.deb ...
+7.419 Unpacking libbinutils:amd64 (2.44-3) ...
+7.490 Selecting previously unselected package libgprofng0:amd64.
+7.492 Preparing to unpack .../10-libgprofng0_2.44-3_amd64.deb ...
+7.497 Unpacking libgprofng0:amd64 (2.44-3) ...
+7.588 Selecting previously unselected package libctf-nobfd0:amd64.
+7.590 Preparing to unpack .../11-libctf-nobfd0_2.44-3_amd64.deb ...
+7.596 Unpacking libctf-nobfd0:amd64 (2.44-3) ...
+7.638 Selecting previously unselected package libctf0:amd64.
+7.640 Preparing to unpack .../12-libctf0_2.44-3_amd64.deb ...
+7.645 Unpacking libctf0:amd64 (2.44-3) ...
+7.684 Selecting previously unselected package libjansson4:amd64.
+7.688 Preparing to unpack .../13-libjansson4_2.14-2+b3_amd64.deb ...
+7.693 Unpacking libjansson4:amd64 (2.14-2+b3) ...
+7.723 Selecting previously unselected package binutils-x86-64-linux-gnu.
+7.725 Preparing to unpack .../14-binutils-x86-64-linux-gnu_2.44-3_amd64.deb ...
+7.730 Unpacking binutils-x86-64-linux-gnu (2.44-3) ...
+7.856 Selecting previously unselected package binutils.
+7.858 Preparing to unpack .../15-binutils_2.44-3_amd64.deb ...
+7.864 Unpacking binutils (2.44-3) ...
+7.921 Selecting previously unselected package libisl23:amd64.
+7.923 Preparing to unpack .../16-libisl23_0.27-1_amd64.deb ...
+7.930 Unpacking libisl23:amd64 (0.27-1) ...
+8.007 Selecting previously unselected package libmpfr6:amd64.
+8.009 Preparing to unpack .../17-libmpfr6_4.2.2-1_amd64.deb ...
+8.014 Unpacking libmpfr6:amd64 (4.2.2-1) ...
+8.074 Selecting previously unselected package libmpc3:amd64.
+8.076 Preparing to unpack .../18-libmpc3_1.3.1-1+b3_amd64.deb ...
+8.081 Unpacking libmpc3:amd64 (1.3.1-1+b3) ...
+8.111 Selecting previously unselected package cpp-14-x86-64-linux-gnu.
+8.113 Preparing to unpack .../19-cpp-14-x86-64-linux-gnu_14.2.0-19_amd64.deb ...
+8.118 Unpacking cpp-14-x86-64-linux-gnu (14.2.0-19) ...
+8.875 Selecting previously unselected package cpp-14.
+8.877 Preparing to unpack .../20-cpp-14_14.2.0-19_amd64.deb ...
+8.880 Unpacking cpp-14 (14.2.0-19) ...
+8.899 Selecting previously unselected package cpp-x86-64-linux-gnu.
+8.901 Preparing to unpack .../21-cpp-x86-64-linux-gnu_4%3a14.2.0-1_amd64.deb ...
+8.904 Unpacking cpp-x86-64-linux-gnu (4:14.2.0-1) ...
+8.923 Selecting previously unselected package cpp.
+8.924 Preparing to unpack .../22-cpp_4%3a14.2.0-1_amd64.deb ...
+8.931 Unpacking cpp (4:14.2.0-1) ...
+8.951 Selecting previously unselected package libcc1-0:amd64.
+8.952 Preparing to unpack .../23-libcc1-0_14.2.0-19_amd64.deb ...
+8.955 Unpacking libcc1-0:amd64 (14.2.0-19) ...
+8.980 Selecting previously unselected package libgomp1:amd64.
+8.982 Preparing to unpack .../24-libgomp1_14.2.0-19_amd64.deb ...
+8.984 Unpacking libgomp1:amd64 (14.2.0-19) ...
+9.013 Selecting previously unselected package libitm1:amd64.
+9.015 Preparing to unpack .../25-libitm1_14.2.0-19_amd64.deb ...
+9.019 Unpacking libitm1:amd64 (14.2.0-19) ...
+9.039 Selecting previously unselected package libatomic1:amd64.
+9.041 Preparing to unpack .../26-libatomic1_14.2.0-19_amd64.deb ...
+9.044 Unpacking libatomic1:amd64 (14.2.0-19) ...
+9.068 Selecting previously unselected package libasan8:amd64.
+9.069 Preparing to unpack .../27-libasan8_14.2.0-19_amd64.deb ...
+9.072 Unpacking libasan8:amd64 (14.2.0-19) ...
+9.297 Selecting previously unselected package liblsan0:amd64.
+9.300 Preparing to unpack .../28-liblsan0_14.2.0-19_amd64.deb ...
+9.302 Unpacking liblsan0:amd64 (14.2.0-19) ...
+9.405 Selecting previously unselected package libtsan2:amd64.
+9.407 Preparing to unpack .../29-libtsan2_14.2.0-19_amd64.deb ...
+9.410 Unpacking libtsan2:amd64 (14.2.0-19) ...
+9.635 Selecting previously unselected package libubsan1:amd64.
+9.638 Preparing to unpack .../30-libubsan1_14.2.0-19_amd64.deb ...
+9.640 Unpacking libubsan1:amd64 (14.2.0-19) ...
+9.732 Selecting previously unselected package libhwasan0:amd64.
+9.734 Preparing to unpack .../31-libhwasan0_14.2.0-19_amd64.deb ...
+9.737 Unpacking libhwasan0:amd64 (14.2.0-19) ...
+9.838 dpkg: error processing archive /tmp/apt-dpkg-install-9igiTc/31-libhwasan0_14.2.0-19_amd64.deb (--unpack):
+9.838  cannot copy extracted data for './usr/lib/x86_64-linux-gnu/libhwasan.so.0.0.0' to '/usr/lib/x86_64-linux-gnu/libhwasan.so.0.0.0.dpkg-new': failed to write (No space left on device)
+9.856 Selecting previously unselected package libquadmath0:amd64.
+9.858 Preparing to unpack .../32-libquadmath0_14.2.0-19_amd64.deb ...
+9.861 Unpacking libquadmath0:amd64 (14.2.0-19) ...
+9.891 Selecting previously unselected package libgcc-14-dev:amd64.
+9.893 Preparing to unpack .../33-libgcc-14-dev_14.2.0-19_amd64.deb ...
+9.896 Unpacking libgcc-14-dev:amd64 (14.2.0-19) ...
+9.946 dpkg: error processing archive /tmp/apt-dpkg-install-9igiTc/33-libgcc-14-dev_14.2.0-19_amd64.deb (--unpack):
+9.946  cannot copy extracted data for './usr/lib/gcc/x86_64-linux-gnu/14/libasan.a' to '/usr/lib/gcc/x86_64-linux-gnu/14/libasan.a.dpkg-new': failed to write (No space left on device)
+9.965 Selecting previously unselected package gcc-14-x86-64-linux-gnu.
+9.967 Preparing to unpack .../34-gcc-14-x86-64-linux-gnu_14.2.0-19_amd64.deb ...
+9.970 Unpacking gcc-14-x86-64-linux-gnu (14.2.0-19) ...
+10.05 dpkg: error processing archive /tmp/apt-dpkg-install-9igiTc/34-gcc-14-x86-64-linux-gnu_14.2.0-19_amd64.deb (--unpack):
+10.05  cannot copy extracted data for './usr/bin/x86_64-linux-gnu-lto-dump-14' to '/usr/bin/x86_64-linux-gnu-lto-dump-14.dpkg-new': failed to write (No space left on device)
+10.05 dpkg-deb: error: paste subprocess was killed by signal (Broken pipe)
+10.06 Selecting previously unselected package gcc-14.
+10.06 Preparing to unpack .../35-gcc-14_14.2.0-19_amd64.deb ...
+10.06 Unpacking gcc-14 (14.2.0-19) ...
+10.09 Selecting previously unselected package gcc-x86-64-linux-gnu.
+10.10 Preparing to unpack .../36-gcc-x86-64-linux-gnu_4%3a14.2.0-1_amd64.deb ...
+10.10 Unpacking gcc-x86-64-linux-gnu (4:14.2.0-1) ...
+10.12 Selecting previously unselected package gcc.
+10.12 Preparing to unpack .../37-gcc_4%3a14.2.0-1_amd64.deb ...
+10.12 Unpacking gcc (4:14.2.0-1) ...
+10.14 Selecting previously unselected package libc-dev-bin.
+10.14 Preparing to unpack .../38-libc-dev-bin_2.41-12_amd64.deb ...
+10.15 Unpacking libc-dev-bin (2.41-12) ...
+10.16 Selecting previously unselected package linux-libc-dev.
+10.17 Preparing to unpack .../39-linux-libc-dev_6.12.57-1_all.deb ...
+10.17 Unpacking linux-libc-dev (6.12.57-1) ...
+10.24 dpkg: error processing archive /tmp/apt-dpkg-install-9igiTc/39-linux-libc-dev_6.12.57-1_all.deb (--unpack):
+10.24  cannot copy extracted data for './usr/include/linux/if_team.h' to '/usr/include/linux/if_team.h.dpkg-new': failed to write (No space left on device)
+10.27 Selecting previously unselected package libcrypt-dev:amd64.
+10.28 Preparing to unpack .../40-libcrypt-dev_1%3a4.4.38-1_amd64.deb ...
+10.28 Unpacking libcrypt-dev:amd64 (1:4.4.38-1) ...
+10.31 Selecting previously unselected package rpcsvc-proto.
+10.31 Preparing to unpack .../41-rpcsvc-proto_1.4.3-1_amd64.deb ...
+10.31 Unpacking rpcsvc-proto (1.4.3-1) ...
+10.34 Selecting previously unselected package libc6-dev:amd64.
+10.34 Preparing to unpack .../42-libc6-dev_2.41-12_amd64.deb ...
+10.34 Unpacking libc6-dev:amd64 (2.41-12) ...
+10.41 dpkg: error processing archive /tmp/apt-dpkg-install-9igiTc/42-libc6-dev_2.41-12_amd64.deb (--unpack):
+10.41  unable to create '/usr/include/x86_64-linux-gnu/bits/types/error_t.h.dpkg-new' (while processing './usr/include/x86_64-linux-gnu/bits/types/error_t.h'): No space left on device
+10.44 Selecting previously unselected package libcom-err2:amd64.
+10.44 Preparing to unpack .../43-libcom-err2_1.47.2-3+b3_amd64.deb ...
+10.45 Unpacking libcom-err2:amd64 (1.47.2-3+b3) ...
+10.47 Selecting previously unselected package libkrb5support0:amd64.
+10.47 Preparing to unpack .../44-libkrb5support0_1.21.3-5_amd64.deb ...
+10.47 Unpacking libkrb5support0:amd64 (1.21.3-5) ...
+10.50 Selecting previously unselected package libk5crypto3:amd64.
+10.50 Preparing to unpack .../45-libk5crypto3_1.21.3-5_amd64.deb ...
+10.50 Unpacking libk5crypto3:amd64 (1.21.3-5) ...
+10.53 Selecting previously unselected package libkeyutils1:amd64.
+10.53 Preparing to unpack .../46-libkeyutils1_1.6.3-6_amd64.deb ...
+10.53 Unpacking libkeyutils1:amd64 (1.6.3-6) ...
+10.55 Selecting previously unselected package libkrb5-3:amd64.
+10.55 Preparing to unpack .../47-libkrb5-3_1.21.3-5_amd64.deb ...
+10.56 Unpacking libkrb5-3:amd64 (1.21.3-5) ...
+10.60 Selecting previously unselected package libgssapi-krb5-2:amd64.
+10.61 Preparing to unpack .../48-libgssapi-krb5-2_1.21.3-5_amd64.deb ...
+10.61 Unpacking libgssapi-krb5-2:amd64 (1.21.3-5) ...
+10.64 Selecting previously unselected package libldap-common.
+10.64 Preparing to unpack .../49-libldap-common_2.6.10+dfsg-1_all.deb ...
+10.64 Unpacking libldap-common (2.6.10+dfsg-1) ...
+10.66 Selecting previously unselected package libsasl2-modules-db:amd64.
+10.67 Preparing to unpack .../50-libsasl2-modules-db_2.1.28+dfsg1-9_amd64.deb ...
+10.67 Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg1-9) ...
+10.69 Selecting previously unselected package libsasl2-2:amd64.
+10.69 Preparing to unpack .../51-libsasl2-2_2.1.28+dfsg1-9_amd64.deb ...
+10.70 Unpacking libsasl2-2:amd64 (2.1.28+dfsg1-9) ...
+10.72 Selecting previously unselected package libldap2:amd64.
+10.72 Preparing to unpack .../52-libldap2_2.6.10+dfsg-1_amd64.deb ...
+10.73 Unpacking libldap2:amd64 (2.6.10+dfsg-1) ...
+10.74 dpkg: error processing archive /tmp/apt-dpkg-install-9igiTc/52-libldap2_2.6.10+dfsg-1_amd64.deb (--unpack):
+10.74  cannot copy extracted data for './usr/lib/x86_64-linux-gnu/libldap.so.2.0.200' to '/usr/lib/x86_64-linux-gnu/libldap.so.2.0.200.dpkg-new': failed to write (No space left on device)
+10.76 Selecting previously unselected package libpq5:amd64.
+10.76 Preparing to unpack .../53-libpq5_17.6-0+deb13u1_amd64.deb ...
+10.76 Unpacking libpq5:amd64 (17.6-0+deb13u1) ...
+10.79 tar: ./preinst: Cannot write: No space left on device
+10.80 tar: ./prerm: Cannot write: No space left on device
+10.80 tar: Exiting with failure status due to previous errors
+10.80 dpkg-deb: error: tar subprocess returned error exit status 2
+10.80 dpkg: error processing archive /tmp/apt-dpkg-install-9igiTc/54-libsasl2-modules_2.1.28+dfsg1-9_amd64.deb (--unpack):
+10.80  dpkg-deb --control subprocess returned error exit status 2
+10.80 tar: ./md5sums: Wrote only 512 of 10240 bytes
+10.80 tar: Exiting with failure status due to previous errors
+10.81 dpkg-deb: error: tar subprocess returned error exit status 2
+10.81 dpkg: error processing archive /tmp/apt-dpkg-install-9igiTc/55-manpages-dev_6.9.1-1_all.deb (--unpack):
+10.81  dpkg-deb --control subprocess returned error exit status 2
+10.81 tar: ./postrm: Cannot write: No space left on device
+10.82 tar: ./preinst: Cannot write: No space left on device
+10.82 tar: ./prerm: Cannot write: No space left on device
+10.82 tar: Exiting with failure status due to previous errors
+10.82 dpkg-deb: error: tar subprocess returned error exit status 2
+10.82 dpkg: error processing archive /tmp/apt-dpkg-install-9igiTc/56-postgresql-client-common_278_all.deb (--unpack):
+10.82  dpkg-deb --control subprocess returned error exit status 2
+10.83 tar: ./md5sums: Wrote only 1024 of 10240 bytes
+10.83 tar: ./prerm: Cannot write: No space left on device
+10.83 tar: Exiting with failure status due to previous errors
+10.83 dpkg-deb: error: tar subprocess returned error exit status 2
+10.83 dpkg: error processing archive /tmp/apt-dpkg-install-9igiTc/57-postgresql-client-17_17.6-0+deb13u1_amd64.deb (--unpack):
+10.83  dpkg-deb --control subprocess returned error exit status 2
+10.84 Selecting previously unselected package postgresql-client.
+10.84 Preparing to unpack .../58-postgresql-client_17+278_all.deb ...
+10.84 Unpacking postgresql-client (17+278) ...
+10.85 dpkg: error processing archive /tmp/apt-dpkg-install-9igiTc/58-postgresql-client_17+278_all.deb (--unpack):
+10.85  cannot copy extracted data for './usr/share/doc/postgresql-client/copyright' to '/usr/share/doc/postgresql-client/copyright.dpkg-new': failed to write (No space left on device)
+10.85 dpkg: unrecoverable fatal error, aborting:
+10.85  unable to flush /var/lib/dpkg/updates/tmp.i after padding: No space left on device
+10.87 E: Sub-process /usr/bin/dpkg returned an error code (2)
+------
+[+] build 0/1
+ ⠙ Image selling-optionscom-selling-options-app Building                                                                                                         11.2s 
+Dockerfile:8
+
+--------------------
+
+   7 |     # Install system dependencies
+
+   8 | >>> RUN apt-get update && apt-get install -y \
+
+   9 | >>>     gcc \
+
+  10 | >>>     postgresql-client \
+
+  11 | >>>     && rm -rf /var/lib/apt/lists/*
+
+  12 |     
+
+--------------------
+
+failed to solve: process "/bin/sh -c apt-get update && apt-get install -y     gcc     postgresql-client     && rm -rf /var/lib/apt/lists/*" did not complete successfully: exit code: 100
+
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ 
