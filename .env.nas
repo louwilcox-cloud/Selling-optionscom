@@ -9,6 +9,11 @@ DATABASE_URL=postgresql://postgres:SecurePassword123@db:5432/options_db
 POSTGRES_DB=options_db
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=SecurePassword123
+PGHOST=db
+PGDATABASE=options_db
+PGUSER=postgres
+PGPASSWORD=SecurePassword123
+PGPORT=5432
 
 # Flask Configuration
 FLASK_ENV=production
