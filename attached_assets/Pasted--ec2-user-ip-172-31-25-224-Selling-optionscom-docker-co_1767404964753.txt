@@ -1,0 +1,53 @@
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ docker compose logs -f
+WARN[0000] /home/ec2-user/Selling-optionscom/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+selling-options-db  | 
+selling-options-db  | PostgreSQL Database directory appears to contain a database; Skipping initialization
+selling-options-db  | 
+selling-options-db  | 2026-01-03 01:45:37.656 UTC [1] LOG:  starting PostgreSQL 16.11 (Debian 16.11-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+selling-options-db  | 2026-01-03 01:45:37.658 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+selling-options-db  | 2026-01-03 01:45:37.658 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+selling-options-db  | 2026-01-03 01:45:37.659 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+selling-options-db  | 2026-01-03 01:45:37.664 UTC [27] LOG:  database system was shut down at 2026-01-03 01:39:53 UTC
+selling-options-db  | 2026-01-03 01:45:37.687 UTC [1] LOG:  database system is ready to accept connections
+selling-options-caddy  | {"level":"info","ts":1767404738.6006958,"msg":"maxprocs: Leaving GOMAXPROCS=1: CPU quota undefined"}
+selling-options-caddy  | {"level":"info","ts":1767404738.6009638,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":915602227,"previous":9223372036854775807}
+selling-options-caddy  | {"level":"info","ts":1767404738.6017776,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+selling-options-caddy  | {"level":"warn","ts":1767404738.6033738,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+selling-options-caddy  | {"level":"warn","ts":1767404738.6033835,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+selling-options-caddy  | {"level":"warn","ts":1767404738.6078248,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+selling-options-caddy  | {"level":"warn","ts":1767404738.607836,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+selling-options-caddy  | {"level":"warn","ts":1767404738.60789,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+selling-options-caddy  | {"level":"warn","ts":1767404738.6078937,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+selling-options-caddy  | {"level":"info","ts":1767404738.6083257,"msg":"adapted config to JSON","adapter":"caddyfile"}
+selling-options-caddy  | {"level":"warn","ts":1767404738.6083329,"msg":"Caddyfile input is not formatted; run 'caddy fmt --overwrite' to fix inconsistencies","adapter":"caddyfile","file":"/etc/caddy/Caddyfile","line":6}
+selling-options-caddy  | {"level":"warn","ts":1767404738.6088102,"logger":"admin","msg":"admin endpoint disabled"}
+selling-options-caddy  | {"level":"info","ts":1767404738.6106865,"logger":"http.auto_https","msg":"automatic HTTPS is completely disabled for server","server_name":"srv0"}
+selling-options-caddy  | {"level":"warn","ts":1767404738.615042,"logger":"http","msg":"HTTP/2 skipped because it requires TLS","network":"tcp","addr":":80"}
+selling-options-caddy  | {"level":"warn","ts":1767404738.615052,"logger":"http","msg":"HTTP/3 skipped because it requires TLS","network":"tcp","addr":":80"}
+selling-options-caddy  | {"level":"info","ts":1767404738.6150608,"logger":"http.log","msg":"server running","name":"srv0","protocols":["h1","h2","h3"]}
+selling-options-caddy  | {"level":"info","ts":1767404738.6176734,"msg":"autosaved config (load with --resume flag)","file":"/config/caddy/autosave.json"}
+selling-options-caddy  | {"level":"info","ts":1767404738.6176841,"msg":"serving initial configuration"}
+selling-options-caddy  | {"level":"info","ts":1767404738.6211503,"logger":"tls.cache.maintenance","msg":"started background certificate maintenance","cache":"0xc000205000"}
+selling-options-caddy  | 1.7674047403771992e+09 info    [FileStorage:/data/caddy] /data/caddy/locks/storage_clean.lock: Empty lockfile (EOF) - likely previous process crashed or storage medium failure; treating as stale
+selling-options-caddy  | 1.7674047403772342e+09 info    [FileStorage:/data/caddy] Lock for 'storage_clean' is stale (created: 0001-01-01 00:00:00 +0000 UTC, last update: 0001-01-01 00:00:00 +0000 UTC); removing then retrying: /data/caddy/locks/storage_clean.lock
+selling-options-caddy  | {"level":"info","ts":1767404740.3788009,"logger":"tls","msg":"cleaning storage unit","storage":"FileStorage:/data/caddy"}
+selling-options-caddy  | {"level":"info","ts":1767404740.3806324,"logger":"tls","msg":"certificate expired beyond grace period; cleaning up","storage":"FileStorage:/data/caddy","asset_key":"certificates/acme-v02.api.letsencrypt.org-directory/www.ezmoneywithoptions.com/www.ezmoneywithoptions.com.crt","expired_for":2113424.380630215,"grace_period":1209600}
+selling-options-caddy  | {"level":"info","ts":1767404740.3806453,"logger":"tls","msg":"deleting asset because resource expired","storage":"FileStorage:/data/caddy","asset_key":"certificates/acme-v02.api.letsencrypt.org-directory/www.ezmoneywithoptions.com/www.ezmoneywithoptions.com.crt"}
+selling-options-caddy  | {"level":"info","ts":1767404740.380686,"logger":"tls","msg":"deleting asset because resource expired","storage":"FileStorage:/data/caddy","asset_key":"certificates/acme-v02.api.letsencrypt.org-directory/www.ezmoneywithoptions.com/www.ezmoneywithoptions.com.key"}
+selling-options-caddy  | {"level":"info","ts":1767404740.3807032,"logger":"tls","msg":"deleting asset because resource expired","storage":"FileStorage:/data/caddy","asset_key":"certificates/acme-v02.api.letsencrypt.org-directory/www.ezmoneywithoptions.com/www.ezmoneywithoptions.com.json"}
+selling-options-caddy  | {"level":"info","ts":1767404740.3807333,"logger":"tls","msg":"deleting site folder because key is empty","storage":"FileStorage:/data/caddy","site_key":"certificates/acme-v02.api.letsencrypt.org-directory/www.ezmoneywithoptions.com"}
+selling-options-caddy  | {"level":"info","ts":1767404740.3816159,"logger":"tls","msg":"finished cleaning storage units"}
+selling-options-caddy  | {"level":"error","ts":1767404748.2267785,"logger":"http.log.error","msg":"dial tcp: lookup selling-options-app on 127.0.0.11:53: no such host","request":{"remote_ip":"172.24.0.1","remote_port":"36710","client_ip":"172.24.0.1","proto":"HTTP/1.1","method":"GET","host":"localhost","uri":"/api/market-data","headers":{"User-Agent":["curl/8.3.0"],"Accept":["*/*"]}},"duration":0.018505885,"status":502,"err_id":"ze1zvacaz","err_trace":"reverseproxy.statusError (reverseproxy.go:1390)"}
+selling-options-caddy  | {"level":"error","ts":1767404748.2392864,"logger":"http.log.error","msg":"dial tcp: lookup selling-options-app on 127.0.0.11:53: no such host","request":{"remote_ip":"172.24.0.1","remote_port":"36722","client_ip":"172.24.0.1","proto":"HTTP/1.1","method":"GET","host":"localhost","uri":"/","headers":{"User-Agent":["curl/8.3.0"],"Accept":["*/*"]}},"duration":0.002644131,"status":502,"err_id":"9kn0vmzc2","err_trace":"reverseproxy.statusError (reverseproxy.go:1390)"}
+selling-options-app    | python: can't open file '/app/app.py': [Errno 2] No such file or directory
+selling-options-app    | python: can't open file '/app/app.py': [Errno 2] No such file or directory
+selling-options-app    | python: can't open file '/app/app.py': [Errno 2] No such file or directory
+selling-options-app    | python: can't open file '/app/app.py': [Errno 2] No such file or directory
+selling-options-app    | python: can't open file '/app/app.py': [Errno 2] No such file or directory
+selling-options-app    | python: can't open file '/app/app.py': [Errno 2] No such file or directory
+selling-options-app    | python: can't open file '/app/app.py': [Errno 2] No such file or directory
+selling-options-app    | python: can't open file '/app/app.py': [Errno 2] No such file or directory
+selling-options-app    | python: can't open file '/app/app.py': [Errno 2] No such file or directory
+selling-options-app    | python: can't open file '/app/app.py': [Errno 2] No such file or directory
+selling-options-app    | python: can't open file '/app/app.py': [Errno 2] No such file or directory
+selling-options-app    | python: can't open file '/app/app.py': [Errno 2] No such file or directory
