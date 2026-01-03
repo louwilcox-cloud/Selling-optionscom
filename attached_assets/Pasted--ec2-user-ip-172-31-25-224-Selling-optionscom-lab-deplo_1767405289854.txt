@@ -1,0 +1,172 @@
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ ./lab-deploy.sh
+🚀 Deploying Market Pulse to Lab Environment...
+WARN[0000] /home/ec2-user/Selling-optionscom/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+[+] down 4/4
+ ✔ Container selling-options-caddy                Removed                                                                                                         0.1s 
+ ✔ Container selling-options-app                  Removed                                                                                                         0.0s 
+ ✔ Container selling-options-db                   Removed                                                                                                         0.1s 
+ ✔ Network selling-optionscom_selling-options-net Removed                                                                                                         0.0s 
+WARN[0000] /home/ec2-user/Selling-optionscom/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+[+] Building 37.8s (14/14) FINISHED                                                                                                                                    
+ => [internal] load local bake definitions                                                                                                                        0.0s
+ => => reading from stdin 616B                                                                                                                                    0.0s
+ => [internal] load build definition from Dockerfile                                                                                                              0.0s
+ => => transferring dockerfile: 679B                                                                                                                              0.0s
+ => [internal] load metadata for docker.io/library/python:3.11-slim                                                                                               0.1s
+ => [internal] load .dockerignore                                                                                                                                 0.0s
+ => => transferring context: 280B                                                                                                                                 0.0s
+ => [1/7] FROM docker.io/library/python:3.11-slim@sha256:1dd3dca85e22886e44fcad1bb7ccab6691dfa83db52214cf9e20696e095f3e36                                         0.0s
+ => [internal] load build context                                                                                                                                 0.0s
+ => => transferring context: 34.47kB                                                                                                                              0.0s
+ => CACHED [2/7] WORKDIR /app                                                                                                                                     0.0s
+ => [3/7] RUN apt-get update && apt-get install -y     gcc     postgresql-client     && rm -rf /var/lib/apt/lists/*                                              15.4s
+ => [4/7] COPY requirements.txt .                                                                                                                                 0.1s 
+ => [5/7] RUN pip install --no-cache-dir -r requirements.txt                                                                                                     13.8s 
+ => [6/7] COPY . .                                                                                                                                                0.2s 
+ => [7/7] RUN mkdir -p flask_session                                                                                                                              0.2s 
+ => exporting to image                                                                                                                                            7.9s 
+ => => exporting layers                                                                                                                                           7.9s 
+ => => writing image sha256:8eed117accb10ab999d65cca1cea36e14c631397b34d469e0dacae181dd9f944                                                                      0.0s 
+ => => naming to docker.io/library/selling-optionscom-selling-options-app                                                                                         0.0s 
+ => resolving provenance for metadata file                                                                                                                        0.0s
+[+] build 1/1
+ ✔ Image selling-optionscom-selling-options-app Built                                                                                                            37.9s 
+WARN[0000] /home/ec2-user/Selling-optionscom/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+WARN[0000] No services to build                         
+[+] up 4/4
+ ✔ Network selling-optionscom_selling-options-net Created                                                                                                         0.1s 
+ ✔ Container selling-options-db                   Created                                                                                                         0.0s 
+ ✔ Container selling-options-app                  Created                                                                                                         0.0s 
+ ✔ Container selling-options-caddy                Created                                                                                                         0.0s 
+⏳ Waiting for services to start...
+🔍 Running health checks...
+WARN[0000] /home/ec2-user/Selling-optionscom/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+✅ Containers are running
+⚠️  API health check failed (may need a moment to initialize)
+⚠️  Web interface check failed
+
+🎯 Deployment Summary:
+   Web Interface: http://localhost/
+   API Endpoint:  http://localhost/api/
+   Database:      PostgreSQL (internal)
+
+🔧 Management commands:
+   View logs:     docker compose logs -f
+   Stop:          docker compose down
+   Restart:       docker compose restart
+
+✨ Market Pulse is ready in your lab environment!
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ docker compose logs -f
+WARN[0000] /home/ec2-user/Selling-optionscom/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+selling-options-db  | 
+selling-options-db  | PostgreSQL Database directory appears to contain a database; Skipping initialization
+selling-options-db  | 
+selling-options-db  | 2026-01-03 01:52:59.842 UTC [1] LOG:  starting PostgreSQL 16.11 (Debian 16.11-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+selling-options-db  | 2026-01-03 01:52:59.843 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+selling-options-db  | 2026-01-03 01:52:59.843 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+selling-options-db  | 2026-01-03 01:52:59.845 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+selling-options-db  | 2026-01-03 01:52:59.853 UTC [28] LOG:  database system was shut down at 2026-01-03 01:52:20 UTC
+selling-options-db  | 2026-01-03 01:52:59.884 UTC [1] LOG:  database system is ready to accept connections
+selling-options-app  | Traceback (most recent call last):
+selling-options-app  |   File "/app/main.py", line 13, in <module>
+selling-options-app  |     from routes.api import api_bp
+selling-options-app  |   File "/app/routes/api.py", line 4, in <module>
+selling-options-app  |     from services.polygon_service import (
+selling-options-app  |   File "/app/services/polygon_service.py", line 11, in <module>
+selling-options-app  |     raise RuntimeError("Missing POLYGON_API_KEY in environment.")
+selling-options-app  | RuntimeError: Missing POLYGON_API_KEY in environment.
+selling-options-app  | Traceback (most recent call last):
+selling-options-app  |   File "/app/main.py", line 13, in <module>
+selling-options-app  |     from routes.api import api_bp
+selling-options-app  |   File "/app/routes/api.py", line 4, in <module>
+selling-options-app  |     from services.polygon_service import (
+selling-options-app  |   File "/app/services/polygon_service.py", line 11, in <module>
+selling-options-app  |     raise RuntimeError("Missing POLYGON_API_KEY in environment.")
+selling-options-app  | RuntimeError: Missing POLYGON_API_KEY in environment.
+selling-options-app  | Traceback (most recent call last):
+selling-options-app  |   File "/app/main.py", line 13, in <module>
+selling-options-app  |     from routes.api import api_bp
+selling-options-app  |   File "/app/routes/api.py", line 4, in <module>
+selling-options-app  |     from services.polygon_service import (
+selling-options-app  |   File "/app/services/polygon_service.py", line 11, in <module>
+selling-options-app  |     raise RuntimeError("Missing POLYGON_API_KEY in environment.")
+selling-options-app  | RuntimeError: Missing POLYGON_API_KEY in environment.
+selling-options-app  | Traceback (most recent call last):
+selling-options-app  |   File "/app/main.py", line 13, in <module>
+selling-options-app  |     from routes.api import api_bp
+selling-options-app  |   File "/app/routes/api.py", line 4, in <module>
+selling-options-app  |     from services.polygon_service import (
+selling-options-app  |   File "/app/services/polygon_service.py", line 11, in <module>
+selling-options-app  |     raise RuntimeError("Missing POLYGON_API_KEY in environment.")
+selling-options-app  | RuntimeError: Missing POLYGON_API_KEY in environment.
+selling-options-app  | Traceback (most recent call last):
+selling-options-app  |   File "/app/main.py", line 13, in <module>
+selling-options-app  |     from routes.api import api_bp
+selling-options-app  |   File "/app/routes/api.py", line 4, in <module>
+selling-options-app  |     from services.polygon_service import (
+selling-options-app  |   File "/app/services/polygon_service.py", line 11, in <module>
+selling-options-app  |     raise RuntimeError("Missing POLYGON_API_KEY in environment.")
+selling-options-app  | RuntimeError: Missing POLYGON_API_KEY in environment.
+selling-options-app  | Traceback (most recent call last):
+selling-options-app  |   File "/app/main.py", line 13, in <module>
+selling-options-app  |     from routes.api import api_bp
+selling-options-app  |   File "/app/routes/api.py", line 4, in <module>
+selling-options-app  |     from services.polygon_service import (
+selling-options-app  |   File "/app/services/polygon_service.py", line 11, in <module>
+selling-options-app  |     raise RuntimeError("Missing POLYGON_API_KEY in environment.")
+selling-options-app  | RuntimeError: Missing POLYGON_API_KEY in environment.
+selling-options-app  | Traceback (most recent call last):
+selling-options-app  |   File "/app/main.py", line 13, in <module>
+selling-options-app  |     from routes.api import api_bp
+selling-options-app  |   File "/app/routes/api.py", line 4, in <module>
+selling-options-app  |     from services.polygon_service import (
+selling-options-app  |   File "/app/services/polygon_service.py", line 11, in <module>
+selling-options-app  |     raise RuntimeError("Missing POLYGON_API_KEY in environment.")
+selling-options-app  | RuntimeError: Missing POLYGON_API_KEY in environment.
+selling-options-app  | Traceback (most recent call last):
+selling-options-app  |   File "/app/main.py", line 13, in <module>
+selling-options-app  |     from routes.api import api_bp
+selling-options-app  |   File "/app/routes/api.py", line 4, in <module>
+selling-options-app  |     from services.polygon_service import (
+selling-options-app  |   File "/app/services/polygon_service.py", line 11, in <module>
+selling-options-app  |     raise RuntimeError("Missing POLYGON_API_KEY in environment.")
+selling-options-app  | RuntimeError: Missing POLYGON_API_KEY in environment.
+selling-options-app  | Traceback (most recent call last):
+selling-options-app  |   File "/app/main.py", line 13, in <module>
+selling-options-app  |     from routes.api import api_bp
+selling-options-app  |   File "/app/routes/api.py", line 4, in <module>
+selling-options-app  |     from services.polygon_service import (
+selling-options-app  |   File "/app/services/polygon_service.py", line 11, in <module>
+selling-options-app  |     raise RuntimeError("Missing POLYGON_API_KEY in environment.")
+selling-options-app  | RuntimeError: Missing POLYGON_API_KEY in environment.
+selling-options-app  | Traceback (most recent call last):
+selling-options-app  |   File "/app/main.py", line 13, in <module>
+selling-options-app  |     from routes.api import api_bp
+selling-options-app  |   File "/app/routes/api.py", line 4, in <module>
+selling-options-app  |     from services.polygon_service import (
+selling-options-app  |   File "/app/services/polygon_service.py", line 11, in <module>
+selling-options-app  |     raise RuntimeError("Missing POLYGON_API_KEY in environment.")
+selling-options-app  | RuntimeError: Missing POLYGON_API_KEY in environment.
+selling-options-caddy  | {"level":"info","ts":1767405180.680739,"msg":"maxprocs: Leaving GOMAXPROCS=1: CPU quota undefined"}
+selling-options-caddy  | {"level":"info","ts":1767405180.680994,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":915602227,"previous":9223372036854775807}
+selling-options-caddy  | {"level":"info","ts":1767405180.6819575,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+selling-options-caddy  | {"level":"warn","ts":1767405180.6843219,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+selling-options-caddy  | {"level":"warn","ts":1767405180.6843345,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+selling-options-caddy  | {"level":"warn","ts":1767405180.684582,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+selling-options-caddy  | {"level":"warn","ts":1767405180.6845868,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+selling-options-caddy  | {"level":"warn","ts":1767405180.684626,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+selling-options-caddy  | {"level":"warn","ts":1767405180.6846297,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+selling-options-caddy  | {"level":"info","ts":1767405180.6849813,"msg":"adapted config to JSON","adapter":"caddyfile"}
+selling-options-caddy  | {"level":"warn","ts":1767405180.6849864,"msg":"Caddyfile input is not formatted; run 'caddy fmt --overwrite' to fix inconsistencies","adapter":"caddyfile","file":"/etc/caddy/Caddyfile","line":6}
+selling-options-caddy  | {"level":"warn","ts":1767405180.6853611,"logger":"admin","msg":"admin endpoint disabled"}
+selling-options-caddy  | {"level":"info","ts":1767405180.692126,"logger":"tls.cache.maintenance","msg":"started background certificate maintenance","cache":"0xc0000e7480"}
+selling-options-caddy  | {"level":"info","ts":1767405180.6941602,"logger":"http.auto_https","msg":"automatic HTTPS is completely disabled for server","server_name":"srv0"}
+selling-options-caddy  | {"level":"warn","ts":1767405180.7023292,"logger":"http","msg":"HTTP/2 skipped because it requires TLS","network":"tcp","addr":":80"}
+selling-options-caddy  | {"level":"warn","ts":1767405180.702417,"logger":"http","msg":"HTTP/3 skipped because it requires TLS","network":"tcp","addr":":80"}
+selling-options-caddy  | {"level":"info","ts":1767405180.7024508,"logger":"http.log","msg":"server running","name":"srv0","protocols":["h1","h2","h3"]}
+selling-options-caddy  | {"level":"info","ts":1767405180.7047164,"msg":"autosaved config (load with --resume flag)","file":"/config/caddy/autosave.json"}
+selling-options-caddy  | {"level":"info","ts":1767405180.7048085,"msg":"serving initial configuration"}
+selling-options-caddy  | {"level":"info","ts":1767405180.7097578,"logger":"tls","msg":"storage cleaning happened too recently; skipping for now","storage":"FileStorage:/data/caddy","instance":"b746ba80-2e47-4e32-95cc-02fe35e7d574","try_again":1767491580.7097552,"try_again_in":86399.999999096}
+selling-options-caddy  | {"level":"info","ts":1767405180.7098763,"logger":"tls","msg":"finished cleaning storage units"}
+selling-options-caddy  | {"level":"error","ts":1767405190.267531,"logger":"http.log.error","msg":"dial tcp: lookup selling-options-app on 127.0.0.11:53: no such host","request":{"remote_ip":"172.25.0.1","remote_port":"53600","client_ip":"172.25.0.1","proto":"HTTP/1.1","method":"GET","host":"localhost","uri":"/api/market-data","headers":{"User-Agent":["curl/8.3.0"],"Accept":["*/*"]}},"duration":0.008731876,"status":502,"err_id":"j69eb4983","err_trace":"reverseproxy.statusError (reverseproxy.go:1390)"}
+selling-options-caddy  | {"level":"error","ts":1767405190.2775602,"logger":"http.log.error","msg":"dial tcp: lookup selling-options-app on 127.0.0.11:53: no such host","request":{"remote_ip":"172.25.0.1","remote_port":"53604","client_ip":"172.25.0.1","proto":"HTTP/1.1","method":"GET","host":"localhost","uri":"/","headers":{"User-Agent":["curl/8.3.0"],"Accept":["*/*"]}},"duration":0.004118154,"status":502,"err_id":"dtgqafxpi","err_trace":"reverseproxy.statusError (reverseproxy.go:1390)"}
