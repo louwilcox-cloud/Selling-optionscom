@@ -1,7 +1,27 @@
 # Caddyfile for Selling Options - with HTTPS
 # Caddy will automatically get SSL certificates from Let's Encrypt
 
+# HTTPS for domain
 ezmoneywithoptions.com {
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "no-referrer-when-downgrade"
+        X-Env "LAB"
+    }
+    
+    encode zstd gzip
+    
+    reverse_proxy selling-options-app:5000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+
+# HTTP access via IP address (for testing)
+:80 {
     header {
         X-Content-Type-Options "nosniff"
         X-Frame-Options "DENY"
