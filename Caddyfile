@@ -1,16 +1,7 @@
-# Lab environment Caddyfile for Market Pulse / Selling Options
-# Configured to work with your existing NAS setup
+# Caddyfile for Selling Options - with HTTPS
+# Caddy will automatically get SSL certificates from Let's Encrypt
 
-# For lab environment (adjust domain as needed)
-{
-    # Global options
-    auto_https off
-    admin off
-}
-
-# HTTP configuration for internal lab
-:80 {
-    # Security headers
+ezmoneywithoptions.com {
     header {
         X-Content-Type-Options "nosniff"
         X-Frame-Options "DENY"
@@ -18,55 +9,12 @@
         X-Env "LAB"
     }
     
-    # Compression
     encode zstd gzip
     
-    # Admin route protection - IP allowlist only
-    @admin path /admin* /admin/*
-    @notallowed not remote_ip 192.168.0.0/16 10.0.0.0/8 172.16.0.0/12 127.0.0.1/32
-    
-    handle @admin {
-        # Block unauthorized IPs from accessing admin
-        respond @notallowed "Access Denied - Admin area restricted" 403
-        
-        reverse_proxy selling-options-app:5000 {
-            header_up Host {host}
-            header_up X-Real-IP {remote_host}
-            header_up X-Forwarded-For {remote_host}
-            header_up X-Forwarded-Proto {scheme}
-        }
-    }
-    
-    # API routes
-    handle /api/* {
-        reverse_proxy selling-options-app:5000 {
-            header_up Host {host}
-            header_up X-Real-IP {remote_host}
-            header_up X-Forwarded-For {remote_host}
-            header_up X-Forwarded-Proto {scheme}
-        }
-    }
-    
-    # Static files and main application
-    handle {
-        reverse_proxy selling-options-app:5000 {
-            header_up Host {host}
-            header_up X-Real-IP {remote_host}
-            header_up X-Forwarded-For {remote_host}
-            header_up X-Forwarded-Proto {scheme}
-        }
+    reverse_proxy selling-options-app:5000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
     }
 }
-
-# HTTPS configuration (if you want to enable later)
-# your-lab-domain.local {
-#     encode zstd gzip
-#     header {
-#         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-#         X-Content-Type-Options "nosniff"
-#         X-Frame-Options "DENY"
-#         Referrer-Policy "no-referrer-when-downgrade"
-#         X-Env "LAB"
-#     }
-#     reverse_proxy selling-options-app:5000
-# }
