@@ -1,0 +1,23 @@
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ docker compose logs selling-options-app | tail -20
+WARN[0000] /home/ec2-user/Selling-optionscom/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:50:50] "GET / HTTP/1.1" 200 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:50:50] "GET /static/attached_assets/generated_images/Clean_financial_chart_logo_a5295a8c.png HTTP/1.1" 304 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:50:50] "GET /static/style.css HTTP/1.1" 304 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:50:50] "GET /static/nav.js HTTP/1.1" 304 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:50:50] "GET /static/favicon.ico HTTP/1.1" 304 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:50:50] "GET /api/auth-status HTTP/1.1" 200 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:50:50] "GET /static/favicon-32x32.png HTTP/1.1" 304 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:50:50] "GET /static/favicon-16x16.png HTTP/1.1" 304 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:50:51] "GET /api/market-data HTTP/1.1" 200 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:50:54] "GET /login HTTP/1.1" 200 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:50:54] "GET /static/style.css HTTP/1.1" 304 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:50:54] "GET /static/nav.js HTTP/1.1" 304 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:50:54] "GET /static/attached_assets/generated_images/Clean_financial_chart_logo_a5295a8c.png HTTP/1.1" 304 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:50:54] "GET /api/auth-status HTTP/1.1" 200 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:51:00] "POST /login HTTP/1.1" 302 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:51:00] "GET /login HTTP/1.1" 200 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:51:00] "GET /static/attached_assets/generated_images/Clean_financial_chart_logo_a5295a8c.png HTTP/1.1" 304 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:51:00] "GET /static/style.css HTTP/1.1" 304 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:51:00] "GET /static/nav.js HTTP/1.1" 304 -
+selling-options-app  | 172.28.0.4 - - [03/Jan/2026 02:51:00] "GET /api/auth-status HTTP/1.1" 200 -
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ 
