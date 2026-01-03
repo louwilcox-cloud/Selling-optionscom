@@ -11,6 +11,11 @@ services:
       - .env.nas
     environment:
       - DATABASE_URL=postgresql://postgres:SecurePassword123@db:5432/options_db
+      - PGHOST=db
+      - PGDATABASE=options_db
+      - PGUSER=postgres
+      - PGPASSWORD=SecurePassword123
+      - PGPORT=5432
       - FLASK_ENV=production
     depends_on:
       - db
