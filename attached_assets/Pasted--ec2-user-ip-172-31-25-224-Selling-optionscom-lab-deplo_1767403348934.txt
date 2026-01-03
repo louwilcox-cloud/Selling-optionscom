@@ -1,0 +1,35 @@
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ ./lab-deploy.sh
+🚀 Deploying Market Pulse to Lab Environment...
+./lab-deploy.sh: line 10: docker-compose: command not found
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ cd ~/Selling-optionscom
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ ./lab-deploy.sh
+🚀 Deploying Market Pulse to Lab Environment...
+./lab-deploy.sh: line 10: docker-compose: command not found
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ ls -al
+total 72
+drwxrwxr-x 12 ec2-user ec2-user 4096 Jan  3 01:20 .
+drwx------ 17 ec2-user ec2-user 4096 Jan  3 01:20 ..
+drwxrwxr-x  2 ec2-user ec2-user 4096 Jan  3 01:20 attached_assets
+-rw-rw-r--  1 ec2-user ec2-user 2075 Jan  3 01:20 Caddyfile
+-rw-rw-r--  1 ec2-user ec2-user 8455 Jan  3 01:20 db_dump.sql
+-rw-rw-r--  1 ec2-user ec2-user 1261 Jan  3 01:20 docker-compose.yml
+-rw-rw-r--  1 ec2-user ec2-user  638 Jan  3 01:20 Dockerfile
+-rw-rw-r--  1 ec2-user ec2-user  238 Jan  3 01:20 .dockerignore
+drwxrwxr-x  2 ec2-user ec2-user  183 Jan  3 01:20 Docs
+-rw-rw-r--  1 ec2-user ec2-user  695 Jan  3 01:20 .env.nas
+drwxrwxr-x  2 ec2-user ec2-user  126 Jan  3 01:20 flask_session
+drwxrwxr-x  8 ec2-user ec2-user  163 Jan  3 01:20 .git
+drwxrwxr-x  3 ec2-user ec2-user   23 Jan  3 01:20 .github
+-rw-rw-r--  1 ec2-user ec2-user  154 Jan  3 01:20 .gitignore
+-rwxrwxr-x  1 ec2-user ec2-user 1422 Jan  3 01:20 lab-deploy.sh
+-rw-rw-r--  1 ec2-user ec2-user 1944 Jan  3 01:20 main.py
+-rw-rw-r--  1 ec2-user ec2-user    0 Jan  3 01:20 quote
+-rw-rw-r--  1 ec2-user ec2-user  809 Jan  3 01:20 .replit
+-rw-rw-r--  1 ec2-user ec2-user 4886 Jan  3 01:20 replit.md
+-rw-rw-r--  1 ec2-user ec2-user  316 Jan  3 01:20 requirements.txt
+drwxrwxr-x  2 ec2-user ec2-user  125 Jan  3 01:20 routes
+drwxrwxr-x  2 ec2-user ec2-user   93 Jan  3 01:20 services
+drwxrwxr-x  3 ec2-user ec2-user  204 Jan  3 01:20 static
+drwxrwxr-x  2 ec2-user ec2-user  239 Jan  3 01:20 templates
+drwxrwxr-x  2 ec2-user ec2-user   46 Jan  3 01:20 utils
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ 
