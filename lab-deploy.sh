@@ -7,9 +7,9 @@ set -e
 echo "🚀 Deploying Market Pulse to Lab Environment..."
 
 # Build and deploy
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
+docker compose down
+docker compose build --no-cache
+docker compose up -d
 
 # Wait for services to be ready
 echo "⏳ Waiting for services to start..."
@@ -23,11 +23,11 @@ docker compose exec -T db psql -U postgres -d options_db < init-db.sql 2>/dev/nu
 echo "🔍 Running health checks..."
 
 # Check if containers are running
-if docker-compose ps | grep -q "Up"; then
+if docker compose ps | grep -q "Up"; then
     echo "✅ Containers are running"
 else
     echo "❌ Some containers failed to start"
-    docker-compose logs
+    docker compose logs
     exit 1
 fi
 
@@ -56,8 +56,8 @@ echo "   Email:    admin@lab.com"
 echo "   Password: admin123"
 echo ""
 echo "🔧 Management commands:"
-echo "   View logs:     docker-compose logs -f"
-echo "   Stop:          docker-compose down"
-echo "   Restart:       docker-compose restart"
+echo "   View logs:     docker compose logs -f"
+echo "   Stop:          docker compose down"
+echo "   Restart:       docker compose restart"
 echo ""
 echo "✨ Market Pulse is ready in your lab environment!"

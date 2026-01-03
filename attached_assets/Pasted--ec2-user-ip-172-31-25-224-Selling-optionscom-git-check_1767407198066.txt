@@ -1,0 +1,29 @@
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ git checkout -- lab-deploy.sh
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ git pull
+remote: Enumerating objects: 6, done.
+remote: Counting objects: 100% (6/6), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 4 (delta 2), reused 4 (delta 2), pack-reused 0 (from 0)
+Unpacking objects: 100% (4/4), 6.17 KiB | 6.17 MiB/s, done.
+From https://github.com/louwilcox-cloud/Selling-optionscom
+   1a7e492..53d3b05  main       -> origin/main
+Updating 35e6b58..53d3b05
+Fast-forward
+ attached_assets/Pasted--ec2-user-ip-172-31-25-224-Selling-optionscom-git-pull-_1767405740621.txt | 384 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ attached_assets/Pasted--ec2-user-ip-172-31-25-224-Selling-optionscom-git-pull-_1767407110217.txt | 359 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ attached_assets/image_1767405993979.png                                                          | Bin 0 -> 377687 bytes
+ attached_assets/image_1767406356441.png                                                          | Bin 0 -> 788150 bytes
+ attached_assets/image_1767406475701.png                                                          | Bin 0 -> 1153347 bytes
+ init-db.sql                                                                                      |  46 ++++++++
+ lab-deploy.sh                                                                                    |   8 ++
+ 7 files changed, 797 insertions(+)
+ create mode 100644 attached_assets/Pasted--ec2-user-ip-172-31-25-224-Selling-optionscom-git-pull-_1767405740621.txt
+ create mode 100644 attached_assets/Pasted--ec2-user-ip-172-31-25-224-Selling-optionscom-git-pull-_1767407110217.txt
+ create mode 100644 attached_assets/image_1767405993979.png
+ create mode 100644 attached_assets/image_1767406356441.png
+ create mode 100644 attached_assets/image_1767406475701.png
+ create mode 100644 init-db.sql
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ ./lab-deploy.sh
+🚀 Deploying Market Pulse to Lab Environment...
+./lab-deploy.sh: line 10: docker-compose: command not found
+[ec2-user@ip-172-31-25-224 Selling-optionscom]$ 
